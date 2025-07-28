@@ -5,6 +5,8 @@ interface SidebarProps {
   onNavigate: (path: string) => void
   currentRoute: string
   onToggle: () => void
+  user: any
+  onLogout: () => void
 }
 
 const navigationItems = [
@@ -40,7 +42,7 @@ const navigationItems = [
   },
 ]
 
-export function Sidebar({ isOpen, onNavigate, currentRoute, onToggle }: SidebarProps) {
+export function Sidebar({ isOpen, onNavigate, currentRoute, onToggle, user, onLogout }: SidebarProps) {
   return (
     <div className={`sidebar ${isOpen ? "open" : "closed"}`}>
       <div className="sidebar-header">
@@ -71,11 +73,16 @@ export function Sidebar({ isOpen, onNavigate, currentRoute, onToggle }: SidebarP
 
       <div className="sidebar-footer">
         <div className="user-info">
-          <div className="user-avatar">JD</div>
+          <div className="user-avatar">{user?.firstName?.[0]?.toUpperCase() || "U"}</div>
           <div className="user-details">
-            <div className="user-name">John Doe</div>
-            <div className="user-email">john@example.com</div>
+            <div className="user-name">
+              {user?.firstName} {user?.lastName}
+            </div>
+            <div className="user-email">{user?.email}</div>
           </div>
+          <button className="logout-button" onClick={onLogout} title="Logout">
+            🚪
+          </button>
         </div>
       </div>
     </div>
