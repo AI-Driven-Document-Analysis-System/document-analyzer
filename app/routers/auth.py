@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from database import get_db  # Fixed import
+#from database import get_db  # Fixed import
+from core.database import get_db  # If database.py is in app folder
 from models.user import User  # Fixed import
 from schemas.auth import UserCreate, UserLogin, UserResponse, Token, TokenData  # Fixed import
 import os

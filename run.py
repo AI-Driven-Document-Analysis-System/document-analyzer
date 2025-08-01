@@ -81,6 +81,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'app'))
 from app.db.init_db import initialize_database
 from app.main import app
 
+
 def setup_directories():
     """Create necessary directories"""
     directories = [

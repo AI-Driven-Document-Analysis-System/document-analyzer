@@ -4,6 +4,7 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 import logging
 import os
 
+
 from .api import auth
 from .core.database import db_manager
 
