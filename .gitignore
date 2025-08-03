@@ -1,0 +1,5 @@
+.next/
+.next/**
+**/next/cache/**
+**/.next/cache/**
+frontend/.next/cache/webpack/client-development/1.pack.gz
