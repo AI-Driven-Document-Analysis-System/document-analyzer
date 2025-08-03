@@ -245,7 +245,7 @@ def create_tables():
         
         # Create indexes
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_documents_type ON document_classifications(document_type);")
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_documents_upload_date ON documents(upload_timestamp);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_documents_upload_timestamp ON documents(upload_timestamp);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_processing_status ON document_processing(processing_status);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_content_search ON document_content USING gin(to_tsvector('english', searchable_content));")
         
