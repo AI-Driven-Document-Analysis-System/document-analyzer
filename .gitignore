@@ -3,3 +3,4 @@
 **/next/cache/**
 **/.next/cache/**
 frontend/.next/cache/webpack/client-development/1.pack.gz
+frontend/.next/cache/webpack/client-development-fallback/index.pack.gz

@@ -4874,3 +4874,170 @@ fastapi.exceptions.HTTPException
 2025-08-04 00:34:01,477 - app.api.summarization - INFO - Summary word count: 42
 2025-08-04 00:34:02,245 - app.api.summarization - INFO - Summary stored with ID: 56641995-f4e5-4060-8e6b-d06d1189811e
 2025-08-04 00:34:02,260 - app.api.summarization - INFO - Summary generated successfully for document_id: c8cc2296-2983-42e0-9935-a5dbee5334f8, type: Detailed Summary
+2025-08-04 00:46:00,780 - app.db.init_db - INFO - Starting database initialization...
+2025-08-04 00:46:02,650 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-04 00:46:02,938 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-04 00:46:02,940 - app.db.init_db - INFO - Database connection test successful!
+2025-08-04 00:46:05,123 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-04 00:46:05,326 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-04 00:46:11,648 - app.db.init_db - INFO - Database tables created successfully
+2025-08-04 00:46:11,649 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-04 00:46:11,794 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-04 00:46:11,795 - app.main - INFO - Database connection verified
+2025-08-04 00:46:50,135 - app.api.auth - INFO - User logged out: test1@gmail.com
+2025-08-04 00:47:00,876 - app.api.auth - INFO - User logged in successfully: test2@gmail.com
+2025-08-04 00:47:15,841 - app.api.summarization - INFO - Received summarize request: {'document_id': '8c203f8b-6ad6-461b-a8c8-a7514ddc6a4f', 'model_name': 'bart', 'summary_type': '4', 'summary_length': 150}
+2025-08-04 00:47:15,841 - app.api.summarization - INFO - Current user: {'email': 'test2@gmail.com', 'first_name': None, 'last_name': None, 'id': UUID('d76a65d6-253d-47c4-b16a-2cbfae10a881'), 'is_email_verified': False, 'created_at': datetime.datetime(2025, 8, 1, 9, 52, 49, 885934), 'updated_at': datetime.datetime(2025, 8, 1, 9, 52, 49, 885934)}
+2025-08-04 00:47:15,841 - app.api.summarization - INFO - Selected summary option: {'name': 'Executive Summary', 'max_length': 180, 'min_length': 60}
+2025-08-04 00:47:16,452 - app.api.summarization - INFO - Final summary options: {'name': 'Executive Summary', 'max_length': 150, 'min_length': 50}
+2025-08-04 00:47:16,452 - app.api.summarization - INFO - Generating summary for document: financial_sample_535.pdf
+2025-08-04 00:47:40,246 - app.api.summarization - INFO - Summary word count: 50
+2025-08-04 00:47:41,050 - app.api.summarization - INFO - Summary stored with ID: 800371ae-f8b5-4bad-87a5-497fffb24adf
+2025-08-04 00:47:41,050 - app.api.summarization - INFO - Summary generated successfully for document_id: 8c203f8b-6ad6-461b-a8c8-a7514ddc6a4f, type: Executive Summary
+2025-08-04 00:52:12,569 - app.api.summarization - INFO - Received summarize request: {'document_id': '02e553af-d86e-41ea-964d-adeb0671b2b0', 'model_name': 'bart', 'summary_type': '1', 'summary_length': 150}
+2025-08-04 00:52:12,570 - app.api.summarization - INFO - Current user: {'email': 'test2@gmail.com', 'first_name': None, 'last_name': None, 'id': UUID('d76a65d6-253d-47c4-b16a-2cbfae10a881'), 'is_email_verified': False, 'created_at': datetime.datetime(2025, 8, 1, 9, 52, 49, 885934), 'updated_at': datetime.datetime(2025, 8, 1, 9, 52, 49, 885934)}
+2025-08-04 00:52:12,570 - app.api.summarization - INFO - Selected summary option: {'name': 'Brief Summary', 'max_length': 100, 'min_length': 30}
+2025-08-04 00:52:13,223 - app.api.summarization - INFO - Final summary options: {'name': 'Brief Summary', 'max_length': 150, 'min_length': 50}
+2025-08-04 00:52:13,223 - app.api.summarization - INFO - Generating summary for document: legal_sample_927.pdf
+2025-08-04 00:52:32,532 - app.api.summarization - INFO - Summary word count: 42
+2025-08-04 00:52:33,491 - app.api.summarization - INFO - Summary stored with ID: e79533a9-f8c5-424f-9553-992bfe6880b5
+2025-08-04 00:52:33,491 - app.api.summarization - INFO - Summary generated successfully for document_id: 02e553af-d86e-41ea-964d-adeb0671b2b0, type: Brief Summary
+2025-08-04 00:55:50,007 - app.api.auth - INFO - User logged out: test2@gmail.com
+2025-08-04 07:25:32,907 - app.db.init_db - INFO - Starting database initialization...
+2025-08-04 07:25:34,442 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-04 07:25:34,622 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-04 07:25:34,623 - app.db.init_db - INFO - Database connection test successful!
+2025-08-04 07:25:35,911 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-04 07:25:36,090 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-04 07:25:40,805 - app.db.init_db - INFO - Database tables created successfully
+2025-08-04 07:25:40,805 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-04 07:25:41,110 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-04 07:25:41,110 - app.main - INFO - Database connection verified
+2025-08-04 07:25:52,809 - app.api.auth - INFO - User logged in successfully: test3@gmail.com
+2025-08-04 07:26:10,518 - app.api.summarization - INFO - Received summarize request: {'document_id': '80a20c9e-561c-4ae5-86ed-ba46d18a0da1', 'model_name': 'bart', 'summary_type': '2', 'summary_length': 150}
+2025-08-04 07:26:10,519 - app.api.summarization - INFO - Current user: {'email': 'test3@gmail.com', 'first_name': None, 'last_name': None, 'id': UUID('fd8561ff-c779-4cef-a1d8-94fb78b645b3'), 'is_email_verified': False, 'created_at': datetime.datetime(2025, 8, 1, 9, 54, 15, 337793), 'updated_at': datetime.datetime(2025, 8, 1, 9, 54, 15, 337793)}
+2025-08-04 07:26:10,528 - app.api.summarization - INFO - Selected summary option: {'name': 'Detailed Summary', 'max_length': 250, 'min_length': 80}
+2025-08-04 07:26:11,087 - app.api.summarization - INFO - Final summary options: {'name': 'Detailed Summary', 'max_length': 150, 'min_length': 50}
+2025-08-04 07:26:11,087 - app.api.summarization - INFO - Generating summary for document: legal_sample_866.pdf
+2025-08-04 07:26:29,199 - app.api.summarization - INFO - Summary word count: 42
+2025-08-04 07:26:29,848 - app.api.summarization - INFO - Summary stored with ID: fe341265-d697-41b9-9565-07afbbbc552c
+2025-08-04 07:26:29,869 - app.api.summarization - INFO - Summary generated successfully for document_id: 80a20c9e-561c-4ae5-86ed-ba46d18a0da1, type: Detailed Summary
+2025-08-04 07:31:54,838 - app.main - INFO - DocAnalyzer API shutting down...
+2025-08-04 07:31:54,854 - app.core.database - INFO - Database connection pool closed
+2025-08-04 07:31:54,870 - app.main - INFO - Database connections closed
+2025-08-04 07:32:19,531 - app.db.init_db - INFO - Starting database initialization...
+2025-08-04 07:32:21,532 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-04 07:32:21,736 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-04 07:32:21,737 - app.db.init_db - INFO - Database connection test successful!
+2025-08-04 07:32:23,223 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-04 07:32:23,391 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-04 07:32:28,367 - app.db.init_db - INFO - Database tables created successfully
+2025-08-04 07:32:28,369 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-04 07:32:28,717 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-04 07:32:28,717 - app.main - INFO - Database connection verified
+2025-08-04 07:32:45,285 - app.api.summarization - INFO - Received summarize request: {'document_id': '80a20c9e-561c-4ae5-86ed-ba46d18a0da1', 'model_name': 'bart', 'summary_type': '2', 'summary_length': 150}
+2025-08-04 07:32:45,285 - app.api.summarization - INFO - Current user: {'email': 'test3@gmail.com', 'first_name': None, 'last_name': None, 'id': UUID('fd8561ff-c779-4cef-a1d8-94fb78b645b3'), 'is_email_verified': False, 'created_at': datetime.datetime(2025, 8, 1, 9, 54, 15, 337793), 'updated_at': datetime.datetime(2025, 8, 1, 9, 54, 15, 337793)}
+2025-08-04 07:32:45,285 - app.api.summarization - INFO - Selected summary option: {'name': 'Detailed Summary', 'max_length': 250, 'min_length': 80}
+2025-08-04 07:32:46,229 - app.api.summarization - INFO - Final summary options: {'name': 'Detailed Summary', 'max_length': 150, 'min_length': 50}
+2025-08-04 07:32:46,229 - app.api.summarization - INFO - Generating summary for document: legal_sample_866.pdf
+2025-08-04 07:33:00,930 - app.api.summarization - INFO - Summary word count: 42
+2025-08-04 07:33:01,792 - app.api.summarization - INFO - Summary stored with ID: 5f59711d-20ba-4dec-ba2f-d6f5e4e18322
+2025-08-04 07:33:01,792 - app.api.summarization - INFO - Summary generated successfully for document_id: 80a20c9e-561c-4ae5-86ed-ba46d18a0da1, type: Detailed Summary
+2025-08-04 07:35:41,486 - app.api.summarization - INFO - Received summarize request: {'document_id': '80a20c9e-561c-4ae5-86ed-ba46d18a0da1', 'model_name': 'bart', 'summary_type': '2', 'summary_length': 150}
+2025-08-04 07:35:41,487 - app.api.summarization - INFO - Current user: {'email': 'test3@gmail.com', 'first_name': None, 'last_name': None, 'id': UUID('fd8561ff-c779-4cef-a1d8-94fb78b645b3'), 'is_email_verified': False, 'created_at': datetime.datetime(2025, 8, 1, 9, 54, 15, 337793), 'updated_at': datetime.datetime(2025, 8, 1, 9, 54, 15, 337793)}
+2025-08-04 07:35:41,487 - app.api.summarization - INFO - Selected summary option: {'name': 'Detailed Summary', 'max_length': 250, 'min_length': 80}
+2025-08-04 07:35:42,214 - app.api.summarization - INFO - Final summary options: {'name': 'Detailed Summary', 'max_length': 150, 'min_length': 50}
+2025-08-04 07:35:42,214 - app.api.summarization - INFO - Generating summary for document: legal_sample_866.pdf
+2025-08-04 07:35:57,168 - app.api.summarization - INFO - Summary word count: 42
+2025-08-04 07:35:57,804 - app.api.summarization - INFO - Summary stored with ID: 57875b03-e65f-46b9-ac81-6e6dc6cf2a04
+2025-08-04 07:35:57,804 - app.api.summarization - INFO - Summary generated successfully for document_id: 80a20c9e-561c-4ae5-86ed-ba46d18a0da1, type: Detailed Summary
+2025-08-04 07:51:00,689 - app.api.auth - INFO - User logged out: test3@gmail.com
+2025-08-04 07:51:13,836 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
+2025-08-04 07:51:24,602 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'model_name': 'bart', 'summary_type': '1', 'summary_length': 150}
+2025-08-04 07:51:24,602 - app.api.summarization - INFO - Current user: {'email': 'test1@gmail.com', 'first_name': None, 'last_name': None, 'id': UUID('79d0bed5-c1c1-4faf-82d4-fed1a28472d5'), 'is_email_verified': False, 'created_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096), 'updated_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096)}
+2025-08-04 07:51:24,602 - app.api.summarization - INFO - Selected summary option: {'name': 'Brief Summary', 'max_length': 100, 'min_length': 30}
+2025-08-04 07:51:25,770 - app.api.summarization - INFO - Final summary options: {'name': 'Brief Summary', 'max_length': 150, 'min_length': 50}
+2025-08-04 07:51:25,771 - app.api.summarization - INFO - Generating summary for document: EpicofEGypt.pdf
+2025-08-04 07:53:20,353 - app.api.summarization - INFO - Summary word count: 401
+2025-08-04 07:53:21,044 - app.api.summarization - INFO - Summary stored with ID: 4f94ca6a-4e32-4fb0-b4f5-1cbf96baaf3a
+2025-08-04 07:53:21,076 - app.api.summarization - INFO - Summary generated successfully for document_id: 6edfcaf7-0b55-4ca9-add1-544b963a7eda, type: Brief Summary
+2025-08-04 07:54:42,755 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'model_name': 'bart', 'summary_type': '4', 'summary_length': 150}
+2025-08-04 07:54:42,755 - app.api.summarization - INFO - Current user: {'email': 'test1@gmail.com', 'first_name': None, 'last_name': None, 'id': UUID('79d0bed5-c1c1-4faf-82d4-fed1a28472d5'), 'is_email_verified': False, 'created_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096), 'updated_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096)}
+2025-08-04 07:54:42,755 - app.api.summarization - INFO - Selected summary option: {'name': 'Executive Summary', 'max_length': 180, 'min_length': 60}
+2025-08-04 07:54:43,448 - app.api.summarization - INFO - Final summary options: {'name': 'Executive Summary', 'max_length': 150, 'min_length': 50}
+2025-08-04 07:54:43,448 - app.api.summarization - INFO - Generating summary for document: EpicofEGypt.pdf
+2025-08-04 07:56:30,083 - app.api.summarization - INFO - Summary word count: 404
+2025-08-04 07:56:30,805 - app.api.summarization - INFO - Summary stored with ID: 8139953f-9cce-4965-9f77-344717d0883d
+2025-08-04 07:56:30,805 - app.api.summarization - INFO - Summary generated successfully for document_id: 6edfcaf7-0b55-4ca9-add1-544b963a7eda, type: Executive Summary
+2025-08-06 06:50:16,322 - app.db.init_db - INFO - Starting database initialization...
+2025-08-06 06:50:17,967 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-06 06:50:18,162 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-06 06:50:18,164 - app.db.init_db - INFO - Database connection test successful!
+2025-08-06 06:50:19,459 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-06 06:50:19,635 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-06 06:50:24,216 - app.db.init_db - INFO - Database tables created successfully
+2025-08-06 06:50:24,254 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-06 06:50:24,821 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-06 06:50:24,822 - app.main - INFO - Database connection verified
+2025-08-06 06:51:37,759 - app.api.auth - INFO - User logged out: test1@gmail.com
+2025-08-06 06:51:53,032 - app.api.auth - INFO - Failed login attempt for email: test1@gmail.com
+2025-08-06 06:52:02,797 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
+2025-08-06 06:53:50,138 - app.api.summarization - INFO - Received summarize request: {'document_id': 'c8cc2296-2983-42e0-9935-a5dbee5334f8', 'model_name': 'bart', 'summary_type': '1', 'summary_length': 150}
+2025-08-06 06:53:50,140 - app.api.summarization - INFO - Current user: {'email': 'test1@gmail.com', 'first_name': None, 'last_name': None, 'id': UUID('79d0bed5-c1c1-4faf-82d4-fed1a28472d5'), 'is_email_verified': False, 'created_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096), 'updated_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096)}
+2025-08-06 06:53:50,141 - app.api.summarization - INFO - Selected summary option: {'name': 'Brief Summary', 'max_length': 100, 'min_length': 30}
+2025-08-06 06:53:51,127 - app.api.summarization - INFO - Final summary options: {'name': 'Brief Summary', 'max_length': 150, 'min_length': 50}
+2025-08-06 06:53:51,127 - app.api.summarization - INFO - Generating summary for document: legal_sample_603.pdf
+2025-08-06 06:54:08,195 - app.api.summarization - INFO - Summary word count: 42
+2025-08-06 06:54:08,742 - app.api.summarization - INFO - Summary stored with ID: 4df2bad1-d17d-4162-885f-61a18b205547
+2025-08-06 06:54:08,752 - app.api.summarization - INFO - Summary generated successfully for document_id: c8cc2296-2983-42e0-9935-a5dbee5334f8, type: Brief Summary
+2025-08-06 06:54:31,842 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'model_name': 'bart', 'summary_type': '1', 'summary_length': 150}
+2025-08-06 06:54:31,843 - app.api.summarization - INFO - Current user: {'email': 'test1@gmail.com', 'first_name': None, 'last_name': None, 'id': UUID('79d0bed5-c1c1-4faf-82d4-fed1a28472d5'), 'is_email_verified': False, 'created_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096), 'updated_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096)}
+2025-08-06 06:54:31,844 - app.api.summarization - INFO - Selected summary option: {'name': 'Brief Summary', 'max_length': 100, 'min_length': 30}
+2025-08-06 06:54:32,612 - app.api.summarization - INFO - Final summary options: {'name': 'Brief Summary', 'max_length': 150, 'min_length': 50}
+2025-08-06 06:54:32,613 - app.api.summarization - INFO - Generating summary for document: EpicofEGypt.pdf
+2025-08-06 06:56:28,038 - app.api.summarization - INFO - Summary word count: 401
+2025-08-06 06:56:28,772 - app.api.summarization - INFO - Summary stored with ID: 8fd4c5bb-61df-4d53-a718-aa3f5571e3ae
+2025-08-06 06:56:28,774 - app.api.summarization - INFO - Summary generated successfully for document_id: 6edfcaf7-0b55-4ca9-add1-544b963a7eda, type: Brief Summary
+2025-08-06 07:03:31,231 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'model_name': 'bart', 'summary_type': '3', 'summary_length': 150}
+2025-08-06 07:03:31,231 - app.api.summarization - INFO - Current user: {'email': 'test1@gmail.com', 'first_name': None, 'last_name': None, 'id': UUID('79d0bed5-c1c1-4faf-82d4-fed1a28472d5'), 'is_email_verified': False, 'created_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096), 'updated_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096)}
+2025-08-06 07:03:31,233 - app.api.summarization - INFO - Selected summary option: {'name': 'Key Points', 'max_length': 150, 'min_length': 40}
+2025-08-06 07:03:31,774 - app.api.summarization - INFO - Final summary options: {'name': 'Key Points', 'max_length': 150, 'min_length': 40}
+2025-08-06 07:03:31,776 - app.api.summarization - INFO - Generating summary for document: EpicofEGypt.pdf
+2025-08-06 07:03:31,787 - app.api.summarization - INFO - Extracted 6 key points
+2025-08-06 07:03:31,787 - app.api.summarization - INFO - Summary word count: 136
+2025-08-06 07:03:32,528 - app.api.summarization - INFO - Summary stored with ID: d03d128d-8a6b-4941-bdc2-350c43fb236e
+2025-08-06 07:03:32,530 - app.api.summarization - INFO - Summary generated successfully for document_id: 6edfcaf7-0b55-4ca9-add1-544b963a7eda, type: Key Points
+2025-08-06 10:43:17,558 - app.db.init_db - INFO - Starting database initialization...
+2025-08-06 10:43:20,175 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-06 10:43:20,493 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-06 10:43:20,493 - app.db.init_db - INFO - Database connection test successful!
+2025-08-06 10:43:22,256 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-06 10:43:22,535 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-06 10:43:28,297 - app.db.init_db - INFO - Database tables created successfully
+2025-08-06 10:43:28,297 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-06 10:43:28,613 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-06 10:43:28,613 - app.main - INFO - Database connection verified
+2025-08-06 10:47:44,009 - app.api.auth - INFO - User logged out: test1@gmail.com
+2025-08-06 10:47:58,302 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
+2025-08-06 11:34:14,457 - app.db.crud - ERROR - Error getting user by ID: connection already closed
+2025-08-06 11:38:31,931 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
+2025-08-06 11:38:48,192 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'model_name': 'bart', 'summary_type': '1', 'summary_length': 150}
+2025-08-06 11:38:48,207 - app.api.summarization - INFO - Current user: {'email': 'test1@gmail.com', 'first_name': None, 'last_name': None, 'id': UUID('79d0bed5-c1c1-4faf-82d4-fed1a28472d5'), 'is_email_verified': False, 'created_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096), 'updated_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096)}
+2025-08-06 11:38:48,207 - app.api.summarization - INFO - Selected summary option: {'name': 'Brief Summary', 'max_length': 100, 'min_length': 30}
+2025-08-06 11:38:48,935 - app.api.summarization - INFO - Final summary options: {'name': 'Brief Summary', 'max_length': 150, 'min_length': 50}
+2025-08-06 11:38:48,935 - app.api.summarization - INFO - Generating summary for document: EpicofEGypt.pdf
+2025-08-06 11:41:28,396 - app.api.summarization - INFO - Summary word count: 401
+2025-08-06 11:41:29,546 - app.api.summarization - INFO - Summary stored with ID: f256a04e-ff91-47d3-8865-1b18b7c26e31
+2025-08-06 11:41:29,562 - app.api.summarization - INFO - Summary generated successfully for document_id: 6edfcaf7-0b55-4ca9-add1-544b963a7eda, type: Brief Summary
+2025-08-06 11:41:31,305 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
+2025-08-06 23:14:37,797 - app.db.init_db - INFO - Starting database initialization...
+2025-08-06 23:14:40,454 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-06 23:14:40,767 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-06 23:14:40,767 - app.db.init_db - INFO - Database connection test successful!
+2025-08-06 23:14:43,573 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-06 23:14:43,833 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-06 23:14:50,082 - app.db.init_db - INFO - Database tables created successfully
+2025-08-06 23:14:50,082 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-06 23:14:50,670 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-06 23:14:50,670 - app.main - INFO - Database connection verified
+2025-08-06 23:14:57,393 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
