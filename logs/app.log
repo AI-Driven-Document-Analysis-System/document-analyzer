@@ -5041,3 +5041,548 @@ fastapi.exceptions.HTTPException
 2025-08-06 23:14:50,670 - app.main - INFO - DocAnalyzer API starting up...
 2025-08-06 23:14:50,670 - app.main - INFO - Database connection verified
 2025-08-06 23:14:57,393 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
+2025-08-07 18:31:27,755 - app.db.init_db - INFO - Starting database initialization...
+2025-08-07 18:31:29,735 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-07 18:31:29,942 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-07 18:31:29,944 - app.db.init_db - INFO - Database connection test successful!
+2025-08-07 18:31:31,559 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-07 18:31:31,772 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-07 18:31:36,676 - app.db.init_db - INFO - Database tables created successfully
+2025-08-07 18:31:36,691 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-07 18:31:36,982 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-07 18:31:36,983 - app.main - INFO - Database connection verified
+2025-08-07 18:40:44,751 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
+2025-08-07 18:41:16,481 - app.core.database - ERROR - Database connection error: could not translate host name "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" to address: No such host is known. 
+
+2025-08-07 18:41:16,482 - app.db.crud - ERROR - Error getting user by ID: could not translate host name "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" to address: No such host is known. 
+
+2025-08-07 18:48:01,302 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
+2025-08-07 18:48:14,461 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'model_name': 'bart', 'summary_type': '1', 'summary_length': 150}
+2025-08-07 18:48:14,461 - app.api.summarization - INFO - Current user: {'email': 'test1@gmail.com', 'first_name': None, 'last_name': None, 'id': UUID('79d0bed5-c1c1-4faf-82d4-fed1a28472d5'), 'is_email_verified': False, 'created_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096), 'updated_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096)}
+2025-08-07 18:48:14,461 - app.api.summarization - INFO - Selected summary option: {'name': 'Brief Summary', 'max_length': 100, 'min_length': 30, 'model': 'pegasus', 'description': 'Quick, essential points using Pegasus'}
+2025-08-07 18:48:15,378 - app.api.summarization - INFO - Final summary options: {'name': 'Brief Summary', 'max_length': 150, 'min_length': 50, 'model': 'pegasus', 'description': 'Quick, essential points using Pegasus'}
+2025-08-07 18:48:15,378 - app.api.summarization - INFO - Generating summary for document: EpicofEGypt.pdf
+2025-08-07 18:48:36,828 - app.services.summarization_service - ERROR - Error generating summary with pegasus model: Converting from SentencePiece and Tiktoken failed, if a converter for SentencePiece is available, provide a model path with a SentencePiece tokenizer.model file.Currently available slow->fast converters: ['AlbertTokenizer', 'BartTokenizer', 'BarthezTokenizer', 'BertTokenizer', 'BigBirdTokenizer', 'BlenderbotTokenizer', 'CamembertTokenizer', 'CLIPTokenizer', 'CodeGenTokenizer', 'ConvBertTokenizer', 'DebertaTokenizer', 'DebertaV2Tokenizer', 'DistilBertTokenizer', 'DPRReaderTokenizer', 'DPRQuestionEncoderTokenizer', 'DPRContextEncoderTokenizer', 'ElectraTokenizer', 'FNetTokenizer', 'FunnelTokenizer', 'GPT2Tokenizer', 'HerbertTokenizer', 'LayoutLMTokenizer', 'LayoutLMv2Tokenizer', 'LayoutLMv3Tokenizer', 'LayoutXLMTokenizer', 'LongformerTokenizer', 'LEDTokenizer', 'LxmertTokenizer', 'MarkupLMTokenizer', 'MBartTokenizer', 'MBart50Tokenizer', 'MPNetTokenizer', 'MobileBertTokenizer', 'MvpTokenizer', 'NllbTokenizer', 'OpenAIGPTTokenizer', 'PegasusTokenizer', 'Qwen2Tokenizer', 'RealmTokenizer', 'ReformerTokenizer', 'RemBertTokenizer', 'RetriBertTokenizer', 'RobertaTokenizer', 'RoFormerTokenizer', 'SeamlessM4TTokenizer', 'SqueezeBertTokenizer', 'T5Tokenizer', 'UdopTokenizer', 'WhisperTokenizer', 'XLMRobertaTokenizer', 'XLNetTokenizer', 'SplinterTokenizer', 'XGLMTokenizer', 'LlamaTokenizer', 'CodeLlamaTokenizer', 'GemmaTokenizer', 'Phi3Tokenizer']
+2025-08-07 18:48:36,875 - app.services.summarization_service - INFO - Falling back to BART model...
+2025-08-07 18:53:10,007 - app.api.summarization - INFO - Summary word count: 62
+2025-08-07 18:53:10,924 - app.api.summarization - INFO - Summary stored with ID: c895a7ae-2f54-40b0-a4e4-54159b732ce3
+2025-08-07 18:53:10,939 - app.api.summarization - INFO - Summary generated successfully for document_id: 6edfcaf7-0b55-4ca9-add1-544b963a7eda, type: Brief Summary
+2025-08-07 18:55:06,739 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'model_name': 'pegasus', 'summary_type': '1', 'summary_length': 150}
+2025-08-07 18:55:06,741 - app.api.summarization - INFO - Current user: {'email': 'test1@gmail.com', 'first_name': None, 'last_name': None, 'id': UUID('79d0bed5-c1c1-4faf-82d4-fed1a28472d5'), 'is_email_verified': False, 'created_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096), 'updated_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096)}
+2025-08-07 18:55:06,742 - app.api.summarization - INFO - Selected summary option: {'name': 'Brief Summary', 'max_length': 100, 'min_length': 30, 'model': 'pegasus', 'description': 'Quick, essential points using Pegasus'}
+2025-08-07 18:55:07,457 - app.api.summarization - INFO - Final summary options: {'name': 'Brief Summary', 'max_length': 150, 'min_length': 50, 'model': 'pegasus', 'description': 'Quick, essential points using Pegasus'}
+2025-08-07 18:55:07,457 - app.api.summarization - INFO - Generating summary for document: EpicofEGypt.pdf
+2025-08-07 18:55:32,158 - app.services.summarization_service - ERROR - Error generating summary with pegasus model: Converting from SentencePiece and Tiktoken failed, if a converter for SentencePiece is available, provide a model path with a SentencePiece tokenizer.model file.Currently available slow->fast converters: ['AlbertTokenizer', 'BartTokenizer', 'BarthezTokenizer', 'BertTokenizer', 'BigBirdTokenizer', 'BlenderbotTokenizer', 'CamembertTokenizer', 'CLIPTokenizer', 'CodeGenTokenizer', 'ConvBertTokenizer', 'DebertaTokenizer', 'DebertaV2Tokenizer', 'DistilBertTokenizer', 'DPRReaderTokenizer', 'DPRQuestionEncoderTokenizer', 'DPRContextEncoderTokenizer', 'ElectraTokenizer', 'FNetTokenizer', 'FunnelTokenizer', 'GPT2Tokenizer', 'HerbertTokenizer', 'LayoutLMTokenizer', 'LayoutLMv2Tokenizer', 'LayoutLMv3Tokenizer', 'LayoutXLMTokenizer', 'LongformerTokenizer', 'LEDTokenizer', 'LxmertTokenizer', 'MarkupLMTokenizer', 'MBartTokenizer', 'MBart50Tokenizer', 'MPNetTokenizer', 'MobileBertTokenizer', 'MvpTokenizer', 'NllbTokenizer', 'OpenAIGPTTokenizer', 'PegasusTokenizer', 'Qwen2Tokenizer', 'RealmTokenizer', 'ReformerTokenizer', 'RemBertTokenizer', 'RetriBertTokenizer', 'RobertaTokenizer', 'RoFormerTokenizer', 'SeamlessM4TTokenizer', 'SqueezeBertTokenizer', 'T5Tokenizer', 'UdopTokenizer', 'WhisperTokenizer', 'XLMRobertaTokenizer', 'XLNetTokenizer', 'SplinterTokenizer', 'XGLMTokenizer', 'LlamaTokenizer', 'CodeLlamaTokenizer', 'GemmaTokenizer', 'Phi3Tokenizer']
+2025-08-07 18:55:32,158 - app.services.summarization_service - INFO - Falling back to BART model...
+2025-08-07 19:00:12,605 - app.api.summarization - INFO - Summary word count: 62
+2025-08-07 19:00:13,677 - app.api.summarization - INFO - Summary stored with ID: 51546a34-5841-4b8c-97e9-686f4bb035cd
+2025-08-07 19:00:13,677 - app.api.summarization - INFO - Summary generated successfully for document_id: 6edfcaf7-0b55-4ca9-add1-544b963a7eda, type: Brief Summary
+2025-08-07 19:33:38,130 - app.db.crud - ERROR - Error getting user by ID: connection already closed
+2025-08-07 19:34:59,772 - app.core.database - ERROR - Database connection error: connection to server at "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" (94.237.73.228), port 22695 failed: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+SSL SYSCALL error: Connection reset by peer (0x00002746/10054)
+
+2025-08-07 19:34:59,772 - app.db.crud - ERROR - Error getting user by ID: connection to server at "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" (94.237.73.228), port 22695 failed: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+SSL SYSCALL error: Connection reset by peer (0x00002746/10054)
+
+2025-08-07 19:50:58,239 - app.core.database - ERROR - Database connection error: connection to server at "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" (94.237.73.228), port 22695 failed: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+SSL SYSCALL error: Connection reset by peer (0x00002746/10054)
+
+2025-08-07 19:50:58,254 - app.db.crud - ERROR - Error getting user by email: connection to server at "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" (94.237.73.228), port 22695 failed: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+SSL SYSCALL error: Connection reset by peer (0x00002746/10054)
+
+2025-08-07 19:50:58,254 - app.db.crud - ERROR - Error authenticating user: connection to server at "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" (94.237.73.228), port 22695 failed: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+SSL SYSCALL error: Connection reset by peer (0x00002746/10054)
+
+2025-08-07 19:50:58,254 - app.api.auth - ERROR - Error during authentication: connection to server at "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" (94.237.73.228), port 22695 failed: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+SSL SYSCALL error: Connection reset by peer (0x00002746/10054)
+
+2025-08-07 19:52:48,609 - app.core.database - ERROR - Database connection error: connection to server at "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" (94.237.73.228), port 22695 failed: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+SSL SYSCALL error: Connection reset by peer (0x00002746/10054)
+
+2025-08-07 19:52:48,609 - app.db.crud - ERROR - Error getting user by email: connection to server at "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" (94.237.73.228), port 22695 failed: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+SSL SYSCALL error: Connection reset by peer (0x00002746/10054)
+
+2025-08-07 19:52:48,609 - app.db.crud - ERROR - Error authenticating user: connection to server at "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" (94.237.73.228), port 22695 failed: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+SSL SYSCALL error: Connection reset by peer (0x00002746/10054)
+
+2025-08-07 19:52:48,609 - app.api.auth - ERROR - Error during authentication: connection to server at "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" (94.237.73.228), port 22695 failed: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+SSL SYSCALL error: Connection reset by peer (0x00002746/10054)
+
+2025-08-07 19:54:59,312 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
+2025-08-07 19:56:43,469 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'model_name': 't5', 'summary_type': '2', 'summary_length': 150}
+2025-08-07 19:56:43,469 - app.api.summarization - INFO - Current user: {'email': 'test1@gmail.com', 'first_name': None, 'last_name': None, 'id': UUID('79d0bed5-c1c1-4faf-82d4-fed1a28472d5'), 'is_email_verified': False, 'created_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096), 'updated_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096)}
+2025-08-07 19:56:43,475 - app.api.summarization - INFO - Selected summary option: {'name': 'Detailed Summary', 'max_length': 250, 'min_length': 80, 'model': 'bart', 'description': 'Comprehensive analysis using BART'}
+2025-08-07 19:56:45,087 - app.api.summarization - INFO - Final summary options: {'name': 'Detailed Summary', 'max_length': 150, 'min_length': 50, 'model': 'bart', 'description': 'Comprehensive analysis using BART'}
+2025-08-07 19:56:45,090 - app.api.summarization - INFO - Generating summary for document: EpicofEGypt.pdf
+2025-08-07 19:59:51,529 - app.api.summarization - INFO - Summary word count: 60
+2025-08-07 19:59:53,095 - app.api.summarization - INFO - Summary stored with ID: f3f78c72-909b-4183-8ca9-858d6d6b76f5
+2025-08-07 19:59:53,112 - app.api.summarization - INFO - Summary generated successfully for document_id: 6edfcaf7-0b55-4ca9-add1-544b963a7eda, type: Detailed Summary
+2025-08-07 20:00:37,423 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'model_name': 't5', 'summary_type': '2', 'summary_length': 300}
+2025-08-07 20:00:37,423 - app.api.summarization - INFO - Current user: {'email': 'test1@gmail.com', 'first_name': None, 'last_name': None, 'id': UUID('79d0bed5-c1c1-4faf-82d4-fed1a28472d5'), 'is_email_verified': False, 'created_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096), 'updated_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096)}
+2025-08-07 20:00:37,423 - app.api.summarization - INFO - Selected summary option: {'name': 'Detailed Summary', 'max_length': 250, 'min_length': 80, 'model': 'bart', 'description': 'Comprehensive analysis using BART'}
+2025-08-07 20:00:37,996 - app.api.summarization - INFO - Final summary options: {'name': 'Detailed Summary', 'max_length': 300, 'min_length': 100, 'model': 'bart', 'description': 'Comprehensive analysis using BART'}
+2025-08-07 20:00:37,996 - app.api.summarization - INFO - Generating summary for document: EpicofEGypt.pdf
+2025-08-07 20:05:07,344 - app.api.summarization - INFO - Summary word count: 103
+2025-08-07 20:05:08,432 - app.api.summarization - INFO - Summary stored with ID: a0ff032c-083f-498e-b291-a7ed7a3e232f
+2025-08-07 20:05:08,432 - app.api.summarization - INFO - Summary generated successfully for document_id: 6edfcaf7-0b55-4ca9-add1-544b963a7eda, type: Detailed Summary
+2025-08-07 20:06:28,262 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'model_name': 't5', 'summary_type': '3', 'summary_length': 300}
+2025-08-07 20:06:28,268 - app.api.summarization - INFO - Current user: {'email': 'test1@gmail.com', 'first_name': None, 'last_name': None, 'id': UUID('79d0bed5-c1c1-4faf-82d4-fed1a28472d5'), 'is_email_verified': False, 'created_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096), 'updated_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096)}
+2025-08-07 20:06:28,268 - app.api.summarization - INFO - Selected summary option: {'name': 'Key Points', 'max_length': 150, 'min_length': 40, 'model': 'extraction', 'description': 'Bullet-point extraction using custom algorithm'}
+2025-08-07 20:06:30,054 - app.api.summarization - INFO - Final summary options: {'name': 'Key Points', 'max_length': 150, 'min_length': 40, 'model': 'extraction', 'description': 'Bullet-point extraction using custom algorithm'}
+2025-08-07 20:06:30,054 - app.api.summarization - INFO - Generating summary for document: EpicofEGypt.pdf
+2025-08-07 20:06:30,069 - app.api.summarization - INFO - Extracted 6 key points
+2025-08-07 20:06:30,069 - app.api.summarization - INFO - Summary word count: 150
+2025-08-07 20:06:30,730 - app.api.summarization - INFO - Summary stored with ID: 5113fb7e-a42f-4d26-af6c-b22a50484618
+2025-08-07 20:06:30,746 - app.api.summarization - INFO - Summary generated successfully for document_id: 6edfcaf7-0b55-4ca9-add1-544b963a7eda, type: Key Points
+2025-08-07 21:44:34,615 - app.db.crud - ERROR - Error getting user by ID: connection already closed
+2025-08-07 21:46:03,863 - app.core.database - ERROR - Database connection error: connection to server at "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" (94.237.73.228), port 22695 failed: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+SSL SYSCALL error: Connection reset by peer (0x00002746/10054)
+
+2025-08-07 21:46:03,878 - app.db.crud - ERROR - Error getting user by ID: connection to server at "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" (94.237.73.228), port 22695 failed: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+SSL SYSCALL error: Connection reset by peer (0x00002746/10054)
+
+2025-08-07 21:46:40,916 - app.core.database - ERROR - Database connection error: connection to server at "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" (94.237.73.228), port 22695 failed: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+
+2025-08-07 21:46:40,934 - app.db.crud - ERROR - Error getting user by ID: connection to server at "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" (94.237.73.228), port 22695 failed: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+
+2025-08-07 21:46:53,039 - app.core.database - ERROR - Database connection error: could not translate host name "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" to address: No such host is known. 
+
+2025-08-07 21:46:53,039 - app.db.crud - ERROR - Error getting user by ID: could not translate host name "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" to address: No such host is known. 
+
+2025-08-07 21:47:03,138 - app.api.auth - INFO - User logged out: test1@gmail.com
+2025-08-07 21:47:03,732 - app.api.auth - INFO - User logged out: test1@gmail.com
+2025-08-07 21:47:16,882 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
+2025-08-07 21:51:55,911 - app.api.summarization - INFO - Received summarize request: {'document_id': 'c8cc2296-2983-42e0-9935-a5dbee5334f8', 'model_name': 'auto', 'summary_type': 'brief', 'summary_length': 150}
+2025-08-07 21:51:55,958 - app.api.summarization - INFO - Current user: {'email': 'test1@gmail.com', 'first_name': None, 'last_name': None, 'id': UUID('79d0bed5-c1c1-4faf-82d4-fed1a28472d5'), 'is_email_verified': False, 'created_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096), 'updated_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096)}
+2025-08-07 21:51:55,958 - app.api.summarization - ERROR - Invalid summary type: brief
+2025-08-07 21:51:55,958 - app.api.summarization - ERROR - Available options: ['1', '2', '3', '4', '5', '6']
+2025-08-07 21:51:55,958 - app.api.summarization - ERROR - HTTP exception: 
+2025-08-07 22:07:59,385 - app.api.summarization - INFO - Received summarize request: {'document_id': '48ff1af3-7985-47c8-a027-44afe70c096a', 'model_name': 'auto', 'summary_type': 'brief', 'summary_length': 150}
+2025-08-07 22:07:59,401 - app.api.summarization - INFO - Current user: {'email': 'test1@gmail.com', 'first_name': None, 'last_name': None, 'id': UUID('79d0bed5-c1c1-4faf-82d4-fed1a28472d5'), 'is_email_verified': False, 'created_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096), 'updated_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096)}
+2025-08-07 22:07:59,401 - app.api.summarization - ERROR - Invalid summary type: brief
+2025-08-07 22:07:59,401 - app.api.summarization - ERROR - Available options: ['1', '2', '3', '4', '5', '6']
+2025-08-07 22:07:59,401 - app.api.summarization - ERROR - HTTP exception: 
+2025-08-07 23:02:33,445 - app.db.crud - ERROR - Error getting user by ID: connection already closed
+2025-08-07 23:02:40,952 - app.api.auth - INFO - User logged out: test1@gmail.com
+2025-08-07 23:02:41,581 - app.api.auth - INFO - User logged out: test1@gmail.com
+2025-08-07 23:03:01,183 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
+2025-08-07 23:03:33,199 - app.api.summarization - INFO - Received summarize request: {'document_id': '82ab7074-3ea4-478e-91c7-4c2bd98a4f4e', 'model_name': 'auto', 'summary_type': 'brief', 'summary_length': 150}
+2025-08-07 23:03:33,199 - app.api.summarization - INFO - Current user: {'email': 'test1@gmail.com', 'first_name': None, 'last_name': None, 'id': UUID('79d0bed5-c1c1-4faf-82d4-fed1a28472d5'), 'is_email_verified': False, 'created_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096), 'updated_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096)}
+2025-08-07 23:03:33,199 - app.api.summarization - ERROR - Invalid summary type: brief
+2025-08-07 23:03:33,199 - app.api.summarization - ERROR - Available options: ['1', '2', '3', '4', '5', '6']
+2025-08-07 23:03:33,199 - app.api.summarization - ERROR - HTTP exception: 
+2025-08-07 23:12:59,251 - app.api.summarization - INFO - Received summarize request: {'document_id': 'c8cc2296-2983-42e0-9935-a5dbee5334f8', 'model_name': 'auto', 'summary_type': '1', 'summary_length': 150}
+2025-08-07 23:12:59,251 - app.api.summarization - INFO - Current user: {'email': 'test1@gmail.com', 'first_name': None, 'last_name': None, 'id': UUID('79d0bed5-c1c1-4faf-82d4-fed1a28472d5'), 'is_email_verified': False, 'created_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096), 'updated_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096)}
+2025-08-07 23:12:59,251 - app.api.summarization - INFO - Selected summary option: {'name': 'Brief Summary', 'max_length': 100, 'min_length': 30, 'model': 'pegasus', 'description': 'Quick, essential points using Pegasus'}
+2025-08-07 23:12:59,770 - app.api.summarization - INFO - Final summary options: {'name': 'Brief Summary', 'max_length': 150, 'min_length': 50, 'model': 'pegasus', 'description': 'Quick, essential points using Pegasus'}
+2025-08-07 23:12:59,770 - app.api.summarization - INFO - Generating summary for document: legal_sample_603.pdf
+2025-08-07 23:13:54,233 - app.services.summarization_service - ERROR - Error generating summary with pegasus model: Converting from SentencePiece and Tiktoken failed, if a converter for SentencePiece is available, provide a model path with a SentencePiece tokenizer.model file.Currently available slow->fast converters: ['AlbertTokenizer', 'BartTokenizer', 'BarthezTokenizer', 'BertTokenizer', 'BigBirdTokenizer', 'BlenderbotTokenizer', 'CamembertTokenizer', 'CLIPTokenizer', 'CodeGenTokenizer', 'ConvBertTokenizer', 'DebertaTokenizer', 'DebertaV2Tokenizer', 'DistilBertTokenizer', 'DPRReaderTokenizer', 'DPRQuestionEncoderTokenizer', 'DPRContextEncoderTokenizer', 'ElectraTokenizer', 'FNetTokenizer', 'FunnelTokenizer', 'GPT2Tokenizer', 'HerbertTokenizer', 'LayoutLMTokenizer', 'LayoutLMv2Tokenizer', 'LayoutLMv3Tokenizer', 'LayoutXLMTokenizer', 'LongformerTokenizer', 'LEDTokenizer', 'LxmertTokenizer', 'MarkupLMTokenizer', 'MBartTokenizer', 'MBart50Tokenizer', 'MPNetTokenizer', 'MobileBertTokenizer', 'MvpTokenizer', 'NllbTokenizer', 'OpenAIGPTTokenizer', 'PegasusTokenizer', 'Qwen2Tokenizer', 'RealmTokenizer', 'ReformerTokenizer', 'RemBertTokenizer', 'RetriBertTokenizer', 'RobertaTokenizer', 'RoFormerTokenizer', 'SeamlessM4TTokenizer', 'SqueezeBertTokenizer', 'T5Tokenizer', 'UdopTokenizer', 'WhisperTokenizer', 'XLMRobertaTokenizer', 'XLNetTokenizer', 'SplinterTokenizer', 'XGLMTokenizer', 'LlamaTokenizer', 'CodeLlamaTokenizer', 'GemmaTokenizer', 'Phi3Tokenizer']
+2025-08-07 23:13:54,249 - app.services.summarization_service - INFO - Falling back to BART model...
+2025-08-07 23:16:39,713 - app.api.summarization - INFO - Summary word count: 52
+2025-08-07 23:16:42,355 - app.api.summarization - INFO - Summary stored with ID: 732a59d4-1bbd-4eae-b348-107df630ecbb
+2025-08-07 23:16:42,400 - app.api.summarization - INFO - Summary generated successfully for document_id: c8cc2296-2983-42e0-9935-a5dbee5334f8, type: Brief Summary
+2025-08-07 23:33:15,642 - app.api.summarization - INFO - Received summarize request: {'document_id': 'c8cc2296-2983-42e0-9935-a5dbee5334f8', 'model_name': 'auto', 'summary_type': '1', 'summary_length': 150}
+2025-08-07 23:33:15,642 - app.api.summarization - INFO - Current user: {'email': 'test1@gmail.com', 'first_name': None, 'last_name': None, 'id': UUID('79d0bed5-c1c1-4faf-82d4-fed1a28472d5'), 'is_email_verified': False, 'created_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096), 'updated_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096)}
+2025-08-07 23:33:15,642 - app.api.summarization - INFO - Selected summary option: {'name': 'Brief Summary', 'max_length': 100, 'min_length': 30, 'model': 'pegasus', 'description': 'Quick, essential points using Pegasus'}
+2025-08-07 23:33:16,259 - app.api.summarization - INFO - Final summary options: {'name': 'Brief Summary', 'max_length': 150, 'min_length': 50, 'model': 'pegasus', 'description': 'Quick, essential points using Pegasus'}
+2025-08-07 23:33:16,259 - app.api.summarization - INFO - Generating summary for document: legal_sample_603.pdf
+2025-08-07 23:33:42,823 - app.services.summarization_service - ERROR - Error generating summary with pegasus model: Converting from SentencePiece and Tiktoken failed, if a converter for SentencePiece is available, provide a model path with a SentencePiece tokenizer.model file.Currently available slow->fast converters: ['AlbertTokenizer', 'BartTokenizer', 'BarthezTokenizer', 'BertTokenizer', 'BigBirdTokenizer', 'BlenderbotTokenizer', 'CamembertTokenizer', 'CLIPTokenizer', 'CodeGenTokenizer', 'ConvBertTokenizer', 'DebertaTokenizer', 'DebertaV2Tokenizer', 'DistilBertTokenizer', 'DPRReaderTokenizer', 'DPRQuestionEncoderTokenizer', 'DPRContextEncoderTokenizer', 'ElectraTokenizer', 'FNetTokenizer', 'FunnelTokenizer', 'GPT2Tokenizer', 'HerbertTokenizer', 'LayoutLMTokenizer', 'LayoutLMv2Tokenizer', 'LayoutLMv3Tokenizer', 'LayoutXLMTokenizer', 'LongformerTokenizer', 'LEDTokenizer', 'LxmertTokenizer', 'MarkupLMTokenizer', 'MBartTokenizer', 'MBart50Tokenizer', 'MPNetTokenizer', 'MobileBertTokenizer', 'MvpTokenizer', 'NllbTokenizer', 'OpenAIGPTTokenizer', 'PegasusTokenizer', 'Qwen2Tokenizer', 'RealmTokenizer', 'ReformerTokenizer', 'RemBertTokenizer', 'RetriBertTokenizer', 'RobertaTokenizer', 'RoFormerTokenizer', 'SeamlessM4TTokenizer', 'SqueezeBertTokenizer', 'T5Tokenizer', 'UdopTokenizer', 'WhisperTokenizer', 'XLMRobertaTokenizer', 'XLNetTokenizer', 'SplinterTokenizer', 'XGLMTokenizer', 'LlamaTokenizer', 'CodeLlamaTokenizer', 'GemmaTokenizer', 'Phi3Tokenizer']
+2025-08-07 23:33:42,854 - app.services.summarization_service - INFO - Falling back to BART model...
+2025-08-07 23:34:59,709 - app.api.summarization - INFO - Summary word count: 52
+2025-08-07 23:35:01,169 - app.api.summarization - INFO - Summary stored with ID: e3d392da-2504-4865-82ec-3ffd412f3fef
+2025-08-07 23:35:01,200 - app.api.summarization - INFO - Summary generated successfully for document_id: c8cc2296-2983-42e0-9935-a5dbee5334f8, type: Brief Summary
+2025-08-08 18:15:26,741 - app.db.init_db - INFO - Starting database initialization...
+2025-08-08 18:15:28,678 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-08 18:15:28,900 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-08 18:15:28,901 - app.db.init_db - INFO - Database connection test successful!
+2025-08-08 18:15:30,477 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-08 18:15:30,679 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-08 18:15:36,079 - app.db.init_db - INFO - Database tables created successfully
+2025-08-08 18:15:36,079 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-08 18:15:36,386 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-08 18:15:36,386 - app.main - INFO - Database connection verified
+2025-08-08 18:16:11,241 - app.api.summarization - INFO - Received summarize request: {'document_id': '48ff1af3-7985-47c8-a027-44afe70c096a', 'summary_type': '1', 'summary_length': 150}
+2025-08-08 18:16:11,241 - app.api.summarization - INFO - Current user: {'email': 'test1@gmail.com', 'first_name': None, 'last_name': None, 'id': UUID('79d0bed5-c1c1-4faf-82d4-fed1a28472d5'), 'is_email_verified': False, 'created_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096), 'updated_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096)}
+2025-08-08 18:16:11,242 - app.api.summarization - ERROR - Invalid summary type: 1
+2025-08-08 18:16:11,242 - app.api.summarization - ERROR - Available options: ['brief', 'detailed', 'key_points', 'domain_specific']
+2025-08-08 18:16:11,242 - app.api.summarization - ERROR - HTTP exception: 
+2025-08-08 18:16:41,491 - app.api.summarization - INFO - Received summarize request: {'document_id': '48ff1af3-7985-47c8-a027-44afe70c096a', 'summary_type': '1', 'summary_length': 150}
+2025-08-08 18:16:41,492 - app.api.summarization - INFO - Current user: {'email': 'test1@gmail.com', 'first_name': None, 'last_name': None, 'id': UUID('79d0bed5-c1c1-4faf-82d4-fed1a28472d5'), 'is_email_verified': False, 'created_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096), 'updated_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096)}
+2025-08-08 18:16:41,493 - app.api.summarization - ERROR - Invalid summary type: 1
+2025-08-08 18:16:41,493 - app.api.summarization - ERROR - Available options: ['brief', 'detailed', 'key_points', 'domain_specific']
+2025-08-08 18:16:41,494 - app.api.summarization - ERROR - HTTP exception: 
+2025-08-08 18:29:37,384 - app.api.summarization - INFO - Received summarize request: {'document_id': '48ff1af3-7985-47c8-a027-44afe70c096a', 'summary_type': 'brief', 'summary_length': 150}
+2025-08-08 18:29:37,386 - app.api.summarization - INFO - Current user: {'email': 'test1@gmail.com', 'first_name': None, 'last_name': None, 'id': UUID('79d0bed5-c1c1-4faf-82d4-fed1a28472d5'), 'is_email_verified': False, 'created_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096), 'updated_at': datetime.datetime(2025, 8, 1, 9, 49, 41, 887096)}
+2025-08-08 18:29:38,118 - app.core.database - ERROR - Database connection error: column d.document_type does not exist
+LINE 2: ...   SELECT d.original_filename, dc.extracted_text, d.document...
+                                                             ^
+
+2025-08-08 18:29:38,121 - app.api.summarization - ERROR - Database error: column d.document_type does not exist
+LINE 2: ...   SELECT d.original_filename, dc.extracted_text, d.document...
+                                                             ^
+
+2025-08-08 18:29:38,122 - app.api.summarization - ERROR - Error code: 42703
+2025-08-08 18:29:38,227 - app.api.summarization - ERROR - Traceback (most recent call last):
+  File "D:\Projects\document-analyzer\app\api\summarization.py", line 121, in summarize_document
+    #                 cursor.execute(query, (request.document_id, str(current_user.id)))
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedColumn: column d.document_type does not exist
+LINE 2: ...   SELECT d.original_filename, dc.extracted_text, d.document...
+                                                             ^
+
+
+2025-08-08 18:29:53,969 - app.main - INFO - DocAnalyzer API shutting down...
+2025-08-08 18:29:54,000 - app.core.database - INFO - Database connection pool closed
+2025-08-08 18:29:54,000 - app.main - INFO - Database connections closed
+2025-08-08 18:30:37,535 - app.db.init_db - INFO - Starting database initialization...
+2025-08-08 18:30:39,239 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-08 18:30:39,448 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-08 18:30:39,448 - app.db.init_db - INFO - Database connection test successful!
+2025-08-08 18:30:40,895 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-08 18:30:41,105 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-08 18:30:46,609 - app.db.init_db - INFO - Database tables created successfully
+2025-08-08 18:30:46,609 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-08 18:30:46,784 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-08 18:30:46,784 - app.main - INFO - Database connection verified
+2025-08-08 18:31:00,506 - app.api.summarization - INFO - Received summarize request: {'document_id': '48ff1af3-7985-47c8-a027-44afe70c096a', 'summary_type': 'brief', 'summary_length': 150}
+2025-08-08 18:31:01,129 - app.core.database - ERROR - Database connection error: column d.document_type does not exist
+LINE 2: ...   SELECT d.original_filename, dc.extracted_text, d.document...
+                                                             ^
+
+2025-08-08 18:31:01,129 - app.api.summarization - ERROR - Error generating summary: column d.document_type does not exist
+LINE 2: ...   SELECT d.original_filename, dc.extracted_text, d.document...
+                                                             ^
+
+2025-08-08 18:31:01,129 - app.api.summarization - ERROR - Traceback (most recent call last):
+  File "D:\Projects\document-analyzer\app\api\summarization.py", line 341, in summarize_document
+    cursor.execute(query, (request.document_id, str(current_user.id)))
+psycopg2.errors.UndefinedColumn: column d.document_type does not exist
+LINE 2: ...   SELECT d.original_filename, dc.extracted_text, d.document...
+                                                             ^
+
+
+2025-08-08 18:42:28,406 - app.api.summarization - INFO - Received summarize request: {'document_id': '48ff1af3-7985-47c8-a027-44afe70c096a', 'summary_type': 'brief', 'summary_length': 150}
+2025-08-08 18:42:29,041 - app.core.database - ERROR - Database connection error: column d.document_type does not exist
+LINE 2: ...   SELECT d.original_filename, dc.extracted_text, d.document...
+                                                             ^
+
+2025-08-08 18:42:29,041 - app.api.summarization - ERROR - Error generating summary: column d.document_type does not exist
+LINE 2: ...   SELECT d.original_filename, dc.extracted_text, d.document...
+                                                             ^
+
+2025-08-08 18:42:29,089 - app.api.summarization - ERROR - Traceback (most recent call last):
+  File "D:\Projects\document-analyzer\app\api\summarization.py", line 341, in summarize_document
+psycopg2.errors.UndefinedColumn: column d.document_type does not exist
+LINE 2: ...   SELECT d.original_filename, dc.extracted_text, d.document...
+                                                             ^
+
+
+2025-08-08 18:42:40,519 - app.main - INFO - DocAnalyzer API shutting down...
+2025-08-08 18:42:40,541 - app.core.database - INFO - Database connection pool closed
+2025-08-08 18:42:40,541 - app.main - INFO - Database connections closed
+2025-08-08 18:43:11,522 - app.db.init_db - INFO - Starting database initialization...
+2025-08-08 18:43:13,285 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-08 18:43:13,512 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-08 18:43:13,517 - app.db.init_db - INFO - Database connection test successful!
+2025-08-08 18:43:15,025 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-08 18:43:15,307 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-08 18:43:20,466 - app.db.init_db - INFO - Database tables created successfully
+2025-08-08 18:43:20,466 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-08 18:43:20,598 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-08 18:43:20,598 - app.main - INFO - Database connection verified
+2025-08-08 18:43:36,604 - app.api.summarization - INFO - Received summarize request: {'document_id': '48ff1af3-7985-47c8-a027-44afe70c096a', 'summary_type': 'brief', 'summary_length': 150}
+2025-08-08 18:43:37,249 - app.api.summarization - INFO - Generating brief summary using bart model
+2025-08-08 18:43:59,287 - app.api.summarization - INFO - Summary generated successfully using bart
+2025-08-08 18:44:11,266 - app.api.summarization - INFO - Received summarize request: {'document_id': '48ff1af3-7985-47c8-a027-44afe70c096a', 'summary_type': 'detailed', 'summary_length': 150}
+2025-08-08 18:44:11,857 - app.api.summarization - INFO - Generating detailed summary using pegasus model
+2025-08-08 18:44:35,073 - app.services.summarization_service - ERROR - Error generating summary with pegasus model: Converting from SentencePiece and Tiktoken failed, if a converter for SentencePiece is available, provide a model path with a SentencePiece tokenizer.model file.Currently available slow->fast converters: ['AlbertTokenizer', 'BartTokenizer', 'BarthezTokenizer', 'BertTokenizer', 'BigBirdTokenizer', 'BlenderbotTokenizer', 'CamembertTokenizer', 'CLIPTokenizer', 'CodeGenTokenizer', 'ConvBertTokenizer', 'DebertaTokenizer', 'DebertaV2Tokenizer', 'DistilBertTokenizer', 'DPRReaderTokenizer', 'DPRQuestionEncoderTokenizer', 'DPRContextEncoderTokenizer', 'ElectraTokenizer', 'FNetTokenizer', 'FunnelTokenizer', 'GPT2Tokenizer', 'HerbertTokenizer', 'LayoutLMTokenizer', 'LayoutLMv2Tokenizer', 'LayoutLMv3Tokenizer', 'LayoutXLMTokenizer', 'LongformerTokenizer', 'LEDTokenizer', 'LxmertTokenizer', 'MarkupLMTokenizer', 'MBartTokenizer', 'MBart50Tokenizer', 'MPNetTokenizer', 'MobileBertTokenizer', 'MvpTokenizer', 'NllbTokenizer', 'OpenAIGPTTokenizer', 'PegasusTokenizer', 'Qwen2Tokenizer', 'RealmTokenizer', 'ReformerTokenizer', 'RemBertTokenizer', 'RetriBertTokenizer', 'RobertaTokenizer', 'RoFormerTokenizer', 'SeamlessM4TTokenizer', 'SqueezeBertTokenizer', 'T5Tokenizer', 'UdopTokenizer', 'WhisperTokenizer', 'XLMRobertaTokenizer', 'XLNetTokenizer', 'SplinterTokenizer', 'XGLMTokenizer', 'LlamaTokenizer', 'CodeLlamaTokenizer', 'GemmaTokenizer', 'Phi3Tokenizer']
+2025-08-08 18:44:35,073 - app.services.summarization_service - INFO - Falling back to BART model...
+2025-08-08 18:45:31,577 - app.api.summarization - INFO - Summary generated successfully using pegasus
+2025-08-08 18:45:49,676 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'summary_type': 'brief', 'summary_length': 150}
+2025-08-08 18:45:50,279 - app.api.summarization - INFO - Generating brief summary using bart model
+2025-08-08 18:50:35,457 - app.api.summarization - INFO - Summary generated successfully using bart
+2025-08-08 18:52:21,374 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'summary_type': 'detailed', 'summary_length': 150}
+2025-08-08 18:52:22,127 - app.api.summarization - INFO - Generating detailed summary using pegasus model
+2025-08-08 18:52:42,551 - app.services.summarization_service - ERROR - Error generating summary with pegasus model: Converting from SentencePiece and Tiktoken failed, if a converter for SentencePiece is available, provide a model path with a SentencePiece tokenizer.model file.Currently available slow->fast converters: ['AlbertTokenizer', 'BartTokenizer', 'BarthezTokenizer', 'BertTokenizer', 'BigBirdTokenizer', 'BlenderbotTokenizer', 'CamembertTokenizer', 'CLIPTokenizer', 'CodeGenTokenizer', 'ConvBertTokenizer', 'DebertaTokenizer', 'DebertaV2Tokenizer', 'DistilBertTokenizer', 'DPRReaderTokenizer', 'DPRQuestionEncoderTokenizer', 'DPRContextEncoderTokenizer', 'ElectraTokenizer', 'FNetTokenizer', 'FunnelTokenizer', 'GPT2Tokenizer', 'HerbertTokenizer', 'LayoutLMTokenizer', 'LayoutLMv2Tokenizer', 'LayoutLMv3Tokenizer', 'LayoutXLMTokenizer', 'LongformerTokenizer', 'LEDTokenizer', 'LxmertTokenizer', 'MarkupLMTokenizer', 'MBartTokenizer', 'MBart50Tokenizer', 'MPNetTokenizer', 'MobileBertTokenizer', 'MvpTokenizer', 'NllbTokenizer', 'OpenAIGPTTokenizer', 'PegasusTokenizer', 'Qwen2Tokenizer', 'RealmTokenizer', 'ReformerTokenizer', 'RemBertTokenizer', 'RetriBertTokenizer', 'RobertaTokenizer', 'RoFormerTokenizer', 'SeamlessM4TTokenizer', 'SqueezeBertTokenizer', 'T5Tokenizer', 'UdopTokenizer', 'WhisperTokenizer', 'XLMRobertaTokenizer', 'XLNetTokenizer', 'SplinterTokenizer', 'XGLMTokenizer', 'LlamaTokenizer', 'CodeLlamaTokenizer', 'GemmaTokenizer', 'Phi3Tokenizer']
+2025-08-08 18:52:42,575 - app.services.summarization_service - INFO - Falling back to BART model...
+2025-08-08 18:58:11,030 - app.api.summarization - INFO - Summary generated successfully using pegasus
+2025-08-08 19:02:45,701 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'summary_type': 'domain_specific', 'summary_length': 150}
+2025-08-08 19:02:46,375 - app.api.summarization - INFO - Generating domain_specific summary using t5 model
+2025-08-08 19:09:48,585 - app.api.summarization - INFO - Summary generated successfully using t5
+2025-08-08 19:09:51,095 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
+2025-08-08 19:12:53,007 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'summary_type': 'domain_specific', 'summary_length': 150}
+2025-08-08 19:12:53,802 - app.api.summarization - INFO - Generating domain_specific summary using t5 model
+2025-08-08 19:20:00,818 - app.api.summarization - INFO - Summary generated successfully using t5
+2025-08-08 19:20:15,083 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'summary_type': 'brief', 'summary_length': 150}
+2025-08-08 19:20:15,894 - app.api.summarization - INFO - Generating brief summary using bart model
+2025-08-08 19:25:08,031 - app.api.summarization - INFO - Summary generated successfully using bart
+2025-08-08 19:25:08,183 - asyncio - ERROR - Exception in callback BaseProactorEventLoop._start_serving.<locals>.loop(<_OverlappedF...0.1', 63944))>) at C:\Python312\Lib\asyncio\proactor_events.py:843
+handle: <Handle BaseProactorEventLoop._start_serving.<locals>.loop(<_OverlappedF...0.1', 63944))>) at C:\Python312\Lib\asyncio\proactor_events.py:843>
+Traceback (most recent call last):
+  File "C:\Python312\Lib\asyncio\events.py", line 88, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\Python312\Lib\asyncio\proactor_events.py", line 858, in loop
+    self._make_socket_transport(
+  File "C:\Python312\Lib\asyncio\proactor_events.py", line 647, in _make_socket_transport
+    return _ProactorSocketTransport(self, sock, protocol, waiter,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\asyncio\proactor_events.py", line 613, in __init__
+    super().__init__(loop, sock, protocol, waiter, extra, server)
+  File "C:\Python312\Lib\asyncio\proactor_events.py", line 189, in __init__
+    super().__init__(loop, sock, protocol, waiter, extra, server)
+  File "C:\Python312\Lib\asyncio\proactor_events.py", line 335, in __init__
+    super().__init__(*args, **kw)
+  File "C:\Python312\Lib\asyncio\proactor_events.py", line 66, in __init__
+    self._server._attach()
+  File "C:\Python312\Lib\asyncio\base_events.py", line 296, in _attach
+    assert self._sockets is not None
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+2025-08-08 19:25:08,346 - app.main - INFO - DocAnalyzer API shutting down...
+2025-08-08 19:25:08,389 - app.core.database - INFO - Database connection pool closed
+2025-08-08 19:25:08,389 - app.main - INFO - Database connections closed
+2025-08-08 19:25:46,240 - app.db.init_db - INFO - Starting database initialization...
+2025-08-08 19:25:48,570 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-08 19:25:48,877 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-08 19:25:48,877 - app.db.init_db - INFO - Database connection test successful!
+2025-08-08 19:25:50,725 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-08 19:25:51,029 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-08 19:25:57,288 - app.db.init_db - INFO - Database tables created successfully
+2025-08-08 19:25:57,288 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-08 19:25:57,643 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-08 19:25:57,643 - app.main - INFO - Database connection verified
+2025-08-08 19:30:43,556 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
+2025-08-08 20:19:44,964 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'summary_type': 'brief', 'summary_length': 150}
+2025-08-08 20:19:45,655 - app.api.summarization - INFO - Generating brief summary using bart model
+2025-08-08 20:23:11,097 - app.api.summarization - INFO - Summary generated successfully using bart
+2025-08-08 20:23:25,079 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'summary_type': 'brief', 'summary_length': 300}
+2025-08-08 20:23:25,679 - app.api.summarization - INFO - Generating brief summary using bart model
+2025-08-08 20:27:26,585 - app.api.summarization - INFO - Summary generated successfully using bart
+2025-08-08 20:29:33,982 - app.main - INFO - DocAnalyzer API shutting down...
+2025-08-08 20:29:34,008 - app.core.database - INFO - Database connection pool closed
+2025-08-08 20:29:34,008 - app.main - INFO - Database connections closed
+2025-08-08 20:30:47,558 - app.db.init_db - INFO - Starting database initialization...
+2025-08-08 20:30:50,599 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-08 20:30:50,939 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-08 20:30:50,941 - app.db.init_db - INFO - Database connection test successful!
+2025-08-08 20:30:53,424 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-08 20:30:53,818 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-08 20:31:03,420 - app.db.init_db - INFO - Database tables created successfully
+2025-08-08 20:31:03,420 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-08 20:31:03,670 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-08 20:31:03,670 - app.main - INFO - Database connection verified
+2025-08-08 20:32:07,108 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'summary_type': 'brief', 'summary_length': 150}
+2025-08-08 20:32:09,217 - app.core.database - ERROR - Database connection error: column "word_count" does not exist
+LINE 2:                     SELECT summary_text, word_count, created...
+                                                 ^
+
+2025-08-08 20:32:09,217 - app.api.summarization - ERROR - Error generating summary: column "word_count" does not exist
+LINE 2:                     SELECT summary_text, word_count, created...
+                                                 ^
+
+2025-08-08 20:32:09,217 - app.api.summarization - ERROR - Traceback (most recent call last):
+  File "D:\Projects\document-analyzer\app\api\summarization.py", line 458, in summarize_document
+    cursor.execute(query, (request.document_id, model_name))
+psycopg2.errors.UndefinedColumn: column "word_count" does not exist
+LINE 2:                     SELECT summary_text, word_count, created...
+                                                 ^
+
+
+2025-08-08 20:38:46,541 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'summary_type': 'brief', 'summary_length': 150}
+2025-08-08 20:38:48,917 - app.core.database - ERROR - Database connection error: column "word_count" does not exist
+LINE 2:                     SELECT summary_text, word_count, created...
+                                                 ^
+
+2025-08-08 20:38:48,920 - app.api.summarization - ERROR - Error generating summary: column "word_count" does not exist
+LINE 2:                     SELECT summary_text, word_count, created...
+                                                 ^
+
+2025-08-08 20:38:49,287 - app.api.summarization - ERROR - Traceback (most recent call last):
+  File "D:\Projects\document-analyzer\app\api\summarization.py", line 458, in summarize_document
+psycopg2.errors.UndefinedColumn: column "word_count" does not exist
+LINE 2:                     SELECT summary_text, word_count, created...
+                                                 ^
+
+
+2025-08-08 20:39:00,757 - app.main - INFO - DocAnalyzer API shutting down...
+2025-08-08 20:39:00,792 - app.core.database - INFO - Database connection pool closed
+2025-08-08 20:39:00,793 - app.main - INFO - Database connections closed
+2025-08-08 20:45:45,961 - app.db.init_db - INFO - Starting database initialization...
+2025-08-08 20:45:47,753 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-08 20:45:47,950 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-08 20:45:47,952 - app.db.init_db - INFO - Database connection test successful!
+2025-08-08 20:45:49,650 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-08 20:45:49,856 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-08 20:45:56,816 - app.db.init_db - INFO - Database tables created successfully
+2025-08-08 20:45:56,819 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-08 20:45:57,137 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-08 20:45:57,137 - app.main - INFO - Database connection verified
+2025-08-08 20:47:29,976 - app.api.summarization - INFO - Received summarize request: {'document_id': 'c8cc2296-2983-42e0-9935-a5dbee5334f8', 'summary_type': 'brief', 'summary_length': 150}
+2025-08-08 20:47:31,498 - app.api.summarization - INFO - Generating brief summary using bart model
+2025-08-08 20:48:43,571 - app.api.summarization - INFO - Summary generated successfully using bart
+2025-08-08 20:48:46,222 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
+2025-08-08 20:56:11,979 - app.main - INFO - DocAnalyzer API shutting down...
+2025-08-08 20:56:12,015 - app.core.database - INFO - Database connection pool closed
+2025-08-08 20:56:12,015 - app.main - INFO - Database connections closed
+2025-08-08 20:56:36,737 - app.db.init_db - INFO - Starting database initialization...
+2025-08-08 20:56:38,715 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-08 20:56:38,903 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-08 20:56:38,903 - app.db.init_db - INFO - Database connection test successful!
+2025-08-08 20:56:40,563 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-08 20:56:40,933 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-08 20:56:46,649 - app.db.init_db - INFO - Database tables created successfully
+2025-08-08 20:56:46,649 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-08 20:56:46,780 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-08 20:56:46,781 - app.main - INFO - Database connection verified
+2025-08-08 20:57:01,629 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'summary_type': 'brief', 'summary_length': 150}
+2025-08-08 20:57:01,629 - app.api.summarization - INFO - Checking for existing summary with model bart and target word count 150
+2025-08-08 20:57:02,279 - app.core.database - ERROR - Database connection error: column "document_summaries.id" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 2:                     SELECT id, summary_text, key_points, mod...
+                                   ^
+
+2025-08-08 20:57:02,279 - app.api.summarization - ERROR - Error checking existing summary: column "document_summaries.id" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 2:                     SELECT id, summary_text, key_points, mod...
+                                   ^
+
+2025-08-08 20:57:02,279 - app.api.summarization - INFO - No suitable cached summary found, generating new summary
+2025-08-08 20:57:03,519 - app.api.summarization - INFO - Generating brief summary using bart model
+2025-08-08 21:03:13,479 - app.api.summarization - INFO - Summary stored in database with word count: 50
+2025-08-08 21:03:13,526 - app.api.summarization - INFO - Summary generated successfully using bart with 50 words
+2025-08-08 21:03:36,251 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'summary_type': 'brief', 'summary_length': 150}
+2025-08-08 21:03:36,251 - app.api.summarization - INFO - Checking for existing summary with model bart and target word count 150
+2025-08-08 21:03:36,919 - app.core.database - ERROR - Database connection error: column "document_summaries.id" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 2:                     SELECT id, summary_text, key_points, mod...
+                                   ^
+
+2025-08-08 21:03:36,919 - app.api.summarization - ERROR - Error checking existing summary: column "document_summaries.id" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 2:                     SELECT id, summary_text, key_points, mod...
+                                   ^
+
+2025-08-08 21:03:36,919 - app.api.summarization - INFO - No suitable cached summary found, generating new summary
+2025-08-08 21:03:37,618 - app.api.summarization - INFO - Generating brief summary using bart model
+2025-08-08 21:11:09,520 - app.api.summarization - ERROR - Failed to store summary in database: connection already closed
+2025-08-08 21:11:09,544 - app.api.summarization - INFO - Summary generated successfully using bart with 50 words
+2025-08-08 21:11:09,594 - asyncio - ERROR - Exception in callback BaseProactorEventLoop._start_serving.<locals>.loop(<_OverlappedF...0.1', 51535))>) at C:\Python312\Lib\asyncio\proactor_events.py:843
+handle: <Handle BaseProactorEventLoop._start_serving.<locals>.loop(<_OverlappedF...0.1', 51535))>) at C:\Python312\Lib\asyncio\proactor_events.py:843>
+Traceback (most recent call last):
+  File "C:\Python312\Lib\asyncio\events.py", line 88, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\Python312\Lib\asyncio\proactor_events.py", line 858, in loop
+    self._make_socket_transport(
+  File "C:\Python312\Lib\asyncio\proactor_events.py", line 647, in _make_socket_transport
+    return _ProactorSocketTransport(self, sock, protocol, waiter,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\asyncio\proactor_events.py", line 613, in __init__
+    super().__init__(loop, sock, protocol, waiter, extra, server)
+  File "C:\Python312\Lib\asyncio\proactor_events.py", line 189, in __init__
+    super().__init__(loop, sock, protocol, waiter, extra, server)
+  File "C:\Python312\Lib\asyncio\proactor_events.py", line 335, in __init__
+    super().__init__(*args, **kw)
+  File "C:\Python312\Lib\asyncio\proactor_events.py", line 66, in __init__
+    self._server._attach()
+  File "C:\Python312\Lib\asyncio\base_events.py", line 296, in _attach
+    assert self._sockets is not None
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+2025-08-08 21:12:36,936 - app.core.database - ERROR - Database connection error: connection to server at "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" (94.237.73.228), port 22695 failed: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+SSL SYSCALL error: Connection reset by peer (0x00002746/10054)
+
+2025-08-08 21:12:36,940 - app.db.crud - ERROR - Error getting user by ID: connection to server at "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" (94.237.73.228), port 22695 failed: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+SSL SYSCALL error: Connection reset by peer (0x00002746/10054)
+
+2025-08-08 21:12:36,956 - app.main - INFO - DocAnalyzer API shutting down...
+2025-08-08 21:12:36,957 - app.core.database - INFO - Database connection pool closed
+2025-08-08 21:12:36,957 - app.main - INFO - Database connections closed
+2025-08-08 21:33:00,214 - app.db.init_db - INFO - Starting database initialization...
+2025-08-08 21:33:02,496 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-08 21:33:03,154 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-08 21:33:03,154 - app.db.init_db - INFO - Database connection test successful!
+2025-08-08 21:33:04,864 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-08 21:33:05,121 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-08 21:33:12,232 - app.db.init_db - INFO - Database tables created successfully
+2025-08-08 21:33:12,232 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-08 21:33:12,447 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-08 21:33:12,448 - app.main - INFO - Database connection verified
+2025-08-08 21:33:31,589 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
+2025-08-08 22:38:25,377 - app.db.crud - ERROR - Error getting user by ID: connection already closed
+2025-08-08 22:39:47,654 - app.core.database - ERROR - Database connection error: connection to server at "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" (94.237.73.228), port 22695 failed: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+SSL SYSCALL error: Connection reset by peer (0x00002746/10054)
+
+2025-08-08 22:39:47,654 - app.db.crud - ERROR - Error getting user by ID: connection to server at "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" (94.237.73.228), port 22695 failed: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+SSL SYSCALL error: Connection reset by peer (0x00002746/10054)
+
+2025-08-08 22:40:07,750 - app.core.database - ERROR - Database connection error: connection to server at "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" (94.237.73.228), port 22695 failed: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+
+2025-08-08 22:40:07,784 - app.db.crud - ERROR - Error getting user by ID: connection to server at "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" (94.237.73.228), port 22695 failed: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+
+2025-08-08 22:40:12,390 - app.api.auth - INFO - User logged out: test1@gmail.com
+2025-08-08 22:40:13,978 - app.api.auth - INFO - User logged out: test1@gmail.com
+2025-08-08 22:40:14,963 - app.api.auth - INFO - User logged out: test1@gmail.com
+2025-08-08 22:40:16,501 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
+2025-08-08 23:12:09,217 - app.main - INFO - DocAnalyzer API shutting down...
+2025-08-08 23:12:09,318 - app.core.database - INFO - Database connection pool closed
+2025-08-08 23:12:09,318 - app.main - INFO - Database connections closed
+2025-08-09 00:09:50,820 - app.db.init_db - INFO - Starting database initialization...
+2025-08-09 00:09:52,484 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-09 00:09:52,787 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-09 00:09:52,787 - app.db.init_db - INFO - Database connection test successful!
+2025-08-09 00:09:55,075 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-09 00:09:55,498 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-09 00:10:03,827 - app.db.init_db - INFO - Database tables created successfully
+2025-08-09 00:10:03,827 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-09 00:10:04,734 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-09 00:10:04,734 - app.main - INFO - Database connection verified
+2025-08-09 00:13:30,322 - app.api.summarization - INFO - Received summarize request: {'document_id': '48ff1af3-7985-47c8-a027-44afe70c096a', 'summary_type': 'brief', 'summary_length': 150}
+2025-08-09 00:13:30,324 - app.api.summarization - INFO - Checking for existing summary with model bart and target word count 150
+2025-08-09 00:13:30,928 - app.core.database - ERROR - Database connection error: column "document_summaries.id" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 2:                     SELECT id, summary_text, key_points, mod...
+                                   ^
+
+2025-08-09 00:13:30,928 - app.api.summarization - ERROR - Error checking existing summary: column "document_summaries.id" must appear in the GROUP BY clause or be used in an aggregate function
+LINE 2:                     SELECT id, summary_text, key_points, mod...
+                                   ^
+
+2025-08-09 00:13:30,928 - app.api.summarization - INFO - No suitable cached summary found, generating new summary
+2025-08-09 00:13:31,529 - app.api.summarization - INFO - Generating brief summary using bart model
+2025-08-09 00:13:52,536 - app.api.summarization - INFO - Summary stored in database with word count: 41
+2025-08-09 00:13:52,552 - app.api.summarization - INFO - Summary generated successfully using bart with 41 words
