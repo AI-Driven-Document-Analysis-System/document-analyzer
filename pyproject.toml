@@ -1,5 +1,10 @@
+[build-system]
+requires = ["setuptools>=45", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "docanalyzer"
+version = "0.1.0"
 
 [project.optional-dependencies]
 rag = [
@@ -34,3 +39,7 @@ layout = [
 all = [
     "docanalyzer[rag,summarization,classification,ocr,layout]"
 ]
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+exclude = ["frontend*", "logs*", "tests*", ".venv*"]
