@@ -195,6 +195,7 @@ async def health_check():
     except Exception as e:
         logger.error(f"Health check failed: {e}")
         raise HTTPException(status_code=503, detail="Service unavailable")
+    
 
 @app.on_event("startup")
 async def startup_event():

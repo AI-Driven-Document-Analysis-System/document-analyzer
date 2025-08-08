@@ -138,3 +138,5 @@ async def get_documents(current_user: UserResponse = Depends(get_current_user)):
         print("Full traceback:")
         print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+
