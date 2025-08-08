@@ -4,3 +4,16 @@
 **/.next/cache/**
 frontend/.next/cache/webpack/client-development/1.pack.gz
 frontend/.next/cache/webpack/client-development-fallback/index.pack.gz
+
+# IDE files
+.idea/
+.vscode/
+
+# Python cache
+__pycache__/
+
+# Virtual environment
+.venv/
+
+# ChromaDB storage (for when you run the app)
+chroma_db/
