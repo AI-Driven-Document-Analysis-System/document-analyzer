@@ -1,9 +1,14 @@
-from langchain.llms import OpenAI
-from langchain.chat_models import ChatOpenAI
-from langchain.llms import LlamaCpp
+from langchain_community.llms import OpenAI
+from langchain_community.chat_models import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
+from typing import Any, List, Optional, Dict
+from langchain_community.llms import LlamaCpp
 from langchain.callbacks.manager import CallbackManager
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from typing import Optional, List, Any
+
+
+
 
 
 class LLMFactory:
@@ -72,6 +77,56 @@ class LLMFactory:
                 streaming=streaming,
                 callback_manager=callback_manager
             )
+
+    @staticmethod
+    def create_gemini_llm(api_key: str, model: str = "gemini-1.5-flash",
+                          temperature: float = 0.7, streaming: bool = False,
+                          callbacks: Optional[List[Any]] = None) -> Any:
+        """
+        This method creates a ChatGoogleGenerativeAI instance for Google's Generative AI models.
+        This is the correct integration for the new Google Generative AI API (Gemini models).
+        
+        Args:
+            api_key (str): Google AI API key for authentication
+            model (str): Model name (e.g., "gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro")
+            temperature (float): Controls randomness in responses (0.0 = deterministic, 1.0 = very random)
+            streaming (bool): Whether to enable streaming responses
+            callbacks (Optional[List[Any]]): List of callback handlers for monitoring and logging
+            
+        Returns:
+            ChatGoogleGenerativeAI: Configured instance for Google Generative AI models
+            
+        Example:
+            # Create a streaming Gemini model
+            llm = LLMFactory.create_gemini_llm(
+                api_key="your-google-api-key",
+                model="gemini-1.5-flash",
+                temperature=0.7,
+                streaming=True
+            )
+            
+            # Create a non-streaming Gemini model
+            llm = LLMFactory.create_gemini_llm(
+                api_key="your-google-api-key",
+                model="gemini-1.5-pro",
+                temperature=0.5,
+                streaming=False
+            )
+        """
+        # Set up callback manager if streaming is enabled and callbacks are provided
+        if streaming and callbacks:
+            callback_manager = CallbackManager(callbacks)
+        else:
+            callback_manager = None
+
+        # Use ChatGoogleGenerativeAI for all Gemini models
+        # This is the correct integration for the new Google Generative AI API
+        return ChatGoogleGenerativeAI(
+            google_api_key=api_key,
+            model=model,
+            temperature=temperature,
+            callback_manager=callback_manager
+        )
 
     @staticmethod
     def create_llama_llm(model_path: str, temperature: float = 0.7,
