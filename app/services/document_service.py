@@ -4,25 +4,25 @@ import magic
 from minio import Minio
 from minio.error import S3Error
 from fastapi import UploadFile, HTTPException
-from sqlalchemy.orm import Session
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Dict, Any
 from uuid import uuid4
 import asyncio
 from datetime import datetime
+from io import BytesIO
 
-from db.crud import document_crud
-from schemas.document_schemas import DocumentCreate, DocumentProcessingCreate
+from ..core.database import db_manager
+from ..core.config import settings
 
 class DocumentService:
     def __init__(self):
-        # MinIO configuration - adjust these based on your setup
+        # MinIO configuration
         self.minio_client = Minio(
-            endpoint=os.getenv("MINIO_ENDPOINT", "localhost:9000"),
-            access_key=os.getenv("MINIO_ACCESS_KEY", "minioadmin"),
-            secret_key=os.getenv("MINIO_SECRET_KEY", "minioadmin"),
-            secure=os.getenv("MINIO_SECURE", "False").lower() == "true"
+            endpoint=settings.minio_endpoint,
+            access_key=settings.minio_access_key,
+            secret_key=settings.minio_secret_key,
+            secure=settings.minio_secure
         )
-        self.bucket_name = os.getenv("MINIO_BUCKET", "documents")
+        self.bucket_name = settings.minio_bucket_name
         self._ensure_bucket_exists()
     
     def _ensure_bucket_exists(self):
@@ -47,7 +47,7 @@ class DocumentService:
             return mime_type
         except:
             # Fallback to basic detection based on file extension
-            ext = filename.lower().split('.')[-1]
+            ext = filename.lower().split('.')[-1] if '.' in filename else ''
             mime_mapping = {
                 'pdf': 'application/pdf',
                 'doc': 'application/msword',
@@ -67,28 +67,49 @@ class DocumentService:
         ext = filename.split('.')[-1] if '.' in filename else ''
         return f"{user_id}/{timestamp}/{file_id}.{ext}" if ext else f"{user_id}/{timestamp}/{file_id}"
     
-    async def upload_document(self, file: UploadFile, user_id: str, db: Session) -> Tuple[str, str]:
+    def _check_document_exists_by_hash(self, file_hash: str) -> Optional[str]:
+        """Check if document already exists by hash"""
+        try:
+            with db_manager.get_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(
+                        "SELECT id FROM documents WHERE document_hash = %s",
+                        (file_hash,)
+                    )
+                    result = cursor.fetchone()
+                    return str(result[0]) if result else None
+        except Exception as e:
+            print(f"Error checking document hash: {e}")
+            return None
+    
+    async def upload_document(self, file: UploadFile, user_id: str) -> Dict[str, Any]:
         """
         Upload document to MinIO and save metadata to database
-        Returns: (document_id, file_path)
         """
         try:
             # Read file content
             file_content = await file.read()
             file_size = len(file_content)
             
-            # Validate file size (e.g., max 50MB)
-            max_size = int(os.getenv("MAX_FILE_SIZE", 50 * 1024 * 1024))  # 50MB
+            # Validate file size (max 50MB)
+            max_size = 50 * 1024 * 1024  # 50MB
             if file_size > max_size:
-                raise HTTPException(status_code=413, detail=f"File too large. Maximum size: {max_size/1024/1024}MB")
+                raise HTTPException(
+                    status_code=413, 
+                    detail=f"File too large. Maximum size: {max_size/1024/1024}MB"
+                )
             
             # Calculate file hash
             file_hash = self._calculate_file_hash(file_content)
             
             # Check if document already exists
-            existing_doc_id = document_crud.check_document_exists_by_hash(db, file_hash)
+            existing_doc_id = self._check_document_exists_by_hash(file_hash)
             if existing_doc_id:
-                return existing_doc_id, "Document already exists"
+                return {
+                    "document_id": existing_doc_id,
+                    "message": "Document already exists",
+                    "status": "duplicate"
+                }
             
             # Get MIME type
             mime_type = self._get_mime_type(file_content, file.filename or "unknown")
@@ -105,13 +126,15 @@ class DocumentService:
             ]
             
             if mime_type not in allowed_types:
-                raise HTTPException(status_code=415, detail=f"Unsupported file type: {mime_type}")
+                raise HTTPException(
+                    status_code=415, 
+                    detail=f"Unsupported file type: {mime_type}"
+                )
             
             # Generate MinIO path
             minio_path = self._generate_minio_path(user_id, file.filename or "unknown")
             
             # Upload to MinIO
-            from io import BytesIO
             self.minio_client.put_object(
                 bucket_name=self.bucket_name,
                 object_name=minio_path,
@@ -120,48 +143,67 @@ class DocumentService:
                 content_type=mime_type
             )
             
-            # Create document record
-            document_data = DocumentCreate(
-                original_filename=file.filename or "unknown",
-                file_path_minio=minio_path,
-                file_size=file_size,
-                mime_type=mime_type,
-                document_hash=file_hash,
-                user_id=user_id
-            )
+            # Create document record in database
+            document_id = str(uuid4())
+            now = datetime.utcnow()
             
-            document_id = document_crud.create_document(db, document_data)
+            with db_manager.get_connection() as conn:
+                with conn.cursor() as cursor:
+                    # Insert document
+                    cursor.execute("""
+                        INSERT INTO documents (
+                            id, original_filename, file_path_minio, file_size, 
+                            mime_type, document_hash, uploaded_by_user_id, upload_timestamp, 
+                            created_at, updated_at
+                        )
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (
+                        document_id, file.filename or "unknown", minio_path, 
+                        file_size, mime_type, file_hash, user_id, now, now, now
+                    ))
+                    
+                    # Create processing record
+                    processing_id = str(uuid4())
+                    cursor.execute("""
+                        INSERT INTO document_processing (id, document_id, processing_status)
+                        VALUES (%s, %s, %s)
+                    """, (processing_id, document_id, "pending"))
+                    
+                    conn.commit()
             
-            # Create processing record
-            processing_data = DocumentProcessingCreate(
-                document_id=document_id,
-                processing_status="uploaded"
-            )
+            # Start background processing
+            asyncio.create_task(self._start_document_processing(document_id))
             
-            document_crud.create_document_processing(db, processing_data)
-            
-            # Start background processing (implement this based on your processing pipeline)
-            await self._start_document_processing(document_id, db)
-            
-            return document_id, minio_path
+            return {
+                "document_id": document_id,
+                "file_path": minio_path,
+                "message": "Document uploaded successfully",
+                "status": "processing",
+                "file_size": file_size,
+                "mime_type": mime_type
+            }
             
         except S3Error as e:
             raise HTTPException(status_code=500, detail=f"MinIO upload failed: {str(e)}")
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
     
-    async def _start_document_processing(self, document_id: str, db: Session):
-        """
-        Start background document processing
-        This is a placeholder - implement your actual processing pipeline
-        """
-        # Update status to processing
-        document_crud.update_processing_status(db, document_id, "processing")
-        
-        # Simulate processing delay (replace with actual processing logic)
-        await asyncio.sleep(2)
-        
+    async def _start_document_processing(self, document_id: str):
+        """Start background document processing"""
         try:
+            # Update status to processing
+            with db_manager.get_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute("""
+                        UPDATE document_processing 
+                        SET processing_status = %s 
+                        WHERE document_id = %s
+                    """, ("processing", document_id))
+                    conn.commit()
+            
+            # Simulate processing delay (replace with actual processing logic)
+            await asyncio.sleep(2)
+            
             # Your processing logic here:
             # 1. OCR for images/scanned PDFs
             # 2. Text extraction
@@ -171,12 +213,26 @@ class DocumentService:
             # 6. Indexing
             
             # For now, just mark as completed
-            document_crud.update_processing_status(db, document_id, "completed")
-            
+            with db_manager.get_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute("""
+                        UPDATE document_processing 
+                        SET processing_status = %s, ocr_completed_at = %s 
+                        WHERE document_id = %s
+                    """, ("completed", datetime.utcnow(), document_id))
+                    conn.commit()
+                    
         except Exception as e:
             # Mark as failed with error details
             error_details = {"message": str(e), "timestamp": datetime.utcnow().isoformat()}
-            document_crud.update_processing_status(db, document_id, "failed", error_details)
+            with db_manager.get_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute("""
+                        UPDATE document_processing 
+                        SET processing_status = %s, processing_errors = %s 
+                        WHERE document_id = %s
+                    """, ("failed", str(error_details), document_id))
+                    conn.commit()
     
     def get_document_download_url(self, file_path: str, expires_in_hours: int = 1) -> str:
         """Generate a presigned URL for downloading the document"""
@@ -191,18 +247,18 @@ class DocumentService:
         except S3Error as e:
             raise HTTPException(status_code=500, detail=f"Failed to generate download URL: {str(e)}")
     
-    def delete_document(self, file_path: str, document_id: str, db: Session):
+    def delete_document(self, file_path: str, document_id: str):
         """Delete document from MinIO and database"""
         try:
             # Delete from MinIO
             self.minio_client.remove_object(self.bucket_name, file_path)
             
             # Delete from database (CASCADE will handle related records)
-            from sqlalchemy import text
-            query = text("DELETE FROM documents WHERE id = :document_id")
-            db.execute(query, {"document_id": document_id})
-            db.commit()
-            
+            with db_manager.get_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute("DELETE FROM documents WHERE id = %s", (document_id,))
+                    conn.commit()
+                    
         except S3Error as e:
             raise HTTPException(status_code=500, detail=f"Failed to delete document: {str(e)}")
 
