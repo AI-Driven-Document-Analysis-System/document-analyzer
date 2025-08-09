@@ -96,10 +96,13 @@ Answer:""",
                 - chat_history: Current conversation history from memory
         """
         # Process the question through the conversational chain asynchronously
-        result = await self.chain.ainvoke(
-            {"question": question},
-            callbacks=callbacks
-        )
+        if callbacks:
+            result = await self.chain.ainvoke(
+                {"question": question},
+                config={"callbacks": callbacks}
+            )
+        else:
+            result = await self.chain.ainvoke({"question": question})
 
         # Format the response with all relevant information
         return {
@@ -127,10 +130,13 @@ Answer:""",
                 - chat_history: Current conversation history from memory
         """
         # Process the question through the conversational chain synchronously
-        result = self.chain.invoke(
-            {"question": question},
-            callbacks=callbacks
-        )
+        if callbacks:
+            result = self.chain.invoke(
+                {"question": question},
+                config={"callbacks": callbacks}
+            )
+        else:
+            result = self.chain.invoke({"question": question})
 
         # Format the response with all relevant information
         return {
