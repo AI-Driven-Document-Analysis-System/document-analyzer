@@ -1,6 +1,7 @@
 from langchain_community.llms import OpenAI
 from langchain_community.chat_models import ChatOpenAI
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_groq import ChatGroq
 from typing import Any, List, Optional, Dict
 from langchain_community.llms import LlamaCpp
 from langchain.callbacks.manager import CallbackManager
@@ -126,6 +127,37 @@ class LLMFactory:
             model=model,
             temperature=temperature,
             callback_manager=callback_manager
+        )
+
+    @staticmethod
+    def create_groq_llm(api_key: str, model: str = "llama-3.1-8b-instant",
+                        temperature: float = 0.7, streaming: bool = False,
+                        callbacks: Optional[List[Any]] = None) -> Any:
+        """
+        Create a Groq chat model instance using the LangChain Groq integration.
+
+        Args:
+            api_key (str): Groq API key for authentication
+            model (str): Model name (e.g., "llama-3.1-8b-instant", "llama-3.1-70b-versatile", "mixtral-8x7b-32768")
+            temperature (float): Controls randomness in responses (0.0 = deterministic, 1.0 = very random)
+            streaming (bool): Whether to enable streaming responses
+            callbacks (Optional[List[Any]]): List of callback handlers for monitoring and logging
+
+        Returns:
+            ChatGroq: Configured instance for Groq-hosted models
+        """
+        # Set up callback manager if streaming is enabled and callbacks are provided
+        if streaming and callbacks:
+            callback_manager = CallbackManager(callbacks)
+        else:
+            callback_manager = None
+
+        return ChatGroq(
+            groq_api_key=api_key,
+            model_name=model,
+            temperature=temperature,
+            streaming=streaming,
+            callback_manager=callback_manager,
         )
 
     @staticmethod

@@ -19,3 +19,12 @@ __pycache__/
 chroma_db/
 
 *.egg-info/
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.development
+
+# Keep example file
+!.env.example
