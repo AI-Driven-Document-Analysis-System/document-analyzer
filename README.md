@@ -39,8 +39,24 @@ pip install -e .[rag,summarization]
 pip install -e .[all]
 ```
 
-### 4. Setup Environment
+### 4. Setup Environment Variables
 ```bash
 cp .env.example .env
 # Edit .env with your configuration
+```
+
+**Required API Keys:**
+- **GEMINI_API_KEY**: Get your Google AI API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
+- **GROQ_API_KEY**: Get your Groq API key from [Groq Console](https://console.groq.com/)
+
+**Example .env configuration:**
+```env
+# LLM API Keys
+GEMINI_API_KEY=your_gemini_api_key_here
+GROQ_API_KEY=your_groq_api_key_here
+
+# Database Configuration
+DATABASE_URL=postgresql://username:password@localhost:5432/database_name
+
+# Other settings...
 ```
