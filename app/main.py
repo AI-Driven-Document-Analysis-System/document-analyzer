@@ -123,7 +123,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 import logging
 import os
-from .api import auth, summarization, documents  # Add documents import
+from .api import auth, summarization, documents, chat  # Add chat import
 from .core.database import db_manager
 
 # Configure logging
@@ -167,6 +167,7 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/api")
 app.include_router(summarization.router, prefix="/api")
 app.include_router(documents.router, prefix="/api")  # Add this line
+app.include_router(chat.router, prefix="/api")  # Add chat router
 
 @app.get("/")
 async def root():
