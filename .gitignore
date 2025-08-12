@@ -17,6 +17,7 @@ __pycache__/
 
 # ChromaDB storage (for when you run the app)
 chroma_db/
+test_chroma_db/
 
 *.egg-info/
 
