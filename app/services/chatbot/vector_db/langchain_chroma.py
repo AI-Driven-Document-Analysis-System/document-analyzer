@@ -6,6 +6,7 @@ import chromadb
 from chromadb.config import Settings as ChromaSettings
 
 
+
 class LangChainChromaStore:
     """
     A wrapper class that integrates ChromaDB with LangChain for document storage and retrieval.
