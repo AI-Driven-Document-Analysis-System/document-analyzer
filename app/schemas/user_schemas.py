@@ -1,10 +1,10 @@
-from pydantic import BaseModel, EmailStr, validator
+from pydantic import BaseModel, validator
 from typing import Optional
 from datetime import datetime
 from uuid import UUID
 
 class UserBase(BaseModel):
-    email: EmailStr
+    email: str  # Changed from EmailStr to str to avoid email-validator dependency
     first_name: Optional[str] = None
     last_name: Optional[str] = None
 
@@ -18,7 +18,7 @@ class UserCreate(UserBase):
         return v
 
 class UserLogin(BaseModel):
-    email: EmailStr
+    email: str  # Changed from EmailStr to str
     password: str
 
 class UserResponse(UserBase):
