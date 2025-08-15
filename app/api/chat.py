@@ -70,6 +70,30 @@ async def send_message(request: ChatMessageRequest):
             'streaming': False
         }
         
+        # Ensure API key is set based on provider
+        if llm_config.get('provider') == 'groq' and not llm_config.get('api_key'):
+            groq_key = os.getenv('GROQ_API_KEY')
+            if groq_key:
+                llm_config['api_key'] = groq_key
+            else:
+                raise HTTPException(status_code=400, detail="GROQ_API_KEY not found in environment variables")
+        elif llm_config.get('provider') == 'gemini' and not llm_config.get('api_key'):
+            gemini_key = os.getenv('GEMINI_API_KEY')
+            if gemini_key:
+                llm_config['api_key'] = gemini_key
+            else:
+                raise HTTPException(status_code=400, detail="GEMINI_API_KEY not found in environment variables")
+        elif llm_config.get('provider') == 'openai' and not llm_config.get('api_key'):
+            openai_key = os.getenv('OPENAI_API_KEY')
+            if openai_key:
+                llm_config['api_key'] = openai_key
+            else:
+                raise HTTPException(status_code=400, detail="OPENAI_API_KEY not found in environment variables")
+        
+        # Validate API key is present
+        if not llm_config.get('api_key'):
+            raise HTTPException(status_code=400, detail=f"API key not found for provider: {llm_config.get('provider')}")
+        
         # Get or create chat engine
         chat_engine = service.get_or_create_chat_engine(
             llm_config=llm_config,
@@ -133,6 +157,30 @@ async def send_message_stream(request: ChatMessageRequest):
             'temperature': 0.7,
             'streaming': True  # Enable streaming
         }
+        
+        # Ensure API key is set based on provider
+        if llm_config.get('provider') == 'groq' and not llm_config.get('api_key'):
+            groq_key = os.getenv('GROQ_API_KEY')
+            if groq_key:
+                llm_config['api_key'] = groq_key
+            else:
+                raise HTTPException(status_code=400, detail="GROQ_API_KEY not found in environment variables")
+        elif llm_config.get('provider') == 'gemini' and not llm_config.get('api_key'):
+            gemini_key = os.getenv('GEMINI_API_KEY')
+            if gemini_key:
+                llm_config['api_key'] = gemini_key
+            else:
+                raise HTTPException(status_code=400, detail="GEMINI_API_KEY not found in environment variables")
+        elif llm_config.get('provider') == 'openai' and not llm_config.get('api_key'):
+            openai_key = os.getenv('OPENAI_API_KEY')
+            if openai_key:
+                llm_config['api_key'] = openai_key
+            else:
+                raise HTTPException(status_code=400, detail="OPENAI_API_KEY not found in environment variables")
+        
+        # Validate API key is present
+        if not llm_config.get('api_key'):
+            raise HTTPException(status_code=400, detail=f"API key not found for provider: {llm_config.get('provider')}")
         
         # Get or create chat engine
         chat_engine = service.get_or_create_chat_engine(

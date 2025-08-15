@@ -1,6 +1,7 @@
 import os
 from typing import Optional
-from pydantic import BaseSettings, Field
+from pydantic import Field
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -27,6 +28,17 @@ class Settings(BaseSettings):
     DATABASE_NAME: str = Field("docanalyzer", description="Database name")
     DATABASE_USER: str = Field("postgres", description="Database user")
     DATABASE_PASSWORD: str = Field("", description="Database password")
+    
+    # Additional Database Settings (from .env)
+    DB_HOST: Optional[str] = Field(None, description="Database host (alternative)")
+    DB_PORT: Optional[str] = Field(None, description="Database port (alternative)")
+    DB_USER: Optional[str] = Field(None, description="Database user (alternative)")
+    DB_PASSWORD: Optional[str] = Field(None, description="Database password (alternative)")
+    DB_NAME: Optional[str] = Field(None, description="Database name (alternative)")
+    
+    # Additional API Settings (from .env)
+    API_HOST: Optional[str] = Field(None, description="API host")
+    API_PORT: Optional[str] = Field(None, description="API port")
     
     # Vector Database Settings
     VECTOR_DB_PATH: str = Field("./data/chroma_db", description="ChromaDB storage path")
@@ -65,6 +77,7 @@ class Settings(BaseSettings):
     LOG_FILE: str = Field("logs/app.log", description="Log file path")
     
     # File Upload Settings
+    UPLOAD_DIR: Optional[str] = Field(None, description="Upload directory")
     MAX_FILE_SIZE: int = Field(10 * 1024 * 1024, description="Maximum file size in bytes (10MB)")
     ALLOWED_FILE_TYPES: list = Field(
         [".pdf", ".txt", ".docx", ".doc", ".md"],
@@ -81,6 +94,7 @@ class Settings(BaseSettings):
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = True
+        extra = "ignore"  # Allow extra fields from .env file
 
 
 # Create global settings instance
