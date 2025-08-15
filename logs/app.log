@@ -5041,3 +5041,380 @@ fastapi.exceptions.HTTPException
 2025-08-06 23:14:50,670 - app.main - INFO - DocAnalyzer API starting up...
 2025-08-06 23:14:50,670 - app.main - INFO - Database connection verified
 2025-08-06 23:14:57,393 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
+2025-08-15 09:51:12,057 - app.db.init_db - INFO - Starting database initialization...
+2025-08-15 09:51:12,819 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-15 09:51:12,869 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-15 09:51:12,869 - app.db.init_db - INFO - Database connection test successful!
+2025-08-15 09:51:13,418 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-15 09:51:13,488 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-15 09:51:15,172 - app.db.init_db - INFO - Database tables created successfully
+2025-08-15 09:51:15,173 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-15 09:51:15,478 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-15 09:51:15,478 - app.main - INFO - Database connection verified
+2025-08-15 10:04:25,966 - app.main - ERROR - Health check failed: connection already closed
+2025-08-15 10:05:41,560 - app.services.chat_service - INFO - Created new chat engine for user test-user with gemini provider
+2025-08-15 10:05:42,005 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event CollectionQueryEvent: capture() takes 1 positional argument but 3 were given
+2025-08-15 10:06:07,073 - app.services.chatbot.vector_db.indexing - INFO - Indexed document test-rag-document-1 with 3 chunks
+2025-08-15 10:06:07,198 - app.services.chat_service - INFO - Created new chat engine for user test-user-rag with gemini provider
+2025-08-15 10:06:07,225 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Number of requested results 4 is greater than number of elements in index 3, updating n_results = 3
+2025-08-15 10:06:10,362 - chromadb.segment.impl.vector.local_persistent_hnsw - WARNING - Number of requested results 4 is greater than number of elements in index 3, updating n_results = 3
+2025-08-15 10:06:10,906 - langchain_google_genai.chat_models - WARNING - Retrying langchain_google_genai.chat_models._chat_with_retry.<locals>._chat_with_retry in 2.0 seconds as it raised ResourceExhausted: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerDayPerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 50
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 47
+}
+].
+2025-08-15 10:06:13,217 - langchain_google_genai.chat_models - WARNING - Retrying langchain_google_genai.chat_models._chat_with_retry.<locals>._chat_with_retry in 4.0 seconds as it raised ResourceExhausted: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerDayPerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 50
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 45
+}
+].
+2025-08-15 10:06:17,502 - langchain_google_genai.chat_models - WARNING - Retrying langchain_google_genai.chat_models._chat_with_retry.<locals>._chat_with_retry in 8.0 seconds as it raised ResourceExhausted: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerDayPerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 50
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 40
+}
+].
+2025-08-15 10:06:25,789 - langchain_google_genai.chat_models - WARNING - Retrying langchain_google_genai.chat_models._chat_with_retry.<locals>._chat_with_retry in 16.0 seconds as it raised ResourceExhausted: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerDayPerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 50
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 32
+}
+].
+2025-08-15 10:06:42,086 - langchain_google_genai.chat_models - WARNING - Retrying langchain_google_genai.chat_models._chat_with_retry.<locals>._chat_with_retry in 32.0 seconds as it raised ResourceExhausted: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerDayPerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 50
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 16
+}
+].
+2025-08-15 10:07:14,412 - app.api.chat - ERROR - Failed to get response from chat engine: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerDayPerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 50
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 43
+}
+]
+2025-08-15 10:07:14,415 - app.api.chat - ERROR - Error processing chat message: 
+2025-08-15 10:07:15,377 - langchain_google_genai.chat_models - WARNING - Retrying langchain_google_genai.chat_models._chat_with_retry.<locals>._chat_with_retry in 2.0 seconds as it raised ResourceExhausted: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerDayPerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 50
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 42
+}
+].
+2025-08-15 10:07:17,664 - langchain_google_genai.chat_models - WARNING - Retrying langchain_google_genai.chat_models._chat_with_retry.<locals>._chat_with_retry in 4.0 seconds as it raised ResourceExhausted: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerDayPerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 50
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 40
+}
+].
+2025-08-15 10:07:21,948 - langchain_google_genai.chat_models - WARNING - Retrying langchain_google_genai.chat_models._chat_with_retry.<locals>._chat_with_retry in 8.0 seconds as it raised ResourceExhausted: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerDayPerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 50
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 36
+}
+].
+2025-08-15 10:07:30,242 - langchain_google_genai.chat_models - WARNING - Retrying langchain_google_genai.chat_models._chat_with_retry.<locals>._chat_with_retry in 16.0 seconds as it raised ResourceExhausted: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerDayPerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 50
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 28
+}
+].
+2025-08-15 10:07:46,518 - langchain_google_genai.chat_models - WARNING - Retrying langchain_google_genai.chat_models._chat_with_retry.<locals>._chat_with_retry in 32.0 seconds as it raised ResourceExhausted: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerDayPerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 50
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 11
+}
+].
+2025-08-15 10:08:18,841 - app.api.chat - ERROR - Failed to get response from chat engine: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. [violations {
+  quota_metric: "generativelanguage.googleapis.com/generate_content_free_tier_requests"
+  quota_id: "GenerateRequestsPerDayPerProjectPerModel-FreeTier"
+  quota_dimensions {
+    key: "model"
+    value: "gemini-1.5-flash"
+  }
+  quota_dimensions {
+    key: "location"
+    value: "global"
+  }
+  quota_value: 50
+}
+, links {
+  description: "Learn more about Gemini API quotas"
+  url: "https://ai.google.dev/gemini-api/docs/rate-limits"
+}
+, retry_delay {
+  seconds: 39
+}
+]
+2025-08-15 10:08:18,841 - app.api.chat - ERROR - Error processing chat message: 
+2025-08-15 10:09:49,045 - app.main - ERROR - Health check failed: connection already closed
+2025-08-15 10:09:55,524 - app.main - INFO - DocAnalyzer API shutting down...
+2025-08-15 10:09:55,524 - app.core.database - INFO - Database connection pool closed
+2025-08-15 10:09:55,524 - app.main - INFO - Database connections closed
+2025-08-15 10:10:26,455 - app.db.init_db - INFO - Starting database initialization...
+2025-08-15 10:10:27,237 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-15 10:10:27,321 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-15 10:10:27,321 - app.db.init_db - INFO - Database connection test successful!
+2025-08-15 10:10:28,007 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-15 10:10:28,059 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-15 10:10:29,823 - app.db.init_db - INFO - Database tables created successfully
+2025-08-15 10:10:29,824 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-15 10:10:29,966 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-15 10:10:29,966 - app.main - INFO - Database connection verified
+2025-08-15 10:11:15,666 - app.services.chatbot.vector_db.indexing - INFO - Indexed document test-rag-document-1 with 3 chunks
+2025-08-15 10:11:15,696 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event CollectionQueryEvent: capture() takes 1 positional argument but 3 were given
+2025-08-15 10:11:15,723 - app.services.chat_service - ERROR - Failed to create chat engine: 'api_key'
+2025-08-15 10:11:15,723 - app.api.chat - ERROR - Error processing chat message: 'api_key'
+2025-08-15 10:11:18,730 - app.services.chat_service - ERROR - Failed to create chat engine: 'api_key'
+2025-08-15 10:11:18,730 - app.api.chat - ERROR - Error processing chat message: 'api_key'
+2025-08-15 10:11:21,736 - app.services.chat_service - ERROR - Failed to create chat engine: 'api_key'
+2025-08-15 10:11:21,736 - app.api.chat - ERROR - Error processing chat message: 'api_key'
+2025-08-15 10:11:24,743 - app.services.chat_service - ERROR - Failed to create chat engine: 'api_key'
+2025-08-15 10:11:24,743 - app.api.chat - ERROR - Error processing chat message: 'api_key'
+2025-08-15 10:11:27,746 - app.services.chat_service - ERROR - Failed to create chat engine: 'api_key'
+2025-08-15 10:11:27,746 - app.api.chat - ERROR - Error processing chat message: 'api_key'
+2025-08-15 10:12:32,641 - app.services.chatbot.vector_db.indexing - INFO - Indexed document test-rag-document-1 with 3 chunks
+2025-08-15 10:12:32,681 - app.services.chat_service - ERROR - Failed to create chat engine: 'api_key'
+2025-08-15 10:12:32,681 - app.api.chat - ERROR - Error processing chat message: 'api_key'
+2025-08-15 10:12:35,686 - app.services.chat_service - ERROR - Failed to create chat engine: 'api_key'
+2025-08-15 10:12:35,686 - app.api.chat - ERROR - Error processing chat message: 'api_key'
+2025-08-15 10:12:38,690 - app.services.chat_service - ERROR - Failed to create chat engine: 'api_key'
+2025-08-15 10:12:38,690 - app.api.chat - ERROR - Error processing chat message: 'api_key'
+2025-08-15 10:12:59,392 - app.services.chatbot.vector_db.indexing - INFO - Indexed document test-rag-document-1 with 3 chunks
+2025-08-15 10:12:59,473 - app.services.chat_service - ERROR - Failed to create chat engine: 'api_key'
+2025-08-15 10:12:59,473 - app.api.chat - ERROR - Error processing chat message: 'api_key'
+2025-08-15 10:13:02,476 - app.services.chat_service - ERROR - Failed to create chat engine: 'api_key'
+2025-08-15 10:13:02,476 - app.api.chat - ERROR - Error processing chat message: 'api_key'
+2025-08-15 10:13:05,487 - app.services.chat_service - ERROR - Failed to create chat engine: 'api_key'
+2025-08-15 10:13:05,487 - app.api.chat - ERROR - Error processing chat message: 'api_key'
+2025-08-15 10:15:20,755 - app.main - ERROR - Health check failed: connection already closed
+2025-08-15 10:15:25,930 - app.main - INFO - DocAnalyzer API shutting down...
+2025-08-15 10:15:25,930 - app.core.database - INFO - Database connection pool closed
+2025-08-15 10:15:25,930 - app.main - INFO - Database connections closed
+2025-08-15 10:15:56,606 - app.db.init_db - INFO - Starting database initialization...
+2025-08-15 10:15:57,327 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-15 10:15:57,401 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-15 10:15:57,402 - app.db.init_db - INFO - Database connection test successful!
+2025-08-15 10:15:58,083 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-15 10:15:58,170 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-15 10:15:59,838 - app.db.init_db - INFO - Database tables created successfully
+2025-08-15 10:15:59,839 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-15 10:15:59,970 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-15 10:15:59,970 - app.main - INFO - Database connection verified
+2025-08-15 10:16:07,766 - app.services.chatbot.vector_db.indexing - INFO - Indexed document test-rag-document-1 with 3 chunks
+2025-08-15 10:16:07,799 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event CollectionQueryEvent: capture() takes 1 positional argument but 3 were given
+2025-08-15 10:16:09,003 - app.services.chat_service - INFO - Created new chat engine for user test-user-rag with groq provider
+2025-08-15 10:16:10,143 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 10:16:13,814 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 10:16:14,709 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 10:16:18,293 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 10:16:18,893 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 10:16:22,400 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 10:16:23,091 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 10:16:26,575 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 10:16:27,324 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 10:52:53,009 - app.main - ERROR - Health check failed: connection already closed
+2025-08-15 10:53:11,660 - app.services.chatbot.vector_db.indexing - INFO - Indexed document test-rag-document-1 with 3 chunks
+2025-08-15 10:53:12,828 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 10:53:13,902 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 10:53:17,475 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 10:53:18,290 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 10:53:21,879 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 10:53:22,854 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 10:53:26,442 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 10:53:26,592 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2025-08-15 10:53:26,592 - groq._base_client - INFO - Retrying request to /openai/v1/chat/completions in 6.000000 seconds
+2025-08-15 10:53:33,440 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 10:53:36,697 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2025-08-15 10:53:36,697 - groq._base_client - INFO - Retrying request to /openai/v1/chat/completions in 4.000000 seconds
+2025-08-15 10:53:41,384 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 10:53:41,628 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2025-08-15 10:53:41,629 - groq._base_client - INFO - Retrying request to /openai/v1/chat/completions in 14.000000 seconds
+2025-08-15 10:53:56,597 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 10:58:37,998 - app.main - ERROR - Health check failed: connection already closed
+2025-08-15 10:58:46,000 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 10:58:46,828 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 10:58:49,506 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 10:58:50,573 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 10:58:53,172 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 10:58:53,442 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2025-08-15 10:58:53,442 - groq._base_client - INFO - Retrying request to /openai/v1/chat/completions in 16.000000 seconds
+2025-08-15 10:59:10,755 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 10:59:12,927 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2025-08-15 10:59:12,927 - groq._base_client - INFO - Retrying request to /openai/v1/chat/completions in 7.000000 seconds
+2025-08-15 10:59:20,906 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 10:59:21,097 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2025-08-15 10:59:21,097 - groq._base_client - INFO - Retrying request to /openai/v1/chat/completions in 15.000000 seconds
+2025-08-15 10:59:37,421 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 10:59:39,574 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2025-08-15 10:59:39,576 - groq._base_client - INFO - Retrying request to /openai/v1/chat/completions in 6.000000 seconds
+2025-08-15 10:59:46,764 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 10:59:46,798 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event CollectionQueryEvent: capture() takes 1 positional argument but 3 were given
+2025-08-15 10:59:46,960 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
+2025-08-15 10:59:46,960 - groq._base_client - INFO - Retrying request to /openai/v1/chat/completions in 16.000000 seconds
+2025-08-15 11:00:03,853 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
