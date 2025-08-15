@@ -15,11 +15,11 @@ print("DB URL used by FastAPI:", os.getenv("DATABASE_URL"))
 def get_database_config():
     """Get database configuration for Aiven PostgreSQL"""
     return {
-        'host': os.getenv("DB_HOST", "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com"),
-        'port': os.getenv("DB_PORT", "22695"),
-        'user': os.getenv("DB_USER", "avnadmin"),
-        'password': os.getenv("DB_PASSWORD", "AVNS_ZXM128nbLlKRNr9Edtj"),
-        'database': os.getenv("DB_NAME", "defaultdb"),
+        'host': os.getenv("DB_HOST", "your-db-host"),
+        'port': os.getenv("DB_PORT", "5432"),
+        'user': os.getenv("DB_USER", "your-username"),
+        'password': os.getenv("DB_PASSWORD", "your-password"),
+        'database': os.getenv("DB_NAME", "your-database"),
         'sslmode': 'require'
     }
 

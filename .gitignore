@@ -17,3 +17,15 @@ __pycache__/
 
 # ChromaDB storage (for when you run the app)
 chroma_db/
+test_chroma_db/
+
+*.egg-info/
+
+# Environment variables
+.env
+.env.local
+.env.production
+.env.development
+
+# Keep example file
+!.env.example

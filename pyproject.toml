@@ -10,8 +10,10 @@ version = "0.1.0"
 rag = [
     "chromadb==0.4.15",
     "sentence-transformers==5.0.0",
-    "langchain==0.0.340",
-    "langchain-community==0.0.10",
+    "langchain>=0.3.0",
+    "langchain-community>=0.3.0",
+    "langchain-google-genai>=2.0.0",
+    "langchain-groq>=0.1.0",
     "websockets==11.0.3",
     "google-generativeai",
     "huggingface-hub==0.34.3",
