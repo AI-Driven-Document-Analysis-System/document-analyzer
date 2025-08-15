@@ -41,7 +41,7 @@ class Settings(BaseSettings):
     API_PORT: Optional[str] = Field(None, description="API port")
     
     # Vector Database Settings
-    VECTOR_DB_PATH: str = Field("./data/chroma_db", description="ChromaDB storage path")
+    VECTOR_DB_PATH: str = Field("./chroma_db", description="ChromaDB storage path")
     COLLECTION_NAME: str = Field("documents", description="ChromaDB collection name")
     
     # Document Processing Settings

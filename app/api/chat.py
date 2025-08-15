@@ -29,7 +29,7 @@ def initialize_chat_service():
     """Initialize the chat service with configuration"""
     try:
         config = {
-            'vector_db_path': getattr(settings, 'VECTOR_DB_PATH', './data/chroma_db'),
+            'vector_db_path': getattr(settings, 'VECTOR_DB_PATH', './chroma_db'),
             'collection_name': getattr(settings, 'COLLECTION_NAME', 'documents'),
             'chunk_size': getattr(settings, 'CHUNK_SIZE', 1000),
             'chunk_overlap': getattr(settings, 'CHUNK_OVERLAP', 200),
