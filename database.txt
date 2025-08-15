@@ -1,2 +1,0 @@
-4. Connect to the database using the password below:
-AVNS_6LGSQ4QW7CLOoMlizLr

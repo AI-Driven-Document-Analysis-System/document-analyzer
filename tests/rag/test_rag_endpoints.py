@@ -26,11 +26,11 @@ CHAT_API_URL = f"{BASE_URL}/api/chat"
 
 # Test questions to ask your existing documents
 TEST_QUESTIONS = [
-    "What is the main topic of your documents?",
-    "Can you summarize the key points from your documents?",
-    "What are the most important findings or conclusions?",
-    "What recommendations are mentioned in the documents?",
-    "What are the main challenges or issues discussed?",
+    "What is the dress code policy for employees?",
+    "What steps are required to install and launch the software?",
+    "What key achievements were highlighted in the Q4 2024 business report?",
+    "What should employees do regarding internet usage at work?",
+    "What information must be provided to a Data Subject under data protection law?",
 ]
 
 class RAGEndpointTester:
