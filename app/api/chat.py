@@ -10,10 +10,13 @@ from ..schemas.chat_schemas import (
     ChatMessageRequest, ChatMessageResponse, DocumentIndexRequest, DocumentIndexResponse,
     DocumentSearchRequest, DocumentSearchResponse, ConversationHistoryRequest, 
     ConversationHistoryResponse, SystemStatsResponse, LLMConfigRequest, ChatEngineConfig,
-    ErrorResponse, SuccessResponse, LLMProvider, MemoryType
+    ErrorResponse, SuccessResponse, LLMProvider, MemoryType,
+    ConversationCreateRequest, ConversationResponse, ConversationsListResponse, RenameConversationRequest
 )
 from ..services.chat_service import get_chatbot_service, initialize_chatbot_service
 from ..core.config import settings
+from ..db.conversations import get_conversations, get_messages
+from uuid import UUID
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -57,9 +60,16 @@ async def send_message(request: ChatMessageRequest):
     """
     try:
         service = get_chatbot_service()
+        conversation_repo = get_conversations()
+        message_repo = get_messages()
         
-        # Generate conversation ID if not provided
-        conversation_id = request.conversation_id or str(uuid.uuid4())
+        # Ensure a conversation exists
+        if request.conversation_id:
+            conversation_id = request.conversation_id
+        else:
+            # Create a new conversation for this user
+            conv = conversation_repo.create(user_id=UUID(request.user_id) if request.user_id else uuid.uuid4())
+            conversation_id = str(conv.id) if conv else str(uuid.uuid4())
         
         # Prepare LLM config (use default if not provided)
         llm_config = request.llm_config or {
@@ -118,6 +128,17 @@ async def send_message(request: ChatMessageRequest):
                 raise HTTPException(status_code=500, detail="Failed to process chat message")
         
         processing_time = time.time() - start_time
+        
+        # Persist user message and assistant response
+        try:
+            conv_uuid = UUID(conversation_id)
+        except Exception:
+            conv_uuid = uuid.uuid4()
+        try:
+            message_repo.add(conv_uuid, role="user", content=request.message, metadata={"user_id": request.user_id})
+            message_repo.add(conv_uuid, role="assistant", content=response, metadata={"llm_provider": llm_config.get('provider')})
+        except Exception as e:
+            logger.warning(f"Failed to persist chat messages: {e}")
         
         # Prepare response
         return ChatMessageResponse(
@@ -286,25 +307,19 @@ async def get_conversation_history(conversation_id: str):
     for a given conversation ID.
     """
     try:
-        service = get_chatbot_service()
-        
-        # Get conversation history
-        history = service.get_conversation_history(conversation_id)
-        
-        # Parse history into messages (simplified for now)
-        messages = []
-        if history:
-            # TODO: Parse conversation history properly
-            messages = [{"role": "system", "content": history}]
-        
+        conversation_repo = get_conversations()
+        message_repo = get_messages()
+        conv = conversation_repo.get(UUID(conversation_id))
+        msgs = message_repo.list(UUID(conversation_id))
+        messages_payload = [{"id": str(m.id), "role": m.role, "content": m.content, "metadata": m.metadata, "timestamp": m.timestamp} for m in msgs]
         return ConversationHistoryResponse(
             conversation_id=conversation_id,
-            messages=messages,
-            message_count=len(messages),
-            created_at=None,  # TODO: Track conversation timestamps
-            last_updated=None
+            messages=messages_payload,
+            message_count=len(messages_payload),
+            created_at=conv.created_at if conv else None,
+            last_updated=conv.updated_at if conv else None
         )
-        
+    
     except Exception as e:
         logger.error(f"Error getting conversation history: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -319,17 +334,49 @@ async def clear_conversation(conversation_id: str):
     conversation ID.
     """
     try:
-        service = get_chatbot_service()
-        
-        # Clear conversation
-        service.clear_conversation(conversation_id)
-        
-        return SuccessResponse(
-            message=f"Conversation {conversation_id} cleared successfully"
-        )
-        
+        conversation_repo = get_conversations()
+        conversation_repo.delete(UUID(conversation_id))
+        return SuccessResponse(message=f"Conversation {conversation_id} cleared successfully")
+    
     except Exception as e:
         logger.error(f"Error clearing conversation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/conversations", response_model=ConversationResponse)
+async def create_conversation_api(payload: ConversationCreateRequest):
+    try:
+        conversation_repo = get_conversations()
+        conv = conversation_repo.create(user_id=UUID(payload.user_id) if payload.user_id else None, title=payload.title)
+        return ConversationResponse(id=str(conv.id), user_id=str(conv.user_id) if conv.user_id else None, title=conv.title, created_at=conv.created_at, updated_at=conv.updated_at)
+    except Exception as e:
+        logger.error(f"Error creating conversation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/conversations", response_model=ConversationsListResponse)
+async def list_conversations_api(user_id: Optional[str] = None, limit: int = 50, offset: int = 0):
+    try:
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id is required")
+        conversation_repo = get_conversations()
+        rows = conversation_repo.list(UUID(user_id), limit, offset)
+        return {"conversations": [{"id": str(r.id), "user_id": str(r.user_id) if r.user_id else None, "title": r.title, "created_at": r.created_at, "updated_at": r.updated_at} for r in rows]}
+    except Exception as e:
+        logger.error(f"Error listing conversations: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.patch("/conversations/{conversation_id}", response_model=ConversationResponse)
+async def rename_conversation_api(conversation_id: str, payload: RenameConversationRequest):
+    try:
+        conversation_repo = get_conversations()
+        conv = conversation_repo.rename(UUID(conversation_id), payload.title)
+        if not conv:
+            raise HTTPException(status_code=404, detail="Conversation not found")
+        return ConversationResponse(id=str(conv.id), user_id=str(conv.user_id) if conv.user_id else None, title=conv.title, created_at=conv.created_at, updated_at=conv.updated_at)
+    except Exception as e:
+        logger.error(f"Error renaming conversation: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

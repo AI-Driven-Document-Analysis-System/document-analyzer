@@ -1,0 +1,150 @@
+from typing import Optional, List, Dict, Any
+from uuid import UUID, uuid4
+from datetime import datetime
+import json
+import logging
+
+from .models import Conversation as ConversationModel, ChatMessage as ChatMessageModel
+from ..core.database import get_db
+
+logger = logging.getLogger(__name__)
+
+
+class Conversations:
+    def __init__(self, db_manager):
+        self.db = db_manager
+
+    def create(self, user_id: Optional[UUID] = None, title: Optional[str] = None) -> Optional[ConversationModel]:
+        try:
+            conversation_id = uuid4()
+            now = datetime.utcnow()
+            query = """
+                INSERT INTO conversations (id, user_id, title, created_at, updated_at)
+                VALUES (%s, %s, %s, %s, %s)
+                RETURNING *
+            """
+            params = (conversation_id, user_id, title, now, now)
+            result = self.db.execute_one(query, params)
+            if result:
+                return ConversationModel(**dict(result))
+            return None
+        except Exception as e:
+            logger.error(f"Error creating conversation: {e}")
+            raise
+
+    def list(self, user_id: UUID, limit: int = 50, offset: int = 0) -> List[ConversationModel]:
+        try:
+            query = """
+                SELECT * FROM conversations
+                WHERE user_id = %s
+                ORDER BY updated_at DESC
+                LIMIT %s OFFSET %s
+            """
+            results = self.db.execute_query(query, (user_id, limit, offset), fetch=True)
+            return [ConversationModel(**dict(row)) for row in results]
+        except Exception as e:
+            logger.error(f"Error listing conversations: {e}")
+            raise
+
+    def get(self, conversation_id: UUID, user_id: Optional[UUID] = None) -> Optional[ConversationModel]:
+        try:
+            if user_id:
+                query = "SELECT * FROM conversations WHERE id = %s AND user_id = %s"
+                params = (conversation_id, user_id)
+            else:
+                query = "SELECT * FROM conversations WHERE id = %s"
+                params = (conversation_id,)
+            result = self.db.execute_one(query, params)
+            if result:
+                return ConversationModel(**dict(result))
+            return None
+        except Exception as e:
+            logger.error(f"Error getting conversation: {e}")
+            raise
+
+    def rename(self, conversation_id: UUID, title: str) -> Optional[ConversationModel]:
+        try:
+            query = """
+                UPDATE conversations
+                SET title = %s, updated_at = %s
+                WHERE id = %s
+                RETURNING *
+            """
+            params = (title, datetime.utcnow(), conversation_id)
+            result = self.db.execute_one(query, params)
+            if result:
+                return ConversationModel(**dict(result))
+            return None
+        except Exception as e:
+            logger.error(f"Error renaming conversation: {e}")
+            raise
+
+    def delete(self, conversation_id: UUID) -> int:
+        try:
+            query = "DELETE FROM conversations WHERE id = %s"
+            return self.db.execute_query(query, (conversation_id,))
+        except Exception as e:
+            logger.error(f"Error deleting conversation: {e}")
+            raise
+
+
+class Messages:
+    def __init__(self, db_manager):
+        self.db = db_manager
+
+    def add(self, conversation_id: UUID, role: str, content: str, metadata: Optional[Dict[str, Any]] = None) -> Optional[ChatMessageModel]:
+        try:
+            message_id = uuid4()
+            now = datetime.utcnow()
+            query = """
+                INSERT INTO chat_messages (id, conversation_id, role, content, metadata, timestamp)
+                VALUES (%s, %s, %s, %s, %s, %s)
+                RETURNING *
+            """
+            params = (message_id, conversation_id, role, content, json.dumps(metadata) if metadata is not None else None, now)
+            result = self.db.execute_one(query, params)
+            if result:
+                # Bump conversation updated_at
+                self.db.execute_query("UPDATE conversations SET updated_at = %s WHERE id = %s", (now, conversation_id))
+                row = dict(result)
+                if isinstance(row.get("metadata"), str):
+                    try:
+                        row["metadata"] = json.loads(row["metadata"]) if row["metadata"] else None
+                    except Exception:
+                        pass
+                return ChatMessageModel(**row)
+            return None
+        except Exception as e:
+            logger.error(f"Error adding chat message: {e}")
+            raise
+
+    def list(self, conversation_id: UUID, limit: int = 200, offset: int = 0) -> List[ChatMessageModel]:
+        try:
+            query = """
+                SELECT * FROM chat_messages
+                WHERE conversation_id = %s
+                ORDER BY timestamp ASC
+                LIMIT %s OFFSET %s
+            """
+            results = self.db.execute_query(query, (conversation_id, limit, offset), fetch=True)
+            messages: List[ChatMessageModel] = []
+            for row in results:
+                row_dict = dict(row)
+                if isinstance(row_dict.get("metadata"), str):
+                    try:
+                        row_dict["metadata"] = json.loads(row_dict["metadata"]) if row_dict["metadata"] else None
+                    except Exception:
+                        pass
+                messages.append(ChatMessageModel(**row_dict))
+            return messages
+        except Exception as e:
+            logger.error(f"Error getting chat messages: {e}")
+            raise
+
+
+def get_conversations() -> Conversations:
+    return Conversations(get_db())
+
+
+def get_messages() -> Messages:
+    return Messages(get_db()) 
