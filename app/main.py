@@ -1,8 +1,10 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 import logging
 import os
+import asyncio
+from datetime import datetime
 from .api import auth, summarization, documents, chat  # Add chat import
 from .core.database import db_manager
 from .db.init_db import create_tables
@@ -76,7 +78,13 @@ async def health_check():
         }
     except Exception as e:
         logger.error(f"Health check failed: {e}")
-        raise HTTPException(status_code=503, detail="Service unavailable")
+        # Don't crash the server, just return unhealthy status
+        return {
+            "status": "unhealthy",
+            "database": "disconnected",
+            "error": str(e),
+            "timestamp": "2024-01-01T00:00:00Z"
+        }
 
 @app.on_event("startup")
 async def startup_event():
@@ -90,9 +98,17 @@ async def startup_event():
             logger.info("Database tables ensured")
         else:
             logger.info("DATABASE_URL not set; skipping table initialization")
-        logger.info("Database connection verified")
+        
+        # Start background database monitoring task
+        try:
+            asyncio.create_task(database_monitor_task())
+            logger.info("Database monitoring task started")
+        except Exception as e:
+            logger.warning(f"Failed to start database monitoring: {e}")
+            
     except Exception as e:
         logger.warning(f"Startup DB init warning: {e}")
+        # Don't crash the server if DB init fails
 
 @app.on_event("shutdown")
 async def shutdown_event():
@@ -105,6 +121,33 @@ async def shutdown_event():
         logger.info("Database connections closed")
     except Exception as e:
         logger.error(f"Shutdown error: {e}")
+
+async def database_monitor_task():
+    """Background task to monitor database health and clean up connections"""
+    while True:
+        try:
+            # Check database health every 5 minutes
+            await asyncio.sleep(300)  # 5 minutes
+            
+            # Test connection and log status
+            if db_manager.test_connection():
+                logger.debug("Database health check passed")
+            else:
+                logger.warning("Database health check failed, attempting reconnection...")
+                try:
+                    # Use the safer public method instead of private method
+                    success = db_manager.initialize_pool()
+                    if success:
+                        logger.info("Database reconnection successful")
+                    else:
+                        logger.error("Database reconnection failed")
+                except Exception as e:
+                    logger.error(f"Database reconnection failed: {e}")
+                    
+        except Exception as e:
+            logger.error(f"Database monitoring task error: {e}")
+            await asyncio.sleep(60)  # Wait 1 minute before retrying
+
 
 if __name__ == "__main__":
     import uvicorn

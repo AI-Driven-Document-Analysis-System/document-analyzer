@@ -485,3 +485,93 @@ async def health_check():
     except Exception as e:
         logger.error(f"Health check failed: {e}")
         raise HTTPException(status_code=503, detail="Service unavailable")
+
+
+@router.get("/db/health")
+async def database_health_check():
+    """
+    Database health check endpoint
+    
+    This endpoint verifies database connectivity and connection pool status.
+    """
+    try:
+        from ..core.database import db_manager
+        
+        # Check if pool is initialized
+        if not db_manager.is_initialized():
+            return {
+                "status": "unhealthy",
+                "database": "postgresql",
+                "error": "Connection pool not initialized",
+                "details": "Check DATABASE_URL environment variable",
+                "timestamp": time.time()
+            }
+        
+        # Test connection
+        connection_test = db_manager.test_connection()
+        pool_status = db_manager.get_pool_status()
+        
+        # Check environment variables
+        env_info = {
+            "DATABASE_URL_set": bool(os.getenv("DATABASE_URL")),
+            "DATABASE_URL_length": len(os.getenv("DATABASE_URL", "")) if os.getenv("DATABASE_URL") else 0
+        }
+        
+        return {
+            "status": "healthy" if connection_test else "unhealthy",
+            "database": "postgresql",
+            "connection_test": connection_test,
+            "pool_status": pool_status,
+            "environment": env_info,
+            "timestamp": time.time()
+        }
+        
+    except Exception as e:
+        logger.error(f"Database health check failed: {e}")
+        return {
+            "status": "error",
+            "database": "postgresql",
+            "error": str(e),
+            "timestamp": time.time()
+        }
+
+
+@router.post("/db/reconnect")
+async def force_database_reconnect():
+    """
+    Force database reconnection
+    
+    This endpoint forces the database connection pool to reinitialize.
+    Use only when experiencing connection issues.
+    """
+    try:
+        from ..core.database import db_manager
+        
+        # Try to initialize the pool
+        success = db_manager.initialize_pool()
+        
+        if success:
+            # Test the new connection
+            connection_test = db_manager.test_connection()
+            return {
+                "status": "success" if connection_test else "partial",
+                "message": "Database connection pool reinitialized",
+                "connection_test": connection_test,
+                "timestamp": time.time()
+            }
+        else:
+            return {
+                "status": "failed",
+                "message": "Failed to reinitialize connection pool",
+                "error": "Check DATABASE_URL and database connectivity",
+                "timestamp": time.time()
+            }
+        
+    except Exception as e:
+        logger.error(f"Database reconnection failed: {e}")
+        return {
+            "status": "error",
+            "message": "Database reconnection failed",
+            "error": str(e),
+            "timestamp": time.time()
+        }
