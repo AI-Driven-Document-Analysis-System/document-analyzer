@@ -5418,3 +5418,24 @@ fastapi.exceptions.HTTPException
 2025-08-15 10:59:46,960 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 429 Too Many Requests"
 2025-08-15 10:59:46,960 - groq._base_client - INFO - Retrying request to /openai/v1/chat/completions in 16.000000 seconds
 2025-08-15 11:00:03,853 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 12:06:15,764 - app.db.init_db - INFO - Starting database initialization...
+2025-08-15 12:06:16,619 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-15 12:06:16,689 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-15 12:06:16,691 - app.db.init_db - INFO - Database connection test successful!
+2025-08-15 12:06:17,149 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-15 12:06:17,199 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-15 12:06:18,538 - app.db.init_db - INFO - Database tables created successfully
+2025-08-15 12:06:18,539 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-15 12:06:18,757 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-15 12:06:18,757 - app.main - INFO - Database connection verified
+2025-08-15 12:07:07,457 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event CollectionQueryEvent: capture() takes 1 positional argument but 3 were given
+2025-08-15 12:07:08,314 - app.services.chat_service - INFO - Created new chat engine for user test-user-rag with groq provider
+2025-08-15 12:07:09,407 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 12:07:12,046 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 12:07:12,725 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 12:07:15,285 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 12:07:16,095 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 12:07:18,868 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 12:07:19,457 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 12:07:22,133 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-15 12:07:22,892 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
