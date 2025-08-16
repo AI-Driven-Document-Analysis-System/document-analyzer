@@ -413,3 +413,12 @@ async def delete_document(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error deleting document: {str(e)}")
+
+#overall what this code do is define a router for the document service, which includes the following endpoints:
+#GET /documents: Get a list of documents for the current user.
+#POST /documents: Upload a new document for the current user.
+#GET /documents/{document_id}: Get a specific document by ID.
+#GET /documents/{document_id}/download: Get download URL for a document.
+#DELETE /documents/{document_id}: Delete a document.
+#The code uses the FastAPI framework to define the endpoints and the Pydantic models to define the request and response schemas.
+#The code also uses the SQLAlchemy ORM to interact with the database and the MinIO client to interact with the object storage.

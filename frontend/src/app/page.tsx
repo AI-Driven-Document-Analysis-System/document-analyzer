@@ -1,4 +1,5 @@
 
+
 // "use client"
 
 // import { useState, useEffect } from "react"
@@ -31,23 +32,40 @@
 //   const [sidebarOpen, setSidebarOpen] = useState(true)
 //   const [user, setUser] = useState(null)
 
+//   // Move useEffect to the top, before any conditional returns
+//   useEffect(() => {
+//     // Check if user is already authenticated
+//     const checkAuth = async () => {
+//       if (authService.isAuthenticated()) {
+//         try {
+//           const userData = await authService.getCurrentUser();
+//           setUser(userData);
+//           setIsAuthenticated(true);
+//         } catch (error) {
+//           // Token is invalid, clear it
+//           authService.logout();
+//           setIsAuthenticated(false);
+//         }
+//       }
+//     };
+    
+//     checkAuth();
+//   }, []);
+
 //   const handleAuthSuccess = (userData: any) => {
 //     setUser(userData)
 //     setIsAuthenticated(true)
 //     setShowAuthModal(false)
 //   }
 
-  
-
 //   const handleLogout = async () => {
-//   await authService.logout();
-//   setUser(null);
-//   setIsAuthenticated(false);
-//   setCurrentRoute("/dashboard");
-// };
+//     await authService.logout();
+//     setUser(null);
+//     setIsAuthenticated(false);
+//     setCurrentRoute("/dashboard");
+//   };
 
-
-
+//   // Now the conditional return comes after all hooks
 //   if (!isAuthenticated) {
 //     return (
 //       <>
@@ -56,28 +74,6 @@
 //       </>
 //     )
 //   }
-
-//  // Add this to the top of your Page component, after the imports
-
-// // Add this useEffect in your Page component
-// useEffect(() => {
-//   // Check if user is already authenticated
-//   const checkAuth = async () => {
-//     if (authService.isAuthenticated()) {
-//       try {
-//         const userData = await authService.getCurrentUser();
-//         setUser(userData);
-//         setIsAuthenticated(true);
-//       } catch (error) {
-//         // Token is invalid, clear it
-//         authService.logout();
-//         setIsAuthenticated(false);
-//       }
-//     }
-//   };
-  
-//   checkAuth();
-// }, []);
 
 //   const CurrentComponent = routes[currentRoute as keyof typeof routes]?.component || Dashboard
 //   const breadcrumb = routes[currentRoute as keyof typeof routes]?.breadcrumb || ["Dashboard"]
@@ -124,13 +120,12 @@
 
 
 
+//Loading Error
+
 "use client"
 
 import { useState, useEffect } from "react"
 import { LandingPage } from "../components/landing/landing-page"
-// If the file exists elsewhere, update the path accordingly, e.g.:
-// import { LandingPage } from "../components/LandingPage"
-// Otherwise, create 'landing-page.tsx' in 'frontend/src/components/landing/'.
 import { AuthModal } from "../components/auth/auth-modal"
 import { Dashboard } from "../components/dashboard/dashboard"
 import { DocumentUpload } from "../components/upload/document-upload"
@@ -150,31 +145,73 @@ const routes = {
 }
 
 export default function Page() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  // FIXED: Initialize all state with safe defaults for SSR
+  // Don't access localStorage during initial render to avoid hydration mismatch
+  const [isAuthenticated, setIsAuthenticated] = useState(false) // Always start false for SSR
+  const [isVerifyingAuth, setIsVerifyingAuth] = useState(true) // Always start verifying
   const [showAuthModal, setShowAuthModal] = useState(false)
-  const [currentRoute, setCurrentRoute] = useState("/dashboard")
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [currentRoute, setCurrentRoute] = useState("/dashboard") // Safe default
+  const [sidebarOpen, setSidebarOpen] = useState(true) // Safe default
   const [user, setUser] = useState(null)
+  const [isClientReady, setIsClientReady] = useState(false) // Track when client is ready
 
-  // Move useEffect to the top, before any conditional returns
+  // FIXED: Handle client-side hydration and state restoration
   useEffect(() => {
-    // Check if user is already authenticated
-    const checkAuth = async () => {
-      if (authService.isAuthenticated()) {
-        try {
+    // Mark client as ready and restore state from localStorage
+    setIsClientReady(true);
+    
+    // Restore persisted state after hydration
+    const savedRoute = localStorage.getItem('currentRoute');
+    if (savedRoute && routes[savedRoute as keyof typeof routes]) {
+      setCurrentRoute(savedRoute);
+    }
+    
+    const savedSidebar = localStorage.getItem('sidebarOpen');
+    if (savedSidebar) {
+      setSidebarOpen(JSON.parse(savedSidebar));
+    }
+  }, []);
+
+  // Verify authentication in background
+  useEffect(() => {
+    if (!isClientReady) return; // Wait for client hydration
+    
+    const verifyAuth = async () => {
+      try {
+        if (authService.isAuthenticated()) {
           const userData = await authService.getCurrentUser();
           setUser(userData);
           setIsAuthenticated(true);
-        } catch (error) {
-          // Token is invalid, clear it
-          authService.logout();
+        } else {
           setIsAuthenticated(false);
         }
+      } catch (error) {
+        // Token is invalid, clear it and redirect to landing
+        authService.logout();
+        setUser(null);
+        setIsAuthenticated(false);
+        setCurrentRoute("/dashboard");
+      } finally {
+        setIsVerifyingAuth(false); // Done verifying
       }
     };
     
-    checkAuth();
-  }, []);
+    verifyAuth();
+  }, [isClientReady]);
+
+  // Persist user's current route (only on client)
+  useEffect(() => {
+    if (isClientReady && isAuthenticated && currentRoute) {
+      localStorage.setItem('currentRoute', currentRoute);
+    }
+  }, [currentRoute, isAuthenticated, isClientReady]);
+
+  // Persist sidebar state (only on client)
+  useEffect(() => {
+    if (isClientReady) {
+      localStorage.setItem('sidebarOpen', JSON.stringify(sidebarOpen));
+    }
+  }, [sidebarOpen, isClientReady]);
 
   const handleAuthSuccess = (userData: any) => {
     setUser(userData)
@@ -187,10 +224,27 @@ export default function Page() {
     setUser(null);
     setIsAuthenticated(false);
     setCurrentRoute("/dashboard");
+    localStorage.removeItem('currentRoute');
   };
 
-  // Now the conditional return comes after all hooks
-  if (!isAuthenticated) {
+  // FIXED: Don't render auth-dependent content until client is ready
+  // This prevents hydration mismatches
+  if (!isClientReady) {
+    return (
+      <div className="app-container">
+        <div className="main-content">
+          <div className="content-area">
+            <div className="initial-loading">
+              <div className="loading-spinner"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show landing page only if we're sure user is not authenticated
+  if (!isAuthenticated && !isVerifyingAuth) {
     return (
       <>
         <LandingPage onShowAuth={() => setShowAuthModal(true)} />
@@ -208,6 +262,13 @@ export default function Page() {
 
   return (
     <div className="app-container">
+      {/* IMPROVED: Show subtle loading indicator while verifying auth */}
+      {isVerifyingAuth && (
+        <div className="auth-verifying-overlay">
+          <div className="auth-verifying-spinner"></div>
+        </div>
+      )}
+
       <Sidebar
         isOpen={sidebarOpen}
         onNavigate={handleNavigation}
@@ -235,6 +296,7 @@ export default function Page() {
         </header>
 
         <div className="content-area">
+          {/* Show the user's intended page immediately, with subtle loading if needed */}
           <CurrentComponent />
         </div>
       </div>
