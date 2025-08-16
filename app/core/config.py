@@ -85,3 +85,6 @@ settings = Settings()
 
 # Print database URL for debugging
 print(f"DB URL used by FastAPI: {settings.get_database_url()}")
+
+
+# what this code overall do is it creates a configuration file for the application, it defines the settings for the database, API, CORS, storage, logging, JWT, MinIO, and AI/ML. It also includes some validation and parsing for the settings.
