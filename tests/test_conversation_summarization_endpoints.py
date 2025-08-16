@@ -341,12 +341,40 @@ class TestConversationSummarizationEndpoints:
         return passed, failed, skipped
 
 
+# def main():
+#     """Main function to run the tests."""
+#     print("🔧 Conversation Summarization Endpoint Tests")
+#     print("Make sure your server is running on http://localhost:8000")
+#     print("=" * 60)
+#
+#     # Check if server is running
+#     try:
+#         response = requests.get(f"{BASE_URL}/health", timeout=5)
+#         if response.status_code == 200:
+#             print("✅ Server is running and accessible")
+#         else:
+#             print("⚠️  Server responded but health check failed")
+#     except requests.exceptions.ConnectionError:
+#         print("❌ Cannot connect to server. Please start your FastAPI server first.")
+#         print("   Run: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000")
+#         return
+#
+#     # Run tests
+#     tester = TestConversationSummarizationEndpoints()
+#     passed, failed, skipped = tester.run_all_tests()
+#
+#     if failed == 0:
+#         print("\n🎉 All tests passed! Your conversation summarization system is working correctly.")
+#     else:
+#         print(f"\n⚠️  {failed} test(s) failed. Check the output above for details.")
+
+
 def main():
-    """Main function to run the tests."""
+    """Main function to run only the long conversation summarization test."""
     print("🔧 Conversation Summarization Endpoint Tests")
     print("Make sure your server is running on http://localhost:8000")
     print("=" * 60)
-    
+
     # Check if server is running
     try:
         response = requests.get(f"{BASE_URL}/health", timeout=5)
@@ -358,16 +386,23 @@ def main():
         print("❌ Cannot connect to server. Please start your FastAPI server first.")
         print("   Run: uvicorn app.main:app --reload --host 0.0.0.0 --port 8000")
         return
-    
-    # Run tests
-    tester = TestConversationSummarizationEndpoints()
-    passed, failed, skipped = tester.run_all_tests()
-    
-    if failed == 0:
-        print("\n🎉 All tests passed! Your conversation summarization system is working correctly.")
-    else:
-        print(f"\n⚠️  {failed} test(s) failed. Check the output above for details.")
 
+    tester = TestConversationSummarizationEndpoints()
+
+    try:
+        print("\n🧪 Running: test_long_conversation_triggering_summarization")
+        print("-" * 40)
+        tester.test_long_conversation_triggering_summarization()
+        print("✅ PASSED: test_long_conversation_triggering_summarization")
+    except Exception as e:
+        print("❌ FAILED: test_long_conversation_triggering_summarization")
+        print(f"   Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+
+
+if __name__ == "__main__":
+    main()
 
 if __name__ == "__main__":
     main() 

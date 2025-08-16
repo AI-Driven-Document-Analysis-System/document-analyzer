@@ -141,6 +141,40 @@ class Messages:
             logger.error(f"Error getting chat messages: {e}")
             raise
 
+    def prune_keep_last_pairs(self, conversation_id: UUID, keep_pairs: int = 8) -> int:
+        """
+        Delete older messages for a conversation, keeping only the last `keep_pairs` user/assistant pairs.
+        System summary messages added recently will be preserved if they are among the last kept messages.
+        Returns number of deleted rows.
+        """
+        try:
+            # Fetch all ids ordered by time
+            fetch_query = """
+                SELECT id FROM chat_messages
+                WHERE conversation_id = %s
+                ORDER BY timestamp ASC
+            """
+            rows = self.db.execute_query(fetch_query, (conversation_id,), fetch=True)
+            ids = [row["id"] for row in rows]
+
+            keep_count = keep_pairs * 2
+            if len(ids) <= keep_count:
+                return 0
+
+            to_delete = ids[: len(ids) - keep_count]
+            deleted = 0
+            # Delete in small batches to avoid parameter limits
+            for i in range(0, len(to_delete), 100):
+                batch = to_delete[i:i+100]
+                del_query = "DELETE FROM chat_messages WHERE id = ANY(%s)"
+                # Some drivers require tuple(list) for arrays
+                self.db.execute_query(del_query, (batch,))
+                deleted += len(batch)
+            return deleted
+        except Exception as e:
+            logger.error(f"Error pruning chat messages: {e}")
+            raise
+
 
 def get_conversations() -> Conversations:
     return Conversations(get_db())

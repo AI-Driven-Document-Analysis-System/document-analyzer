@@ -14,6 +14,7 @@ from ..schemas.chat_schemas import (
     ConversationCreateRequest, ConversationResponse, ConversationsListResponse, RenameConversationRequest
 )
 from ..services.chat_service import get_chatbot_service, initialize_chatbot_service
+from ..services.chatbot.rag.conversation_summarizer import ConversationSummarizer
 from ..core.config import settings
 from ..db.conversations import get_conversations, get_messages
 from uuid import UUID
@@ -111,7 +112,28 @@ async def send_message(request: ChatMessageRequest):
         
         if needs_summarization:
             logger.info(f"Summarization triggered for conversation {conversation_id}: {message_pairs} pairs, {context_window_usage:.2%} context usage")
-            # TODO: Implement actual summarization logic here
+            try:
+                # Build messages payload for summarization
+                convo_msgs = [
+                    {"role": m.role, "content": m.content, "timestamp": m.timestamp}
+                    for m in messages
+                ]
+                summarizer = ConversationSummarizer()
+                summary_text = summarizer.create_conversation_summary(convo_msgs)
+
+                # Store summary as a system message
+                message_repo.add(
+                    conversation_id=UUID(conversation_id),
+                    role="system",
+                    content=f"Previous conversation summary: {summary_text}",
+                    metadata={"type": "conversation_summary", "original_length": len(messages)}
+                )
+
+                # Prune older messages, keep last 8 pairs (plus summary we just added)
+                deleted = message_repo.prune_keep_last_pairs(UUID(conversation_id), keep_pairs=8)
+                logger.info(f"Pruned {deleted} old messages for conversation {conversation_id}")
+            except Exception as se:
+                logger.warning(f"Summarization/pruning failed for conversation {conversation_id}: {se}")
         
         # Generate actual AI response using chatbot service
         try:
