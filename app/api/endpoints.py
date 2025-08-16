@@ -10,7 +10,7 @@ from app.services.chatbot.vector_db.chunking import DocumentChunker
 
 app = FastAPI()
 
-vectorstore = LangChainChromaStore("./data/chroma_db")
+vectorstore = LangChainChromaStore("./chroma_db")
 llm = LLMFactory.create_gemini_llm(api_key="AIzaSyDC2A8PcGuYXMrWyQpVDoTutbIntgyOYyA", model="gemini-1.5-flash")
 retriever = vectorstore.as_retriever()
 chain = CustomConversationalChain(llm, retriever)

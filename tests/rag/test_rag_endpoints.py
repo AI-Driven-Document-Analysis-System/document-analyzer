@@ -65,7 +65,7 @@ class RAGEndpointTester:
         
         chat_data = {
             "message": question,
-            "user_id": "test-user-rag",
+            "user_id": "user-1",
             "memory_type": "window",
             "conversation_id": f"test-conversation-{int(time.time())}",
             "llm_config": {
@@ -146,7 +146,7 @@ class RAGEndpointTester:
         search_data = {
             "query": query,
             "k": 3,
-            "user_id": "test-user-rag"
+            "user_id": "user-1"
         }
         
         try:

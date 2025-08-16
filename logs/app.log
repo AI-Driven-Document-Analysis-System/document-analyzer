@@ -12033,3 +12033,940 @@ fastapi.exceptions.HTTPException
 2025-08-15 15:50:27,148 - app.main - INFO - DocAnalyzer API shutting down...
 2025-08-15 15:50:27,154 - app.core.database - INFO - Database connection pool closed
 2025-08-15 15:50:27,154 - app.main - INFO - Database connections closed
+2025-08-16 17:10:44,938 - app.db.init_db - INFO - Starting database initialization...
+2025-08-16 17:10:45,884 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-16 17:10:45,945 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-16 17:10:45,945 - app.db.init_db - INFO - Database connection test successful!
+2025-08-16 17:10:46,396 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-16 17:10:46,464 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-16 17:10:48,763 - app.db.init_db - INFO - Database tables created successfully
+2025-08-16 17:10:48,763 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-16 17:10:49,679 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-16 17:10:51,962 - app.db.init_db - INFO - Database tables created successfully
+2025-08-16 17:10:51,962 - app.main - INFO - Database tables ensured
+2025-08-16 17:10:51,962 - app.main - INFO - Database monitoring task started
+2025-08-16 17:11:24,876 - app.core.database - WARNING - Database health check failed: maximum recursion depth exceeded
+2025-08-16 17:11:24,876 - app.core.database - ERROR - Database connection error: maximum recursion depth exceeded while calling a Python object
+2025-08-16 17:11:24,876 - app.core.database - WARNING - Database health check failed: maximum recursion depth exceeded while calling a Python object
+2025-08-16 17:11:24,876 - app.core.database - INFO - Reinitializing database connection pool...
+2025-08-16 17:11:24,878 - app.core.database - INFO - Initializing connection pool with: postgresql://avnadmi...
+2025-08-16 17:11:25,459 - app.core.database - INFO - Database connection test successful
+2025-08-16 17:11:25,460 - app.core.database - ERROR - Failed to initialize database connection pool: maximum recursion depth exceeded in comparison
+2025-08-16 17:11:25,460 - app.core.database - ERROR - Failed to reinitialize connection pool
+2025-08-16 17:11:25,460 - app.core.database - ERROR - Database connection error: Connection pool not initialized
+2025-08-16 17:11:25,460 - app.core.database - WARNING - Database health check failed: Connection pool not initialized
+2025-08-16 17:11:25,460 - app.core.database - INFO - Reinitializing database connection pool...
+2025-08-16 17:11:25,460 - app.core.database - INFO - Initializing connection pool with: postgresql://avnadmi...
+2025-08-16 17:11:25,859 - app.core.database - INFO - Database connection test successful
+2025-08-16 17:11:26,282 - app.core.database - INFO - Database connection pool initialized successfully
+2025-08-16 17:11:26,283 - app.core.database - INFO - Database connection pool reinitialized successfully
+2025-08-16 17:14:42,741 - app.main - INFO - DocAnalyzer API shutting down...
+2025-08-16 17:14:42,753 - app.core.database - INFO - Database connection pool closed
+2025-08-16 17:14:42,753 - app.main - INFO - Database connections closed
+2025-08-16 17:15:16,725 - app.db.init_db - INFO - Starting database initialization...
+2025-08-16 17:15:17,518 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-16 17:15:17,567 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-16 17:15:17,568 - app.db.init_db - INFO - Database connection test successful!
+2025-08-16 17:15:18,037 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-16 17:15:18,092 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-16 17:15:20,068 - app.db.init_db - INFO - Database tables created successfully
+2025-08-16 17:15:20,068 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-16 17:15:20,198 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-16 17:15:22,010 - app.db.init_db - INFO - Database tables created successfully
+2025-08-16 17:15:22,011 - app.main - INFO - Database tables ensured
+2025-08-16 17:15:22,011 - app.main - INFO - Database monitoring task started
+2025-08-16 17:15:32,337 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event CollectionQueryEvent: capture() takes 1 positional argument but 3 were given
+2025-08-16 17:15:33,175 - app.services.chat_service - INFO - Created new chat engine for user test-user-rag with groq provider
+2025-08-16 17:15:34,126 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:15:34,358 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(76ff9597-56de-4fa5-b9e8-03d840234fa1) is not present in table "conversations".
+
+2025-08-16 17:15:34,358 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(76ff9597-56de-4fa5-b9e8-03d840234fa1) is not present in table "conversations".
+
+2025-08-16 17:15:34,358 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(76ff9597-56de-4fa5-b9e8-03d840234fa1) is not present in table "conversations".
+
+2025-08-16 17:15:34,358 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(76ff9597-56de-4fa5-b9e8-03d840234fa1) is not present in table "conversations".
+
+2025-08-16 17:15:34,362 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(76ff9597-56de-4fa5-b9e8-03d840234fa1) is not present in table "conversations".
+
+2025-08-16 17:15:36,806 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:15:37,278 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:15:37,522 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(00c81804-2edf-4caf-835a-f59792b16c58) is not present in table "conversations".
+
+2025-08-16 17:15:37,522 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(00c81804-2edf-4caf-835a-f59792b16c58) is not present in table "conversations".
+
+2025-08-16 17:15:37,522 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(00c81804-2edf-4caf-835a-f59792b16c58) is not present in table "conversations".
+
+2025-08-16 17:15:37,522 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(00c81804-2edf-4caf-835a-f59792b16c58) is not present in table "conversations".
+
+2025-08-16 17:15:37,522 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(00c81804-2edf-4caf-835a-f59792b16c58) is not present in table "conversations".
+
+2025-08-16 17:15:39,992 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:15:40,486 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:15:40,696 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(a20047c3-8d56-4d4e-a645-95921445c276) is not present in table "conversations".
+
+2025-08-16 17:15:40,698 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(a20047c3-8d56-4d4e-a645-95921445c276) is not present in table "conversations".
+
+2025-08-16 17:15:40,699 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(a20047c3-8d56-4d4e-a645-95921445c276) is not present in table "conversations".
+
+2025-08-16 17:15:40,699 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(a20047c3-8d56-4d4e-a645-95921445c276) is not present in table "conversations".
+
+2025-08-16 17:15:40,701 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(a20047c3-8d56-4d4e-a645-95921445c276) is not present in table "conversations".
+
+2025-08-16 17:15:43,248 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:15:43,796 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:15:43,995 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(8d145145-1f9a-4f1e-b5f5-846f5e7aa378) is not present in table "conversations".
+
+2025-08-16 17:15:43,995 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(8d145145-1f9a-4f1e-b5f5-846f5e7aa378) is not present in table "conversations".
+
+2025-08-16 17:15:43,995 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(8d145145-1f9a-4f1e-b5f5-846f5e7aa378) is not present in table "conversations".
+
+2025-08-16 17:15:43,995 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(8d145145-1f9a-4f1e-b5f5-846f5e7aa378) is not present in table "conversations".
+
+2025-08-16 17:15:43,998 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(8d145145-1f9a-4f1e-b5f5-846f5e7aa378) is not present in table "conversations".
+
+2025-08-16 17:15:46,454 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:15:46,987 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:15:47,203 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(66afcd98-6979-402f-9871-12b750f70f97) is not present in table "conversations".
+
+2025-08-16 17:15:47,204 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(66afcd98-6979-402f-9871-12b750f70f97) is not present in table "conversations".
+
+2025-08-16 17:15:47,204 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(66afcd98-6979-402f-9871-12b750f70f97) is not present in table "conversations".
+
+2025-08-16 17:15:47,204 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(66afcd98-6979-402f-9871-12b750f70f97) is not present in table "conversations".
+
+2025-08-16 17:15:47,204 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(66afcd98-6979-402f-9871-12b750f70f97) is not present in table "conversations".
+
+2025-08-16 17:16:46,088 - app.main - INFO - DocAnalyzer API shutting down...
+2025-08-16 17:16:46,090 - app.core.database - INFO - Database connection pool closed
+2025-08-16 17:16:46,090 - app.main - INFO - Database connections closed
+2025-08-16 17:17:17,891 - app.db.init_db - INFO - Starting database initialization...
+2025-08-16 17:17:18,650 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-16 17:17:18,704 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-16 17:17:18,705 - app.db.init_db - INFO - Database connection test successful!
+2025-08-16 17:17:19,196 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-16 17:17:19,250 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-16 17:17:20,915 - app.db.init_db - INFO - Database tables created successfully
+2025-08-16 17:17:20,916 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-16 17:17:21,041 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-16 17:17:23,005 - app.db.init_db - INFO - Database tables created successfully
+2025-08-16 17:17:23,005 - app.main - INFO - Database tables ensured
+2025-08-16 17:17:23,005 - app.main - INFO - Database monitoring task started
+2025-08-16 17:19:03,837 - app.core.database - WARNING - Database health check failed: SSL SYSCALL error: EOF detected
+
+2025-08-16 17:19:03,837 - app.core.database - INFO - Reinitializing database connection pool...
+2025-08-16 17:19:03,837 - app.core.database - INFO - Initializing connection pool with: postgresql://avnadmi...
+2025-08-16 17:19:04,478 - app.core.database - INFO - Database connection test successful
+2025-08-16 17:19:04,938 - app.core.database - INFO - Database connection pool initialized successfully
+2025-08-16 17:19:04,938 - app.core.database - INFO - Database connection pool reinitialized successfully
+2025-08-16 17:19:05,460 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event CollectionQueryEvent: capture() takes 1 positional argument but 3 were given
+2025-08-16 17:19:06,086 - app.services.chat_service - INFO - Created new chat engine for user test-user-rag with groq provider
+2025-08-16 17:19:07,004 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:19:07,456 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(be995d6f-1047-4d0e-933a-2a37acf554c5) is not present in table "conversations".
+
+2025-08-16 17:19:07,457 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(be995d6f-1047-4d0e-933a-2a37acf554c5) is not present in table "conversations".
+
+2025-08-16 17:19:07,457 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(be995d6f-1047-4d0e-933a-2a37acf554c5) is not present in table "conversations".
+
+2025-08-16 17:19:07,457 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(be995d6f-1047-4d0e-933a-2a37acf554c5) is not present in table "conversations".
+
+2025-08-16 17:19:07,457 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(be995d6f-1047-4d0e-933a-2a37acf554c5) is not present in table "conversations".
+
+2025-08-16 17:19:09,897 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:19:10,425 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:19:10,713 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(69f8ec03-28e6-4667-8c48-01ed66e35936) is not present in table "conversations".
+
+2025-08-16 17:19:10,713 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(69f8ec03-28e6-4667-8c48-01ed66e35936) is not present in table "conversations".
+
+2025-08-16 17:19:10,713 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(69f8ec03-28e6-4667-8c48-01ed66e35936) is not present in table "conversations".
+
+2025-08-16 17:19:10,713 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(69f8ec03-28e6-4667-8c48-01ed66e35936) is not present in table "conversations".
+
+2025-08-16 17:19:10,714 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(69f8ec03-28e6-4667-8c48-01ed66e35936) is not present in table "conversations".
+
+2025-08-16 17:19:13,151 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:19:13,641 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:19:13,865 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(2db0df35-b949-474a-91c9-af8eb181eee2) is not present in table "conversations".
+
+2025-08-16 17:19:13,866 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(2db0df35-b949-474a-91c9-af8eb181eee2) is not present in table "conversations".
+
+2025-08-16 17:19:13,866 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(2db0df35-b949-474a-91c9-af8eb181eee2) is not present in table "conversations".
+
+2025-08-16 17:19:13,866 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(2db0df35-b949-474a-91c9-af8eb181eee2) is not present in table "conversations".
+
+2025-08-16 17:19:13,866 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(2db0df35-b949-474a-91c9-af8eb181eee2) is not present in table "conversations".
+
+2025-08-16 17:19:16,310 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:19:16,879 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:19:17,107 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(96fc656c-448d-4898-a222-b3c195e819cd) is not present in table "conversations".
+
+2025-08-16 17:19:17,109 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(96fc656c-448d-4898-a222-b3c195e819cd) is not present in table "conversations".
+
+2025-08-16 17:19:17,109 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(96fc656c-448d-4898-a222-b3c195e819cd) is not present in table "conversations".
+
+2025-08-16 17:19:17,109 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(96fc656c-448d-4898-a222-b3c195e819cd) is not present in table "conversations".
+
+2025-08-16 17:19:17,109 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(96fc656c-448d-4898-a222-b3c195e819cd) is not present in table "conversations".
+
+2025-08-16 17:19:19,735 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:19:20,218 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:19:20,453 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(87212919-4155-408e-8384-20eab12c8513) is not present in table "conversations".
+
+2025-08-16 17:19:20,454 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(87212919-4155-408e-8384-20eab12c8513) is not present in table "conversations".
+
+2025-08-16 17:19:20,454 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(87212919-4155-408e-8384-20eab12c8513) is not present in table "conversations".
+
+2025-08-16 17:19:20,454 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(87212919-4155-408e-8384-20eab12c8513) is not present in table "conversations".
+
+2025-08-16 17:19:20,454 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(87212919-4155-408e-8384-20eab12c8513) is not present in table "conversations".
+
+2025-08-16 17:22:23,108 - app.core.database - WARNING - Quick connection test failed: could not receive data from server: Software caused connection abort (0x00002745/10053)
+SSL SYSCALL error: Software caused connection abort (0x00002745/10053)
+
+2025-08-16 17:22:23,141 - app.main - WARNING - Database health check failed, attempting reconnection...
+2025-08-16 17:22:23,143 - app.core.database - INFO - Connection pool already exists, closing first...
+2025-08-16 17:22:23,148 - app.core.database - INFO - Initializing connection pool with: postgresql://avnadmi...
+2025-08-16 17:22:23,827 - app.core.database - INFO - Database connection test successful
+2025-08-16 17:22:24,270 - app.core.database - INFO - Database connection pool initialized successfully
+2025-08-16 17:22:24,270 - app.main - INFO - Database reconnection successful
+2025-08-16 17:22:53,503 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:22:54,013 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:22:54,278 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(c62528ff-63e7-4308-a64e-383d90616692) is not present in table "conversations".
+
+2025-08-16 17:22:54,278 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(c62528ff-63e7-4308-a64e-383d90616692) is not present in table "conversations".
+
+2025-08-16 17:22:54,278 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(c62528ff-63e7-4308-a64e-383d90616692) is not present in table "conversations".
+
+2025-08-16 17:22:54,278 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(c62528ff-63e7-4308-a64e-383d90616692) is not present in table "conversations".
+
+2025-08-16 17:22:54,278 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(c62528ff-63e7-4308-a64e-383d90616692) is not present in table "conversations".
+
+2025-08-16 17:22:56,753 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:22:57,262 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:22:57,525 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(92e31474-8e69-4ad9-bdb4-f1e32efd3b9b) is not present in table "conversations".
+
+2025-08-16 17:22:57,525 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(92e31474-8e69-4ad9-bdb4-f1e32efd3b9b) is not present in table "conversations".
+
+2025-08-16 17:22:57,525 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(92e31474-8e69-4ad9-bdb4-f1e32efd3b9b) is not present in table "conversations".
+
+2025-08-16 17:22:57,525 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(92e31474-8e69-4ad9-bdb4-f1e32efd3b9b) is not present in table "conversations".
+
+2025-08-16 17:22:57,525 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(92e31474-8e69-4ad9-bdb4-f1e32efd3b9b) is not present in table "conversations".
+
+2025-08-16 17:22:59,997 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:23:00,520 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:23:00,739 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(1b6e669a-c8bb-4706-a013-e8f7c697d80c) is not present in table "conversations".
+
+2025-08-16 17:23:00,739 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(1b6e669a-c8bb-4706-a013-e8f7c697d80c) is not present in table "conversations".
+
+2025-08-16 17:23:00,739 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(1b6e669a-c8bb-4706-a013-e8f7c697d80c) is not present in table "conversations".
+
+2025-08-16 17:23:00,739 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(1b6e669a-c8bb-4706-a013-e8f7c697d80c) is not present in table "conversations".
+
+2025-08-16 17:23:00,739 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(1b6e669a-c8bb-4706-a013-e8f7c697d80c) is not present in table "conversations".
+
+2025-08-16 17:23:03,285 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:23:03,898 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:23:04,136 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(2a8a3c16-c928-42ac-b3e3-dbc58d93f7e8) is not present in table "conversations".
+
+2025-08-16 17:23:04,136 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(2a8a3c16-c928-42ac-b3e3-dbc58d93f7e8) is not present in table "conversations".
+
+2025-08-16 17:23:04,136 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(2a8a3c16-c928-42ac-b3e3-dbc58d93f7e8) is not present in table "conversations".
+
+2025-08-16 17:23:04,137 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(2a8a3c16-c928-42ac-b3e3-dbc58d93f7e8) is not present in table "conversations".
+
+2025-08-16 17:23:04,137 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(2a8a3c16-c928-42ac-b3e3-dbc58d93f7e8) is not present in table "conversations".
+
+2025-08-16 17:23:05,572 - app.main - INFO - DocAnalyzer API shutting down...
+2025-08-16 17:23:05,574 - app.core.database - INFO - Database connection pool closed
+2025-08-16 17:23:05,574 - app.main - INFO - Database connections closed
+2025-08-16 17:23:43,091 - app.db.init_db - INFO - Starting database initialization...
+2025-08-16 17:23:44,488 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-16 17:23:44,534 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-16 17:23:44,535 - app.db.init_db - INFO - Database connection test successful!
+2025-08-16 17:23:44,981 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-16 17:23:45,022 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-16 17:23:46,668 - app.db.init_db - INFO - Database tables created successfully
+2025-08-16 17:23:46,668 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-16 17:23:46,798 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-16 17:23:48,442 - app.db.init_db - INFO - Database tables created successfully
+2025-08-16 17:23:48,443 - app.main - INFO - Database tables ensured
+2025-08-16 17:23:48,443 - app.main - INFO - Database monitoring task started
+2025-08-16 17:23:57,735 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event CollectionQueryEvent: capture() takes 1 positional argument but 3 were given
+2025-08-16 17:23:58,441 - app.services.chat_service - INFO - Created new chat engine for user test-user-rag with groq provider
+2025-08-16 17:23:59,391 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:23:59,622 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(1d3c2bb2-4702-47b8-8bbe-4d9432962dfa) is not present in table "conversations".
+
+2025-08-16 17:23:59,626 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(1d3c2bb2-4702-47b8-8bbe-4d9432962dfa) is not present in table "conversations".
+
+2025-08-16 17:23:59,626 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(1d3c2bb2-4702-47b8-8bbe-4d9432962dfa) is not present in table "conversations".
+
+2025-08-16 17:23:59,626 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(1d3c2bb2-4702-47b8-8bbe-4d9432962dfa) is not present in table "conversations".
+
+2025-08-16 17:23:59,629 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(1d3c2bb2-4702-47b8-8bbe-4d9432962dfa) is not present in table "conversations".
+
+2025-08-16 17:24:02,180 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:24:03,075 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:24:03,300 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(412c96aa-c449-4388-a574-f64cc76bc444) is not present in table "conversations".
+
+2025-08-16 17:24:03,300 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(412c96aa-c449-4388-a574-f64cc76bc444) is not present in table "conversations".
+
+2025-08-16 17:24:03,300 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(412c96aa-c449-4388-a574-f64cc76bc444) is not present in table "conversations".
+
+2025-08-16 17:24:03,300 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(412c96aa-c449-4388-a574-f64cc76bc444) is not present in table "conversations".
+
+2025-08-16 17:24:03,300 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(412c96aa-c449-4388-a574-f64cc76bc444) is not present in table "conversations".
+
+2025-08-16 17:24:14,958 - app.main - INFO - DocAnalyzer API shutting down...
+2025-08-16 17:24:14,961 - app.core.database - INFO - Database connection pool closed
+2025-08-16 17:24:14,963 - app.main - INFO - Database connections closed
+2025-08-16 17:24:48,718 - app.db.init_db - INFO - Starting database initialization...
+2025-08-16 17:24:49,446 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-16 17:24:49,491 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-16 17:24:49,491 - app.db.init_db - INFO - Database connection test successful!
+2025-08-16 17:24:49,931 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-16 17:24:49,990 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-16 17:24:51,854 - app.db.init_db - INFO - Database tables created successfully
+2025-08-16 17:24:51,855 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-16 17:24:51,948 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-16 17:24:53,721 - app.db.init_db - INFO - Database tables created successfully
+2025-08-16 17:24:53,722 - app.main - INFO - Database tables ensured
+2025-08-16 17:24:53,722 - app.main - INFO - Database monitoring task started
+2025-08-16 17:24:58,439 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event CollectionQueryEvent: capture() takes 1 positional argument but 3 were given
+2025-08-16 17:25:00,111 - app.services.chat_service - INFO - Created new chat engine for user test-user-rag with groq provider
+2025-08-16 17:25:01,172 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:25:01,517 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(6478ab36-87b5-410e-850c-5dc4303207dd) is not present in table "conversations".
+
+2025-08-16 17:25:01,517 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(6478ab36-87b5-410e-850c-5dc4303207dd) is not present in table "conversations".
+
+2025-08-16 17:25:01,517 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(6478ab36-87b5-410e-850c-5dc4303207dd) is not present in table "conversations".
+
+2025-08-16 17:25:01,517 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(6478ab36-87b5-410e-850c-5dc4303207dd) is not present in table "conversations".
+
+2025-08-16 17:25:01,519 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(6478ab36-87b5-410e-850c-5dc4303207dd) is not present in table "conversations".
+
+2025-08-16 17:25:03,964 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:25:04,444 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:25:04,684 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(412da7b8-92e4-4d5e-b0c4-780bc410aa7d) is not present in table "conversations".
+
+2025-08-16 17:25:04,684 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(412da7b8-92e4-4d5e-b0c4-780bc410aa7d) is not present in table "conversations".
+
+2025-08-16 17:25:04,684 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(412da7b8-92e4-4d5e-b0c4-780bc410aa7d) is not present in table "conversations".
+
+2025-08-16 17:25:04,684 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(412da7b8-92e4-4d5e-b0c4-780bc410aa7d) is not present in table "conversations".
+
+2025-08-16 17:25:04,684 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(412da7b8-92e4-4d5e-b0c4-780bc410aa7d) is not present in table "conversations".
+
+2025-08-16 17:29:53,789 - app.core.database - WARNING - Quick connection test failed: could not receive data from server: Software caused connection abort (0x00002745/10053)
+SSL SYSCALL error: Software caused connection abort (0x00002745/10053)
+
+2025-08-16 17:29:53,806 - app.main - WARNING - Database health check failed, attempting reconnection...
+2025-08-16 17:29:53,807 - app.core.database - INFO - Connection pool already exists, closing first...
+2025-08-16 17:29:53,811 - app.core.database - INFO - Initializing connection pool with: postgresql://avnadmi...
+2025-08-16 17:29:54,506 - app.core.database - INFO - Database connection test successful
+2025-08-16 17:29:54,997 - app.core.database - INFO - Database connection pool initialized successfully
+2025-08-16 17:29:54,998 - app.main - INFO - Database reconnection successful
+2025-08-16 17:34:55,056 - app.core.database - WARNING - Quick connection test failed: could not receive data from server: Software caused connection abort (0x00002745/10053)
+SSL SYSCALL error: Software caused connection abort (0x00002745/10053)
+
+2025-08-16 17:34:55,072 - app.main - WARNING - Database health check failed, attempting reconnection...
+2025-08-16 17:34:55,072 - app.core.database - INFO - Connection pool already exists, closing first...
+2025-08-16 17:34:55,077 - app.core.database - INFO - Initializing connection pool with: postgresql://avnadmi...
+2025-08-16 17:34:55,766 - app.core.database - INFO - Database connection test successful
+2025-08-16 17:34:56,337 - app.core.database - INFO - Database connection pool initialized successfully
+2025-08-16 17:34:56,337 - app.main - INFO - Database reconnection successful
+2025-08-16 17:41:33,414 - app.main - INFO - DocAnalyzer API shutting down...
+2025-08-16 17:41:33,423 - app.core.database - INFO - Database connection pool closed
+2025-08-16 17:41:33,423 - app.main - INFO - Database connections closed
+2025-08-16 17:43:04,373 - app.db.init_db - INFO - Starting database initialization...
+2025-08-16 17:43:05,272 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-16 17:43:05,376 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-16 17:43:05,376 - app.db.init_db - INFO - Database connection test successful!
+2025-08-16 17:43:06,072 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-16 17:43:06,164 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-16 17:43:09,061 - app.db.init_db - INFO - Database tables created successfully
+2025-08-16 17:43:09,061 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-16 17:43:09,222 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-16 17:43:11,949 - app.db.init_db - INFO - Database tables created successfully
+2025-08-16 17:43:11,949 - app.main - INFO - Database tables ensured
+2025-08-16 17:43:11,949 - app.main - INFO - Database monitoring task started
+2025-08-16 17:43:30,651 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event CollectionQueryEvent: capture() takes 1 positional argument but 3 were given
+2025-08-16 17:43:31,311 - app.services.chat_service - INFO - Created new chat engine for user test-user-rag with groq provider
+2025-08-16 17:43:32,270 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:43:32,604 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(5562d555-6f9e-448f-a466-01e2bb0d9533) is not present in table "conversations".
+
+2025-08-16 17:43:32,604 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(5562d555-6f9e-448f-a466-01e2bb0d9533) is not present in table "conversations".
+
+2025-08-16 17:43:32,604 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(5562d555-6f9e-448f-a466-01e2bb0d9533) is not present in table "conversations".
+
+2025-08-16 17:43:32,604 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(5562d555-6f9e-448f-a466-01e2bb0d9533) is not present in table "conversations".
+
+2025-08-16 17:43:32,604 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(5562d555-6f9e-448f-a466-01e2bb0d9533) is not present in table "conversations".
+
+2025-08-16 17:43:35,134 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:43:35,691 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:43:36,063 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(b0498f43-c770-4e64-bd4f-a31c2ba5160e) is not present in table "conversations".
+
+2025-08-16 17:43:36,063 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(b0498f43-c770-4e64-bd4f-a31c2ba5160e) is not present in table "conversations".
+
+2025-08-16 17:43:36,063 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(b0498f43-c770-4e64-bd4f-a31c2ba5160e) is not present in table "conversations".
+
+2025-08-16 17:43:36,063 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(b0498f43-c770-4e64-bd4f-a31c2ba5160e) is not present in table "conversations".
+
+2025-08-16 17:43:36,063 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(b0498f43-c770-4e64-bd4f-a31c2ba5160e) is not present in table "conversations".
+
+2025-08-16 17:50:33,515 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:50:33,987 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:50:34,372 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(637d143f-e5f4-4f7d-ab60-6ed4a17fdd2c) is not present in table "conversations".
+
+2025-08-16 17:50:34,373 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(637d143f-e5f4-4f7d-ab60-6ed4a17fdd2c) is not present in table "conversations".
+
+2025-08-16 17:50:34,373 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(637d143f-e5f4-4f7d-ab60-6ed4a17fdd2c) is not present in table "conversations".
+
+2025-08-16 17:50:34,373 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(637d143f-e5f4-4f7d-ab60-6ed4a17fdd2c) is not present in table "conversations".
+
+2025-08-16 17:50:34,375 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(637d143f-e5f4-4f7d-ab60-6ed4a17fdd2c) is not present in table "conversations".
+
+2025-08-16 17:50:36,804 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:50:37,289 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:50:37,660 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(1cb3ca44-edb5-43d1-affb-6dc8ec37c52f) is not present in table "conversations".
+
+2025-08-16 17:50:37,660 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(1cb3ca44-edb5-43d1-affb-6dc8ec37c52f) is not present in table "conversations".
+
+2025-08-16 17:50:37,660 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(1cb3ca44-edb5-43d1-affb-6dc8ec37c52f) is not present in table "conversations".
+
+2025-08-16 17:50:37,660 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(1cb3ca44-edb5-43d1-affb-6dc8ec37c52f) is not present in table "conversations".
+
+2025-08-16 17:50:37,660 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(1cb3ca44-edb5-43d1-affb-6dc8ec37c52f) is not present in table "conversations".
+
+2025-08-16 17:50:41,999 - app.main - INFO - DocAnalyzer API shutting down...
+2025-08-16 17:50:42,013 - app.core.database - INFO - Database connection pool closed
+2025-08-16 17:50:42,013 - app.main - INFO - Database connections closed
+2025-08-16 17:51:26,968 - app.db.init_db - INFO - Starting database initialization...
+2025-08-16 17:51:28,637 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-16 17:51:28,837 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-16 17:51:28,837 - app.db.init_db - INFO - Database connection test successful!
+2025-08-16 17:51:30,249 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-16 17:51:30,461 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-16 17:51:33,291 - app.db.init_db - INFO - Database tables created successfully
+2025-08-16 17:51:33,298 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-16 17:51:33,437 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-16 17:51:39,472 - app.db.init_db - INFO - Database tables created successfully
+2025-08-16 17:51:39,472 - app.main - INFO - Database tables ensured
+2025-08-16 17:51:39,472 - app.main - INFO - Database monitoring task started
+2025-08-16 17:52:26,322 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event CollectionQueryEvent: capture() takes 1 positional argument but 3 were given
+2025-08-16 17:52:27,078 - app.services.chat_service - INFO - Created new chat engine for user test-user-rag with groq provider
+2025-08-16 17:52:27,898 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:52:28,812 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(fe784e99-a7f8-4efa-b4c1-5007e80741d3) is not present in table "conversations".
+
+2025-08-16 17:52:28,812 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(fe784e99-a7f8-4efa-b4c1-5007e80741d3) is not present in table "conversations".
+
+2025-08-16 17:52:28,812 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(fe784e99-a7f8-4efa-b4c1-5007e80741d3) is not present in table "conversations".
+
+2025-08-16 17:52:28,812 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(fe784e99-a7f8-4efa-b4c1-5007e80741d3) is not present in table "conversations".
+
+2025-08-16 17:52:28,812 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(fe784e99-a7f8-4efa-b4c1-5007e80741d3) is not present in table "conversations".
+
+2025-08-16 17:52:31,193 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:52:31,638 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:52:32,402 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(73b22067-7a99-4007-b7e7-0953fa94bd78) is not present in table "conversations".
+
+2025-08-16 17:52:32,403 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(73b22067-7a99-4007-b7e7-0953fa94bd78) is not present in table "conversations".
+
+2025-08-16 17:52:32,403 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(73b22067-7a99-4007-b7e7-0953fa94bd78) is not present in table "conversations".
+
+2025-08-16 17:52:32,403 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(73b22067-7a99-4007-b7e7-0953fa94bd78) is not present in table "conversations".
+
+2025-08-16 17:52:32,403 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(73b22067-7a99-4007-b7e7-0953fa94bd78) is not present in table "conversations".
+
+2025-08-16 17:52:34,806 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:52:35,223 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:52:36,022 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(718fbdf0-09e3-42ab-9f77-586cee759f7e) is not present in table "conversations".
+
+2025-08-16 17:52:36,022 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(718fbdf0-09e3-42ab-9f77-586cee759f7e) is not present in table "conversations".
+
+2025-08-16 17:52:36,022 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(718fbdf0-09e3-42ab-9f77-586cee759f7e) is not present in table "conversations".
+
+2025-08-16 17:52:36,022 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(718fbdf0-09e3-42ab-9f77-586cee759f7e) is not present in table "conversations".
+
+2025-08-16 17:52:36,022 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(718fbdf0-09e3-42ab-9f77-586cee759f7e) is not present in table "conversations".
+
+2025-08-16 17:52:38,449 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:52:38,958 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:52:39,744 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(a2b5369a-cf16-47fa-80b5-aa309fe44d1e) is not present in table "conversations".
+
+2025-08-16 17:52:39,744 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(a2b5369a-cf16-47fa-80b5-aa309fe44d1e) is not present in table "conversations".
+
+2025-08-16 17:52:39,748 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(a2b5369a-cf16-47fa-80b5-aa309fe44d1e) is not present in table "conversations".
+
+2025-08-16 17:52:39,748 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(a2b5369a-cf16-47fa-80b5-aa309fe44d1e) is not present in table "conversations".
+
+2025-08-16 17:52:39,748 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(a2b5369a-cf16-47fa-80b5-aa309fe44d1e) is not present in table "conversations".
+
+2025-08-16 17:52:42,238 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:52:42,712 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:52:43,489 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(861962d9-13aa-4ae6-9e42-45c74cf641da) is not present in table "conversations".
+
+2025-08-16 17:52:43,491 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(861962d9-13aa-4ae6-9e42-45c74cf641da) is not present in table "conversations".
+
+2025-08-16 17:52:43,492 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(861962d9-13aa-4ae6-9e42-45c74cf641da) is not present in table "conversations".
+
+2025-08-16 17:52:43,492 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(861962d9-13aa-4ae6-9e42-45c74cf641da) is not present in table "conversations".
+
+2025-08-16 17:52:43,492 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(861962d9-13aa-4ae6-9e42-45c74cf641da) is not present in table "conversations".
+
+2025-08-16 17:53:44,879 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:53:45,490 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:53:46,242 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(c72c28cf-2628-40c5-b84d-49bfe7126ba7) is not present in table "conversations".
+
+2025-08-16 17:53:46,242 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(c72c28cf-2628-40c5-b84d-49bfe7126ba7) is not present in table "conversations".
+
+2025-08-16 17:53:46,243 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(c72c28cf-2628-40c5-b84d-49bfe7126ba7) is not present in table "conversations".
+
+2025-08-16 17:53:46,243 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(c72c28cf-2628-40c5-b84d-49bfe7126ba7) is not present in table "conversations".
+
+2025-08-16 17:53:46,243 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(c72c28cf-2628-40c5-b84d-49bfe7126ba7) is not present in table "conversations".
+
+2025-08-16 17:53:48,862 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:53:49,484 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:53:50,229 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(8ff4d74f-841b-428c-b171-08263b64a76b) is not present in table "conversations".
+
+2025-08-16 17:53:50,229 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(8ff4d74f-841b-428c-b171-08263b64a76b) is not present in table "conversations".
+
+2025-08-16 17:53:50,229 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(8ff4d74f-841b-428c-b171-08263b64a76b) is not present in table "conversations".
+
+2025-08-16 17:53:50,229 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(8ff4d74f-841b-428c-b171-08263b64a76b) is not present in table "conversations".
+
+2025-08-16 17:53:50,232 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(8ff4d74f-841b-428c-b171-08263b64a76b) is not present in table "conversations".
+
+2025-08-16 17:53:52,722 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:53:53,785 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:53:54,557 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(6411b5f1-df62-4dd6-9124-c1d49031c33d) is not present in table "conversations".
+
+2025-08-16 17:53:54,557 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(6411b5f1-df62-4dd6-9124-c1d49031c33d) is not present in table "conversations".
+
+2025-08-16 17:53:54,557 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(6411b5f1-df62-4dd6-9124-c1d49031c33d) is not present in table "conversations".
+
+2025-08-16 17:53:54,557 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(6411b5f1-df62-4dd6-9124-c1d49031c33d) is not present in table "conversations".
+
+2025-08-16 17:53:54,557 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(6411b5f1-df62-4dd6-9124-c1d49031c33d) is not present in table "conversations".
+
+2025-08-16 17:53:57,063 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:53:57,624 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 17:53:58,411 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(b4d7e5cb-906a-4fef-abf4-4a760e4cf8a6) is not present in table "conversations".
+
+2025-08-16 17:53:58,411 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(b4d7e5cb-906a-4fef-abf4-4a760e4cf8a6) is not present in table "conversations".
+
+2025-08-16 17:53:58,411 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(b4d7e5cb-906a-4fef-abf4-4a760e4cf8a6) is not present in table "conversations".
+
+2025-08-16 17:53:58,411 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(b4d7e5cb-906a-4fef-abf4-4a760e4cf8a6) is not present in table "conversations".
+
+2025-08-16 17:53:58,411 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(b4d7e5cb-906a-4fef-abf4-4a760e4cf8a6) is not present in table "conversations".
+
+2025-08-16 17:55:06,987 - app.main - INFO - DocAnalyzer API shutting down...
+2025-08-16 17:55:07,013 - app.core.database - INFO - Database connection pool closed
+2025-08-16 17:55:07,013 - app.main - INFO - Database connections closed
+2025-08-16 17:59:33,373 - app.db.init_db - INFO - Starting database initialization...
+2025-08-16 17:59:35,114 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-16 17:59:35,306 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-16 17:59:35,306 - app.db.init_db - INFO - Database connection test successful!
+2025-08-16 17:59:36,866 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-16 17:59:37,091 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-16 17:59:42,830 - app.db.init_db - INFO - Database tables created successfully
+2025-08-16 17:59:42,830 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-16 17:59:43,005 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-16 17:59:45,764 - app.db.init_db - INFO - Database tables created successfully
+2025-08-16 17:59:45,767 - app.main - INFO - Database tables ensured
+2025-08-16 17:59:45,768 - app.main - INFO - Database monitoring task started
+2025-08-16 17:59:59,941 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event CollectionQueryEvent: capture() takes 1 positional argument but 3 were given
+2025-08-16 18:00:00,689 - app.services.chat_service - INFO - Created new chat engine for user test-user-rag with groq provider
+2025-08-16 18:00:01,672 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 18:00:02,057 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(8318baa7-416d-416c-b541-e484e6203acd) is not present in table "conversations".
+
+2025-08-16 18:00:02,057 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(8318baa7-416d-416c-b541-e484e6203acd) is not present in table "conversations".
+
+2025-08-16 18:00:02,057 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(8318baa7-416d-416c-b541-e484e6203acd) is not present in table "conversations".
+
+2025-08-16 18:00:02,057 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(8318baa7-416d-416c-b541-e484e6203acd) is not present in table "conversations".
+
+2025-08-16 18:00:02,057 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(8318baa7-416d-416c-b541-e484e6203acd) is not present in table "conversations".
+
+2025-08-16 18:00:04,532 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 18:00:05,098 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 18:00:05,498 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(7b516ed0-ffca-409a-984a-50e4594aaa1a) is not present in table "conversations".
+
+2025-08-16 18:00:05,498 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(7b516ed0-ffca-409a-984a-50e4594aaa1a) is not present in table "conversations".
+
+2025-08-16 18:00:05,500 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(7b516ed0-ffca-409a-984a-50e4594aaa1a) is not present in table "conversations".
+
+2025-08-16 18:00:05,500 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(7b516ed0-ffca-409a-984a-50e4594aaa1a) is not present in table "conversations".
+
+2025-08-16 18:00:05,500 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(7b516ed0-ffca-409a-984a-50e4594aaa1a) is not present in table "conversations".
+
+2025-08-16 18:00:08,038 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 18:00:08,950 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 18:00:09,331 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(1ffec274-9122-4c4d-b298-8f47d8df44d9) is not present in table "conversations".
+
+2025-08-16 18:00:09,337 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(1ffec274-9122-4c4d-b298-8f47d8df44d9) is not present in table "conversations".
+
+2025-08-16 18:00:09,337 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(1ffec274-9122-4c4d-b298-8f47d8df44d9) is not present in table "conversations".
+
+2025-08-16 18:00:09,337 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(1ffec274-9122-4c4d-b298-8f47d8df44d9) is not present in table "conversations".
+
+2025-08-16 18:00:09,337 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(1ffec274-9122-4c4d-b298-8f47d8df44d9) is not present in table "conversations".
+
+2025-08-16 18:20:19,550 - app.services.chat_service - INFO - Created new chat engine for user user-1 with groq provider
+2025-08-16 18:20:20,424 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 18:20:20,854 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(67a83ade-0069-4529-a761-4b3da326a7ce) is not present in table "conversations".
+
+2025-08-16 18:20:20,854 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(67a83ade-0069-4529-a761-4b3da326a7ce) is not present in table "conversations".
+
+2025-08-16 18:20:20,854 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(67a83ade-0069-4529-a761-4b3da326a7ce) is not present in table "conversations".
+
+2025-08-16 18:20:20,869 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(67a83ade-0069-4529-a761-4b3da326a7ce) is not present in table "conversations".
+
+2025-08-16 18:20:20,869 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(67a83ade-0069-4529-a761-4b3da326a7ce) is not present in table "conversations".
+
+2025-08-16 18:20:23,549 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 18:20:24,168 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 18:20:24,536 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(aca249c6-cc62-4996-b5cd-13934e30fee9) is not present in table "conversations".
+
+2025-08-16 18:20:24,536 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(aca249c6-cc62-4996-b5cd-13934e30fee9) is not present in table "conversations".
+
+2025-08-16 18:20:24,536 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(aca249c6-cc62-4996-b5cd-13934e30fee9) is not present in table "conversations".
+
+2025-08-16 18:20:24,536 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(aca249c6-cc62-4996-b5cd-13934e30fee9) is not present in table "conversations".
+
+2025-08-16 18:20:24,536 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(aca249c6-cc62-4996-b5cd-13934e30fee9) is not present in table "conversations".
+
+2025-08-16 18:20:27,107 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 18:20:27,698 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 18:20:28,073 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(db01818b-b540-4a81-b3a2-ee9dedc3b757) is not present in table "conversations".
+
+2025-08-16 18:20:28,073 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(db01818b-b540-4a81-b3a2-ee9dedc3b757) is not present in table "conversations".
+
+2025-08-16 18:20:28,073 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(db01818b-b540-4a81-b3a2-ee9dedc3b757) is not present in table "conversations".
+
+2025-08-16 18:20:28,073 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(db01818b-b540-4a81-b3a2-ee9dedc3b757) is not present in table "conversations".
+
+2025-08-16 18:20:28,073 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(db01818b-b540-4a81-b3a2-ee9dedc3b757) is not present in table "conversations".
+
+2025-08-16 18:20:30,722 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 18:20:31,338 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 18:20:31,722 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(ef04dae1-6694-4abb-9071-5106cbb36c11) is not present in table "conversations".
+
+2025-08-16 18:20:31,722 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(ef04dae1-6694-4abb-9071-5106cbb36c11) is not present in table "conversations".
+
+2025-08-16 18:20:31,722 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(ef04dae1-6694-4abb-9071-5106cbb36c11) is not present in table "conversations".
+
+2025-08-16 18:20:31,722 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(ef04dae1-6694-4abb-9071-5106cbb36c11) is not present in table "conversations".
+
+2025-08-16 18:20:31,722 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(ef04dae1-6694-4abb-9071-5106cbb36c11) is not present in table "conversations".
+
+2025-08-16 18:20:34,298 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 18:20:35,024 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 18:20:35,564 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(8bf5da03-ca42-409c-8da8-7f29c2312e4b) is not present in table "conversations".
+
+2025-08-16 18:20:35,566 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(8bf5da03-ca42-409c-8da8-7f29c2312e4b) is not present in table "conversations".
+
+2025-08-16 18:20:35,567 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(8bf5da03-ca42-409c-8da8-7f29c2312e4b) is not present in table "conversations".
+
+2025-08-16 18:20:35,567 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(8bf5da03-ca42-409c-8da8-7f29c2312e4b) is not present in table "conversations".
+
+2025-08-16 18:20:35,567 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(8bf5da03-ca42-409c-8da8-7f29c2312e4b) is not present in table "conversations".
+
+2025-08-16 18:20:35,687 - app.main - INFO - DocAnalyzer API shutting down...
+2025-08-16 18:20:35,715 - app.core.database - INFO - Database connection pool closed
+2025-08-16 18:20:35,715 - app.main - INFO - Database connections closed
+2025-08-16 18:21:16,374 - app.db.init_db - INFO - Starting database initialization...
+2025-08-16 18:21:18,146 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-16 18:21:18,335 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-16 18:21:18,335 - app.db.init_db - INFO - Database connection test successful!
+2025-08-16 18:21:19,006 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-16 18:21:19,118 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-16 18:21:24,954 - app.db.init_db - INFO - Database tables created successfully
+2025-08-16 18:21:24,970 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-16 18:21:25,112 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-16 18:21:28,008 - app.db.init_db - INFO - Database tables created successfully
+2025-08-16 18:21:28,008 - app.main - INFO - Database tables ensured
+2025-08-16 18:21:28,008 - app.main - INFO - Database monitoring task started
+2025-08-16 18:21:33,516 - chromadb.telemetry.product.posthog - ERROR - Failed to send telemetry event CollectionQueryEvent: capture() takes 1 positional argument but 3 were given
+2025-08-16 18:21:34,151 - app.services.chat_service - INFO - Created new chat engine for user user-1 with groq provider
+2025-08-16 18:21:35,048 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 18:21:35,889 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(09d7cb49-0a84-4626-ac6a-5ddfa8e7ff3e) is not present in table "conversations".
+
+2025-08-16 18:21:35,889 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(09d7cb49-0a84-4626-ac6a-5ddfa8e7ff3e) is not present in table "conversations".
+
+2025-08-16 18:21:35,889 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(09d7cb49-0a84-4626-ac6a-5ddfa8e7ff3e) is not present in table "conversations".
+
+2025-08-16 18:21:35,889 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(09d7cb49-0a84-4626-ac6a-5ddfa8e7ff3e) is not present in table "conversations".
+
+2025-08-16 18:21:35,889 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(09d7cb49-0a84-4626-ac6a-5ddfa8e7ff3e) is not present in table "conversations".
+
+2025-08-16 18:21:38,441 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 18:21:39,127 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 18:21:39,950 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(585c3a7c-a355-4533-9947-d766eeda9de3) is not present in table "conversations".
+
+2025-08-16 18:21:39,950 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(585c3a7c-a355-4533-9947-d766eeda9de3) is not present in table "conversations".
+
+2025-08-16 18:21:39,950 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(585c3a7c-a355-4533-9947-d766eeda9de3) is not present in table "conversations".
+
+2025-08-16 18:21:39,950 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(585c3a7c-a355-4533-9947-d766eeda9de3) is not present in table "conversations".
+
+2025-08-16 18:21:39,950 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(585c3a7c-a355-4533-9947-d766eeda9de3) is not present in table "conversations".
+
+2025-08-16 18:21:42,505 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 18:21:43,311 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 18:21:44,143 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(09df2084-1de2-4e94-bb22-f0f7450d91f9) is not present in table "conversations".
+
+2025-08-16 18:21:44,143 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(09df2084-1de2-4e94-bb22-f0f7450d91f9) is not present in table "conversations".
+
+2025-08-16 18:21:44,143 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(09df2084-1de2-4e94-bb22-f0f7450d91f9) is not present in table "conversations".
+
+2025-08-16 18:21:44,143 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(09df2084-1de2-4e94-bb22-f0f7450d91f9) is not present in table "conversations".
+
+2025-08-16 18:21:44,143 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(09df2084-1de2-4e94-bb22-f0f7450d91f9) is not present in table "conversations".
+
+2025-08-16 18:21:46,741 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 18:21:47,382 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 18:21:48,230 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(d1616444-9e92-4889-be65-d85a07f4c06e) is not present in table "conversations".
+
+2025-08-16 18:21:48,230 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(d1616444-9e92-4889-be65-d85a07f4c06e) is not present in table "conversations".
+
+2025-08-16 18:21:48,232 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(d1616444-9e92-4889-be65-d85a07f4c06e) is not present in table "conversations".
+
+2025-08-16 18:21:48,232 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(d1616444-9e92-4889-be65-d85a07f4c06e) is not present in table "conversations".
+
+2025-08-16 18:21:48,232 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(d1616444-9e92-4889-be65-d85a07f4c06e) is not present in table "conversations".
+
+2025-08-16 18:21:50,798 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 18:21:51,496 - httpx - INFO - HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+2025-08-16 18:21:52,311 - app.core.database - ERROR - Database cursor error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(7cc6d914-ba4d-4c7d-bf77-9914ba65f6d9) is not present in table "conversations".
+
+2025-08-16 18:21:52,311 - app.core.database - ERROR - Database connection error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(7cc6d914-ba4d-4c7d-bf77-9914ba65f6d9) is not present in table "conversations".
+
+2025-08-16 18:21:52,311 - app.core.database - ERROR - Database operation error: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(7cc6d914-ba4d-4c7d-bf77-9914ba65f6d9) is not present in table "conversations".
+
+2025-08-16 18:21:52,311 - app.db.conversations - ERROR - Error adding chat message: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(7cc6d914-ba4d-4c7d-bf77-9914ba65f6d9) is not present in table "conversations".
+
+2025-08-16 18:21:52,311 - app.api.chat - WARNING - Failed to persist chat messages: insert or update on table "chat_messages" violates foreign key constraint "chat_messages_conversation_id_fkey"
+DETAIL:  Key (conversation_id)=(7cc6d914-ba4d-4c7d-bf77-9914ba65f6d9) is not present in table "conversations".
+

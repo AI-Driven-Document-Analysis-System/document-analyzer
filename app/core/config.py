@@ -128,7 +128,7 @@ class TestingSettings(Settings):
     """Testing environment settings."""
     DEBUG: bool = True
     LOG_LEVEL: str = "DEBUG"
-    VECTOR_DB_PATH: str = "./test_data/chroma_db"
+    VECTOR_DB_PATH: str = "./chroma_db"
     DATABASE_NAME: str = "test_docanalyzer"
 
 

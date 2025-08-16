@@ -64,7 +64,7 @@ class DocumentSearchRequest(BaseModel):
 class DocumentSearchResponse(BaseModel):
     """Response model for document search"""
     query: str = Field(..., description="Original search query")
-    results: List[Dict[str, Any]] = Field(..., description="Search results")
+    documents: List[Dict[str, Any]] = Field(..., description="Search results")
     total_results: int = Field(..., description="Total number of results")
     search_time: float = Field(..., description="Search execution time in seconds")
 

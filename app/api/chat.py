@@ -288,7 +288,7 @@ async def search_documents(request: DocumentSearchRequest):
         
         return DocumentSearchResponse(
             query=request.query,
-            results=results,
+            documents=results,
             total_results=len(results),
             search_time=search_time
         )

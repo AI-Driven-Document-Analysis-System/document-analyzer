@@ -106,12 +106,19 @@ class DatabaseManager:
         current_time = time.time()
         if current_time - self.last_health_check > self.health_check_interval:
             try:
-                with self.get_connection() as conn:
-                    with conn.cursor() as cursor:
+                # Use direct connection from pool to avoid recursion
+                if not self.connection_pool:
+                    raise Exception("Connection pool not initialized")
+                
+                connection = self.connection_pool.getconn()
+                try:
+                    with connection.cursor() as cursor:
                         cursor.execute("SELECT 1")
                         cursor.fetchone()
-                self.last_health_check = current_time
-                logger.debug("Database health check passed")
+                    self.last_health_check = current_time
+                    logger.debug("Database health check passed")
+                finally:
+                    self.connection_pool.putconn(connection)
             except Exception as e:
                 logger.warning(f"Database health check failed: {e}")
                 self._reinitialize_pool()
