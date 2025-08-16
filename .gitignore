@@ -29,3 +29,9 @@ test_chroma_db/
 
 # Keep example file
 !.env.example
+
+# Log files
+logs/
+*.log
+app.log
+

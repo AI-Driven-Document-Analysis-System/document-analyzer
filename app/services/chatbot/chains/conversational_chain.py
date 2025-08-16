@@ -56,7 +56,7 @@ class CustomConversationalChain:
 Context:
 {context}
 
-Chat History:
+Chat History (including conversation summary if available):
 {chat_history}
 
 Question: {question}

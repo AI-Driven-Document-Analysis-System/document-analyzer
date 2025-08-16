@@ -50,14 +50,22 @@ class Settings(BaseSettings):
     EMBEDDING_MODEL: str = Field("all-MiniLM-L6-v2", description="Sentence transformer model")
     MAX_HISTORY_LENGTH: int = Field(10, description="Maximum conversation history length")
     
+    # Conversation Summarization Settings
+    ENABLE_CONVERSATION_SUMMARIZATION: bool = Field(True, description="Enable conversation summarization")
+    SUMMARIZATION_THRESHOLD: int = Field(16, description="Message pairs threshold for summarization")
+    MAX_DETAILED_MESSAGES: int = Field(8, description="Maximum detailed messages to keep before summarization")
+    CONTEXT_WINDOW_THRESHOLD: float = Field(0.7, description="Context window usage threshold for summarization")
+    SUMMARIZATION_LLM_PROVIDER: str = Field("groq", description="LLM provider for summarization")
+    SUMMARIZATION_LLM_MODEL: str = Field("llama-3.1-8b-instant", description="LLM model for summarization")
+    
     # LLM API Keys
     OPENAI_API_KEY: Optional[str] = Field(None, description="OpenAI API key")
     GEMINI_API_KEY: Optional[str] = Field(None, description="Google Gemini API key")
     GROQ_API_KEY: Optional[str] = Field(None, description="Groq API key")
     
     # LLM Default Settings
-    DEFAULT_LLM_PROVIDER: str = Field("gemini", description="Default LLM provider")
-    DEFAULT_LLM_MODEL: str = Field("gemini-1.5-flash", description="Default LLM model")
+    DEFAULT_LLM_PROVIDER: str = Field("groq", description="Default LLM provider")
+    DEFAULT_LLM_MODEL: str = Field("llama-3.1-8b-instant", description="Default LLM model")
     DEFAULT_TEMPERATURE: float = Field(0.7, description="Default LLM temperature")
     DEFAULT_MAX_TOKENS: int = Field(1000, description="Default max tokens")
     

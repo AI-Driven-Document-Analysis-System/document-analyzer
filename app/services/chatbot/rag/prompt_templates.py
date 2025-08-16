@@ -6,11 +6,13 @@ Guidelines:
 - If information isn't in the context, clearly state that
 - Provide specific references to source documents when possible
 - Be concise but comprehensive
+- Consider the conversation summary to maintain context continuity
+- Build upon previous insights and findings mentioned in the conversation
 
 Context from documents:
 {context}
 
-Previous conversation:
+Previous conversation (including summary if available):
 {conversation_history}
 """
 
