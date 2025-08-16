@@ -318,4 +318,3 @@ async def auth_health_check():
         logger.error(f"Health check failed: {e}")
         return {"status": "unhealthy", "message": "Service error"}
 
-

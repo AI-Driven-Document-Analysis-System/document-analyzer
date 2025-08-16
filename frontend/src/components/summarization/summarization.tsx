@@ -63,7 +63,7 @@ export default function Summarization() {
       name: "Domain Specific", 
       desc: "Specialized summary using T5 model", 
       icon: "🎯",
-      model: "T5" // T5 can be fine-tuned for specific domains/contexts
+      model: "Domain Specific Model" // T5 can be fine-tuned for specific domains/contexts
     }
   ];
 
@@ -427,11 +427,11 @@ export default function Summarization() {
 
               {/* Summary Length Slider */}
               <div>
-                <label className="block text-base font-bold text-gray-800 mb-3">
+                {/* <label className="block text-base font-bold text-gray-800 mb-3">
                   Summary Length: {summaryLength} words
-                </label>
+                </label> */}
                 {/* Range slider for word count selection */}
-                <input
+                {/* <input
                   type="range"
                   min="50"
                   max="300"
@@ -439,12 +439,12 @@ export default function Summarization() {
                   value={summaryLength}
                   onChange={(e) => setSummaryLength(Number(e.target.value))}
                   className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-                />
+                /> */}
                 {/* Min/max value indicators */}
-                <div className="flex justify-between text-sm text-gray-500 mt-2 font-medium">
+                {/* <div className="flex justify-between text-sm text-gray-500 mt-2 font-medium">
                   <span>50</span>
                   <span>300</span>
-                </div>
+                </div> */}
               </div>
 
               {/* Generate Summary Button */}
