@@ -1,18 +1,18 @@
 
-//Loading Error
 
 "use client"
 
 import { useState, useEffect } from "react"
 import { LandingPage } from "../components/landing/landing-page"
 import { AuthModal } from "../components/auth/auth-modal"
-import {Dashboard}from "../components/dashboard/dashboard"
+import Dashboard from "../components/dashboard/dashboard"
 import { DocumentUpload } from "../components/upload/document-upload"
 import Summarization from "../components/summarization/summarization";
 import { SearchInterface } from "../components/search/search-interface"
 import { RAGChatbot } from "../components/chat/rag-chatbot"
 import { Sidebar } from "../components/layout/sidebar"
-import "../styles/globals.css"
+// import "../styles/globals.css"
+import './globals.css' 
 import { authService } from "../services/authService"
 
 const routes = {

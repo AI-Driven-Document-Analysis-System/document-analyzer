@@ -6230,3 +6230,314 @@ LINE 2:                     SELECT id, summary_text, key_points, mod...
 2025-08-16 19:01:42,326 - app.api.summarization - ERROR - Failed to store summary in database: value too long for type character varying(20)
 
 2025-08-16 19:01:42,341 - app.api.summarization - INFO - Summary generated successfully using facebook/bart-large-cnn with 50 words
+2025-08-17 12:07:31,791 - app.db.init_db - INFO - Starting database initialization...
+2025-08-17 12:07:33,966 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-17 12:07:34,204 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-17 12:07:34,204 - app.db.init_db - INFO - Database connection test successful!
+2025-08-17 12:07:35,713 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-17 12:07:35,967 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-17 12:07:43,647 - app.db.init_db - INFO - Database tables created successfully
+2025-08-17 12:07:43,647 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-17 12:07:44,182 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-17 12:07:44,182 - app.main - INFO - Database connection verified
+2025-08-17 12:30:25,427 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'summary_type': 'detailed'}
+2025-08-17 12:30:26,055 - app.api.summarization - INFO - Checking for existing summary with model pegasus
+2025-08-17 12:30:26,649 - app.api.summarization - INFO - Found existing summary with 90 words, returning from cache
+2025-08-17 12:30:35,448 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'summary_type': 'domain_specific'}
+2025-08-17 12:30:36,037 - app.api.summarization - WARNING - No specific model found for document type: literature, using default BART
+2025-08-17 12:30:36,037 - app.api.summarization - INFO - Domain-specific summary: Document type 'literature' mapped to model 'facebook/bart-large-cnn'
+2025-08-17 12:30:36,037 - app.api.summarization - INFO - Checking for existing summary with model facebook/bart-large-cnn
+2025-08-17 12:30:36,636 - app.api.summarization - INFO - No cached summary found, generating new summary using model: facebook/bart-large-cnn
+2025-08-17 12:30:36,636 - app.services.summarization_service - ERROR - Error generating summary with facebook/bart-large-cnn model: Unknown model: facebook/bart-large-cnn
+2025-08-17 12:30:36,636 - app.services.summarization_service - INFO - Falling back to BART model...
+2025-08-17 12:37:11,373 - app.core.database - ERROR - Database connection error: value too long for type character varying(20)
+
+2025-08-17 12:37:11,383 - app.api.summarization - ERROR - Failed to store summary in database: value too long for type character varying(20)
+
+2025-08-17 12:37:11,396 - app.api.summarization - INFO - Summary generated successfully using facebook/bart-large-cnn with 50 words
+2025-08-17 12:37:37,743 - app.api.summarization - INFO - Received summarize request: {'document_id': 'c8cc2296-2983-42e0-9935-a5dbee5334f8', 'summary_type': 'detailed'}
+2025-08-17 12:37:38,317 - app.api.summarization - INFO - Checking for existing summary with model pegasus
+2025-08-17 12:37:38,915 - app.api.summarization - INFO - No cached summary found, generating new summary using model: pegasus
+2025-08-17 12:37:59,696 - app.services.summarization_service - ERROR - Error generating summary with pegasus model: Converting from SentencePiece and Tiktoken failed, if a converter for SentencePiece is available, provide a model path with a SentencePiece tokenizer.model file.Currently available slow->fast converters: ['AlbertTokenizer', 'BartTokenizer', 'BarthezTokenizer', 'BertTokenizer', 'BigBirdTokenizer', 'BlenderbotTokenizer', 'CamembertTokenizer', 'CLIPTokenizer', 'CodeGenTokenizer', 'ConvBertTokenizer', 'DebertaTokenizer', 'DebertaV2Tokenizer', 'DistilBertTokenizer', 'DPRReaderTokenizer', 'DPRQuestionEncoderTokenizer', 'DPRContextEncoderTokenizer', 'ElectraTokenizer', 'FNetTokenizer', 'FunnelTokenizer', 'GPT2Tokenizer', 'HerbertTokenizer', 'LayoutLMTokenizer', 'LayoutLMv2Tokenizer', 'LayoutLMv3Tokenizer', 'LayoutXLMTokenizer', 'LongformerTokenizer', 'LEDTokenizer', 'LxmertTokenizer', 'MarkupLMTokenizer', 'MBartTokenizer', 'MBart50Tokenizer', 'MPNetTokenizer', 'MobileBertTokenizer', 'MvpTokenizer', 'NllbTokenizer', 'OpenAIGPTTokenizer', 'PegasusTokenizer', 'Qwen2Tokenizer', 'RealmTokenizer', 'ReformerTokenizer', 'RemBertTokenizer', 'RetriBertTokenizer', 'RobertaTokenizer', 'RoFormerTokenizer', 'SeamlessM4TTokenizer', 'SqueezeBertTokenizer', 'T5Tokenizer', 'UdopTokenizer', 'WhisperTokenizer', 'XLMRobertaTokenizer', 'XLNetTokenizer', 'SplinterTokenizer', 'XGLMTokenizer', 'LlamaTokenizer', 'CodeLlamaTokenizer', 'GemmaTokenizer', 'Phi3Tokenizer']
+2025-08-17 12:37:59,696 - app.services.summarization_service - INFO - Falling back to BART model...
+2025-08-17 12:39:40,405 - app.api.summarization - INFO - Summary stored in database with word count: 40
+2025-08-17 12:39:40,492 - app.api.summarization - INFO - Summary generated successfully using pegasus with 40 words
+2025-08-17 12:59:49,073 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'summary_type': 'brief'}
+2025-08-17 12:59:49,870 - app.api.summarization - INFO - Checking for existing summary with model bart
+2025-08-17 12:59:50,483 - app.api.summarization - INFO - Found existing summary with 50 words, returning from cache
+2025-08-17 13:21:53,940 - app.api.summarization - INFO - Received summarize request: {'document_id': 'c8cc2296-2983-42e0-9935-a5dbee5334f8', 'summary_type': 'domain_specific'}
+2025-08-17 13:21:54,583 - app.api.summarization - WARNING - No specific model found for document type: None, using default BART
+2025-08-17 13:21:54,583 - app.api.summarization - INFO - Domain-specific summary: Document type 'None' mapped to model 'facebook/bart-large-cnn'
+2025-08-17 13:21:54,583 - app.api.summarization - INFO - Checking for existing summary with model facebook/bart-large-cnn
+2025-08-17 13:21:55,155 - app.api.summarization - INFO - No cached summary found, generating new summary using model: facebook/bart-large-cnn
+2025-08-17 13:21:55,156 - app.services.summarization_service - ERROR - Error generating summary with facebook/bart-large-cnn model: Unknown model: facebook/bart-large-cnn
+2025-08-17 13:21:55,156 - app.services.summarization_service - INFO - Falling back to BART model...
+2025-08-17 13:22:14,852 - app.core.database - ERROR - Database connection error: value too long for type character varying(20)
+
+2025-08-17 13:22:14,883 - app.api.summarization - ERROR - Failed to store summary in database: value too long for type character varying(20)
+
+2025-08-17 13:22:14,900 - app.api.summarization - INFO - Summary generated successfully using facebook/bart-large-cnn with 40 words
+2025-08-17 13:26:12,431 - app.api.summarization - INFO - Received summarize request: {'document_id': 'c8cc2296-2983-42e0-9935-a5dbee5334f8', 'summary_type': 'domain_specific'}
+2025-08-17 13:26:13,076 - app.api.summarization - WARNING - No specific model found for document type: None, using default BART
+2025-08-17 13:26:13,076 - app.api.summarization - INFO - Domain-specific summary: Document type 'None' mapped to model 'facebook/bart-large-cnn'
+2025-08-17 13:26:13,076 - app.api.summarization - INFO - Checking for existing summary with model facebook/bart-large-cnn
+2025-08-17 13:26:13,716 - app.api.summarization - INFO - No cached summary found, generating new summary using model: facebook/bart-large-cnn
+2025-08-17 13:26:13,716 - app.services.summarization_service - ERROR - Error generating summary with facebook/bart-large-cnn model: Unknown model: facebook/bart-large-cnn
+2025-08-17 13:26:13,716 - app.services.summarization_service - INFO - Falling back to BART model...
+2025-08-17 13:26:34,389 - app.core.database - ERROR - Database connection error: value too long for type character varying(20)
+
+2025-08-17 13:26:34,403 - app.api.summarization - ERROR - Failed to store summary in database: value too long for type character varying(20)
+
+2025-08-17 13:26:34,403 - app.api.summarization - INFO - Summary generated successfully using facebook/bart-large-cnn with 40 words
+2025-08-17 13:26:46,435 - app.api.summarization - INFO - Received summarize request: {'document_id': 'c8cc2296-2983-42e0-9935-a5dbee5334f8', 'summary_type': 'brief'}
+2025-08-17 13:26:47,301 - app.api.summarization - INFO - Checking for existing summary with model bart
+2025-08-17 13:26:47,997 - app.api.summarization - INFO - Found existing summary with 40 words, returning from cache
+2025-08-17 13:33:00,930 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'summary_type': 'brief'}
+2025-08-17 13:33:01,824 - app.api.summarization - INFO - Checking for existing summary with model bart
+2025-08-17 13:33:02,514 - app.api.summarization - INFO - Found existing summary with 50 words, returning from cache
+2025-08-17 13:33:11,807 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'summary_type': 'detailed'}
+2025-08-17 13:33:12,513 - app.api.summarization - INFO - Checking for existing summary with model pegasus
+2025-08-17 13:33:13,248 - app.api.summarization - INFO - Found existing summary with 90 words, returning from cache
+2025-08-17 13:33:22,428 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'summary_type': 'domain_specific'}
+2025-08-17 13:33:23,242 - app.api.summarization - WARNING - No specific model found for document type: literature, using default BART
+2025-08-17 13:33:23,242 - app.api.summarization - INFO - Domain-specific summary: Document type 'literature' mapped to model 'facebook/bart-large-cnn'
+2025-08-17 13:33:23,242 - app.api.summarization - INFO - Checking for existing summary with model facebook/bart-large-cnn
+2025-08-17 13:33:24,292 - app.api.summarization - INFO - No cached summary found, generating new summary using model: facebook/bart-large-cnn
+2025-08-17 13:33:24,292 - app.services.summarization_service - ERROR - Error generating summary with facebook/bart-large-cnn model: Unknown model: facebook/bart-large-cnn
+2025-08-17 13:33:24,292 - app.services.summarization_service - INFO - Falling back to BART model...
+2025-08-17 13:37:30,887 - app.core.database - ERROR - Database connection error: value too long for type character varying(20)
+
+2025-08-17 13:37:30,905 - app.api.summarization - ERROR - Failed to store summary in database: value too long for type character varying(20)
+
+2025-08-17 13:37:30,925 - app.api.summarization - INFO - Summary generated successfully using facebook/bart-large-cnn with 50 words
+2025-08-17 13:39:02,779 - app.api.summarization - INFO - Received summarize request: {'document_id': '48ff1af3-7985-47c8-a027-44afe70c096a', 'summary_type': 'brief'}
+2025-08-17 13:39:08,907 - app.api.summarization - INFO - Checking for existing summary with model bart
+2025-08-17 13:39:09,466 - app.api.summarization - INFO - Found existing summary with 41 words, returning from cache
+2025-08-17 13:43:29,971 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'summary_type': 'detailed'}
+2025-08-17 13:43:30,600 - app.api.summarization - INFO - Checking for existing summary with model pegasus
+2025-08-17 13:43:31,237 - app.api.summarization - INFO - Found existing summary with 90 words, returning from cache
+2025-08-17 13:48:47,770 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'summary_type': 'domain_specific'}
+2025-08-17 13:48:48,585 - app.api.summarization - WARNING - No specific model found for document type: literature, using default BART
+2025-08-17 13:48:48,585 - app.api.summarization - INFO - Domain-specific summary: Document type 'literature' mapped to model 'facebook/bart-large-cnn'
+2025-08-17 13:48:48,585 - app.api.summarization - INFO - Checking for existing summary with model facebook/bart-large-cnn
+2025-08-17 13:48:49,277 - app.api.summarization - INFO - No cached summary found, generating new summary using model: facebook/bart-large-cnn
+2025-08-17 13:48:49,277 - app.services.summarization_service - ERROR - Error generating summary with facebook/bart-large-cnn model: Unknown model: facebook/bart-large-cnn
+2025-08-17 13:48:49,277 - app.services.summarization_service - INFO - Falling back to BART model...
+2025-08-17 13:52:49,348 - app.core.database - ERROR - Database connection error: value too long for type character varying(20)
+
+2025-08-17 13:52:49,348 - app.api.summarization - ERROR - Failed to store summary in database: value too long for type character varying(20)
+
+2025-08-17 13:52:49,364 - app.api.summarization - INFO - Summary generated successfully using facebook/bart-large-cnn with 50 words
+2025-08-17 14:10:46,222 - app.db.crud - ERROR - Error getting user by ID: connection already closed
+2025-08-17 14:11:04,459 - app.core.database - ERROR - Database connection error: connection to server at "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" (94.237.73.228), port 22695 failed: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+
+2025-08-17 14:11:04,471 - app.db.crud - ERROR - Error getting user by ID: connection to server at "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" (94.237.73.228), port 22695 failed: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+
+2025-08-17 14:11:17,678 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
+2025-08-17 15:09:14,062 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'summary_type': 'brief'}
+2025-08-17 15:09:14,846 - app.api.summarization - INFO - Checking for existing summary with model bart
+2025-08-17 15:09:15,446 - app.api.summarization - INFO - Found existing summary with 50 words, returning from cache
+2025-08-17 20:17:30,014 - app.db.init_db - INFO - Starting database initialization...
+2025-08-17 20:17:34,089 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-17 20:17:34,317 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-17 20:17:34,319 - app.db.init_db - INFO - Database connection test successful!
+2025-08-17 20:17:36,346 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-17 20:17:36,662 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-17 20:17:43,621 - app.db.init_db - INFO - Database tables created successfully
+2025-08-17 20:17:43,622 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-17 20:17:44,445 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-17 20:17:44,445 - app.main - INFO - Database connection verified
+2025-08-17 20:17:45,879 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
+2025-08-17 20:20:35,079 - app.main - INFO - DocAnalyzer API shutting down...
+2025-08-17 20:20:35,103 - app.core.database - INFO - Database connection pool closed
+2025-08-17 20:20:35,103 - app.main - INFO - Database connections closed
+2025-08-17 20:21:20,658 - app.db.init_db - INFO - Starting database initialization...
+2025-08-17 20:21:22,591 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-17 20:21:22,771 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-17 20:21:22,773 - app.db.init_db - INFO - Database connection test successful!
+2025-08-17 20:21:24,492 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-17 20:21:24,685 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-17 20:21:29,771 - app.db.init_db - INFO - Database tables created successfully
+2025-08-17 20:21:29,772 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-17 20:21:30,338 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-17 20:21:30,340 - app.main - INFO - Database connection verified
+2025-08-17 20:27:04,218 - app.db.crud - ERROR - Error getting user by ID: connection already closed
+2025-08-17 20:27:19,167 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
+2025-08-17 20:37:42,345 - app.db.crud - ERROR - Error getting user by ID: connection already closed
+2025-08-17 20:37:53,920 - app.core.database - ERROR - Database connection error: could not translate host name "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" to address: No such host is known. 
+
+2025-08-17 20:37:53,920 - app.db.crud - ERROR - Error getting user by ID: could not translate host name "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" to address: No such host is known. 
+
+2025-08-17 20:38:05,465 - app.core.database - ERROR - Database connection error: could not translate host name "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" to address: No such host is known. 
+
+2025-08-17 20:38:05,469 - app.db.crud - ERROR - Error getting user by ID: could not translate host name "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" to address: No such host is known. 
+
+2025-08-17 20:38:23,701 - app.core.database - ERROR - Database connection error: could not translate host name "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" to address: No such host is known. 
+
+2025-08-17 20:38:23,702 - app.db.crud - ERROR - Error getting user by email: could not translate host name "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" to address: No such host is known. 
+
+2025-08-17 20:38:23,702 - app.db.crud - ERROR - Error authenticating user: could not translate host name "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" to address: No such host is known. 
+
+2025-08-17 20:38:23,702 - app.api.auth - ERROR - Error during authentication: could not translate host name "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" to address: No such host is known. 
+
+2025-08-17 21:05:28,244 - app.db.init_db - INFO - Starting database initialization...
+2025-08-17 21:05:30,151 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-17 21:05:30,336 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-17 21:05:30,339 - app.db.init_db - INFO - Database connection test successful!
+2025-08-17 21:05:32,083 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-17 21:05:32,271 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-17 21:05:38,621 - app.db.init_db - INFO - Database tables created successfully
+2025-08-17 21:05:38,623 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-17 21:05:39,753 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-17 21:05:39,754 - app.main - INFO - Database connection verified
+2025-08-17 21:05:53,207 - app.db.crud - ERROR - Error getting user by email: connection already closed
+2025-08-17 21:05:53,207 - app.db.crud - ERROR - Error authenticating user: connection already closed
+2025-08-17 21:05:53,207 - app.api.auth - ERROR - Error during authentication: connection already closed
+2025-08-17 21:06:06,735 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
+2025-08-17 21:33:56,345 - app.db.crud - ERROR - Error getting user by ID: connection already closed
+2025-08-17 21:33:58,879 - app.api.auth - INFO - User logged out: test1@gmail.com
+2025-08-17 21:33:59,692 - app.api.auth - INFO - User logged out: test1@gmail.com
+2025-08-17 21:34:14,587 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
+2025-08-17 21:34:20,020 - app.api.auth - INFO - User logged out: test1@gmail.com
+2025-08-17 21:34:31,307 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
+2025-08-17 21:34:52,679 - app.main - INFO - DocAnalyzer API shutting down...
+2025-08-17 21:34:52,695 - app.core.database - INFO - Database connection pool closed
+2025-08-17 21:34:52,698 - app.main - INFO - Database connections closed
+2025-08-17 21:36:37,075 - app.db.init_db - INFO - Starting database initialization...
+2025-08-17 21:36:46,960 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-17 21:36:47,992 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-17 21:36:47,994 - app.db.init_db - INFO - Database connection test successful!
+2025-08-17 21:36:52,794 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-17 21:36:53,076 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-17 21:37:08,411 - app.db.init_db - INFO - Database tables created successfully
+2025-08-17 21:37:08,411 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-17 21:37:08,818 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-17 21:37:08,818 - app.main - INFO - Database connection verified
+2025-08-17 21:37:35,855 - app.api.auth - INFO - User logged out: test1@gmail.com
+2025-08-17 21:38:47,055 - app.db.crud - ERROR - Error getting user by ID: connection already closed
+2025-08-17 21:39:32,951 - app.core.database - ERROR - Database connection error: connection to server at "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" (94.237.73.228), port 22695 failed: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+
+2025-08-17 21:39:32,958 - app.db.crud - ERROR - Error getting user by ID: connection to server at "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" (94.237.73.228), port 22695 failed: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+
+2025-08-17 21:39:33,066 - app.core.database - ERROR - Database connection error: could not translate host name "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" to address: No such host is known. 
+
+2025-08-17 21:39:33,072 - app.db.crud - ERROR - Error getting user by ID: could not translate host name "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" to address: No such host is known. 
+
+2025-08-17 21:39:35,931 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
+2025-08-17 21:39:48,496 - app.main - INFO - DocAnalyzer API shutting down...
+2025-08-17 21:39:48,496 - app.core.database - INFO - Database connection pool closed
+2025-08-17 21:39:48,496 - app.main - INFO - Database connections closed
+2025-08-17 21:40:28,852 - app.db.init_db - INFO - Starting database initialization...
+2025-08-17 21:40:31,650 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-17 21:40:31,847 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-17 21:40:31,849 - app.db.init_db - INFO - Database connection test successful!
+2025-08-17 21:40:34,847 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-17 21:40:35,183 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-17 21:40:43,766 - app.db.init_db - INFO - Database tables created successfully
+2025-08-17 21:40:43,766 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-17 21:40:44,856 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-17 21:40:44,857 - app.main - INFO - Database connection verified
+2025-08-17 21:40:54,123 - app.api.auth - INFO - User logged out: test1@gmail.com
+2025-08-17 21:41:04,043 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
+2025-08-17 21:52:32,703 - app.db.crud - ERROR - Error getting user by ID: connection already closed
+2025-08-17 21:52:44,798 - app.core.database - ERROR - Database connection error: could not translate host name "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" to address: No such host is known. 
+
+2025-08-17 21:52:44,798 - app.db.crud - ERROR - Error getting user by ID: could not translate host name "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" to address: No such host is known. 
+
+2025-08-17 21:52:56,815 - app.core.database - ERROR - Database connection error: could not translate host name "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" to address: No such host is known. 
+
+2025-08-17 21:52:56,816 - app.db.crud - ERROR - Error getting user by ID: could not translate host name "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" to address: No such host is known. 
+
+2025-08-17 21:53:08,867 - app.core.database - ERROR - Database connection error: could not translate host name "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" to address: No such host is known. 
+
+2025-08-17 21:53:08,869 - app.db.crud - ERROR - Error getting user by email: could not translate host name "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" to address: No such host is known. 
+
+2025-08-17 21:53:08,870 - app.db.crud - ERROR - Error authenticating user: could not translate host name "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" to address: No such host is known. 
+
+2025-08-17 21:53:08,875 - app.api.auth - ERROR - Error during authentication: could not translate host name "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" to address: No such host is known. 
+
+2025-08-17 21:54:39,791 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
+2025-08-17 22:24:33,656 - app.db.crud - ERROR - Error getting user by ID: connection already closed
+2025-08-17 22:24:53,035 - app.core.database - ERROR - Database connection error: connection to server at "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" (94.237.73.228), port 22695 failed: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+
+2025-08-17 22:24:53,117 - app.db.crud - ERROR - Error getting user by ID: connection to server at "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com" (94.237.73.228), port 22695 failed: server closed the connection unexpectedly
+	This probably means the server terminated abnormally
+	before or while processing the request.
+
+2025-08-17 22:25:01,130 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
+2025-08-17 22:36:34,644 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'summary_type': 'domain_specific'}
+2025-08-17 22:36:35,441 - app.api.summarization - WARNING - No specific model found for document type: literature, using default BART
+2025-08-17 22:36:35,441 - app.api.summarization - INFO - Domain-specific summary: Document type 'literature' mapped to model 'facebook/bart-large-cnn'
+2025-08-17 22:36:35,442 - app.api.summarization - INFO - Checking for existing summary with model facebook/bart-large-cnn
+2025-08-17 22:36:36,077 - app.api.summarization - INFO - No cached summary found, generating new summary using model: facebook/bart-large-cnn
+2025-08-17 22:36:36,082 - app.services.summarization_service - ERROR - Error generating summary with facebook/bart-large-cnn model: Unknown model: facebook/bart-large-cnn
+2025-08-17 22:36:36,082 - app.services.summarization_service - INFO - Falling back to BART model...
+2025-08-17 22:46:39,990 - app.core.database - ERROR - Database connection error: value too long for type character varying(20)
+
+2025-08-17 22:46:40,038 - app.api.summarization - ERROR - Failed to store summary in database: value too long for type character varying(20)
+
+2025-08-17 22:46:40,060 - app.api.summarization - INFO - Summary generated successfully using facebook/bart-large-cnn with 50 words
+2025-08-17 22:46:40,183 - asyncio - ERROR - Exception in callback BaseProactorEventLoop._start_serving.<locals>.loop(<_OverlappedF...0.1', 64914))>) at C:\Python312\Lib\asyncio\proactor_events.py:843
+handle: <Handle BaseProactorEventLoop._start_serving.<locals>.loop(<_OverlappedF...0.1', 64914))>) at C:\Python312\Lib\asyncio\proactor_events.py:843>
+Traceback (most recent call last):
+  File "C:\Python312\Lib\asyncio\events.py", line 88, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\Python312\Lib\asyncio\proactor_events.py", line 858, in loop
+    self._make_socket_transport(
+  File "C:\Python312\Lib\asyncio\proactor_events.py", line 647, in _make_socket_transport
+    return _ProactorSocketTransport(self, sock, protocol, waiter,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python312\Lib\asyncio\proactor_events.py", line 613, in __init__
+    super().__init__(loop, sock, protocol, waiter, extra, server)
+  File "C:\Python312\Lib\asyncio\proactor_events.py", line 189, in __init__
+    super().__init__(loop, sock, protocol, waiter, extra, server)
+  File "C:\Python312\Lib\asyncio\proactor_events.py", line 335, in __init__
+    super().__init__(*args, **kw)
+  File "C:\Python312\Lib\asyncio\proactor_events.py", line 66, in __init__
+    self._server._attach()
+  File "C:\Python312\Lib\asyncio\base_events.py", line 296, in _attach
+    assert self._sockets is not None
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError
+2025-08-17 22:46:40,300 - app.main - INFO - DocAnalyzer API shutting down...
+2025-08-17 22:46:40,316 - app.core.database - INFO - Database connection pool closed
+2025-08-17 22:46:40,316 - app.main - INFO - Database connections closed
+2025-08-17 22:48:18,442 - app.db.init_db - INFO - Starting database initialization...
+2025-08-17 22:48:20,851 - app.db.init_db - INFO - PostgreSQL version: PostgreSQL 17.5 on x86_64-pc-linux-gnu, compiled by gcc (GCC) 14.2.1 20240912 (Red Hat 14.2.1-3), 64-bit
+2025-08-17 22:48:21,045 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-17 22:48:21,045 - app.db.init_db - INFO - Database connection test successful!
+2025-08-17 22:48:24,025 - app.db.init_db - INFO - Connected to database: defaultdb
+2025-08-17 22:48:24,287 - app.db.init_db - INFO - Database 'docanalyzer' already exists
+2025-08-17 22:48:35,298 - app.db.init_db - INFO - Database tables created successfully
+2025-08-17 22:48:35,299 - app.db.init_db - INFO - Database initialization completed successfully!
+2025-08-17 22:48:35,940 - app.main - INFO - DocAnalyzer API starting up...
+2025-08-17 22:48:35,940 - app.main - INFO - Database connection verified
+2025-08-17 22:49:45,279 - app.api.auth - INFO - User logged in successfully: test1@gmail.com
+2025-08-17 22:50:13,997 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'summary_type': 'detailed'}
+2025-08-17 22:50:14,797 - app.api.summarization - INFO - Checking for existing summary with model pegasus
+2025-08-17 22:50:15,747 - app.api.summarization - INFO - Found existing summary with 90 words, returning from cache
+2025-08-17 22:50:35,295 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'summary_type': 'brief'}
+2025-08-17 22:50:36,135 - app.api.summarization - INFO - Checking for existing summary with model bart
+2025-08-17 22:50:37,155 - app.api.summarization - INFO - Found existing summary with 50 words, returning from cache
+2025-08-17 22:51:29,565 - app.api.summarization - INFO - Received summarize request: {'document_id': '48ff1af3-7985-47c8-a027-44afe70c096a', 'summary_type': 'brief'}
+2025-08-17 22:51:30,475 - app.api.summarization - INFO - Checking for existing summary with model bart
+2025-08-17 22:51:32,513 - app.api.summarization - INFO - Found existing summary with 41 words, returning from cache
+2025-08-17 22:51:41,395 - app.api.summarization - INFO - Received summarize request: {'document_id': '48ff1af3-7985-47c8-a027-44afe70c096a', 'summary_type': 'brief'}
+2025-08-17 22:51:42,152 - app.api.summarization - INFO - Checking for existing summary with model bart
+2025-08-17 22:51:42,898 - app.api.summarization - INFO - Found existing summary with 41 words, returning from cache
+2025-08-17 22:52:03,450 - app.api.summarization - INFO - Received summarize request: {'document_id': '82ab7074-3ea4-478e-91c7-4c2bd98a4f4e', 'summary_type': 'brief'}
+2025-08-17 22:52:04,495 - app.api.summarization - INFO - Checking for existing summary with model bart
+2025-08-17 22:52:05,300 - app.api.summarization - INFO - Found existing summary with 25 words, returning from cache
+2025-08-17 23:02:42,936 - app.api.summarization - INFO - Received summarize request: {'document_id': '6edfcaf7-0b55-4ca9-add1-544b963a7eda', 'summary_type': 'brief'}
+2025-08-17 23:02:43,800 - app.api.summarization - INFO - Checking for existing summary with model bart
+2025-08-17 23:02:44,792 - app.api.summarization - INFO - Found existing summary with 50 words, returning from cache
