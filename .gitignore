@@ -37,3 +37,6 @@ app.log
 
 frontend/.next/
 frontend/next-env.d.ts
+frontend/node_modules/
+frontend/.turbo/
+frontend/.vercel/
