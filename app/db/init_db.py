@@ -1,4 +1,3 @@
-
 import os
 import psycopg2
 import psycopg2.extras  # Add this import
@@ -242,13 +241,39 @@ def create_tables():
                 PRIMARY KEY (user_id)
             );
         """)
-        
+
+        # Conversations table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS conversations (
+                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+                title VARCHAR(255),
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
+            );
+        """)
+
+        # Chat messages table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS chat_messages (
+                id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+                conversation_id UUID REFERENCES conversations(id) ON DELETE CASCADE,
+                role VARCHAR(20) NOT NULL,
+                content TEXT NOT NULL,
+                metadata JSONB,
+                timestamp TIMESTAMP DEFAULT NOW()
+            );
+        """)
+
         # Create indexes
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_documents_type ON document_classifications(document_type);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_documents_upload_timestamp ON documents(upload_timestamp);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_processing_status ON document_processing(processing_status);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_content_search ON document_content USING gin(to_tsvector('english', searchable_content));")
-        
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_conversations_user ON conversations(user_id);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_conversations_updated_at ON conversations(updated_at);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_chat_messages_conversation ON chat_messages(conversation_id);")
+
         conn.commit()
         cursor.close()
         conn.close()
