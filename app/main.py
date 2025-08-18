@@ -1,3 +1,5 @@
+from fastapi import FastAPI
+from dotenv import load_dotenv
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 import logging
@@ -7,6 +9,9 @@ from datetime import datetime
 from .api import auth, summarization, documents, chat  # Add chat import
 from .core.database import db_manager
 from .db.init_db import create_tables
+
+# Load environment variables early
+load_dotenv()
 
 # Configure logging
 os.makedirs("logs", exist_ok=True)  # Ensure logs directory exists

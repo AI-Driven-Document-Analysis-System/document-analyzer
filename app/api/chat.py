@@ -135,64 +135,87 @@ async def send_message(request: ChatMessageRequest):
             except Exception as se:
                 logger.warning(f"Summarization/pruning failed for conversation {conversation_id}: {se}")
         
-        # Generate actual AI response using chatbot service
+        # Generate actual AI response using chatbot service, with on-demand init and provider fallback
+        ai_response = None
         try:
-            service = get_chatbot_service()
-            
-            # Prepare LLM config
+            try:
+                service = get_chatbot_service()
+            except RuntimeError:
+                initialize_chat_service()
+                service = get_chatbot_service()
+
+            # Base LLM config
             llm_config = request.llm_config or {
                 'provider': 'groq',
-                'api_key': os.getenv('GROQ_API_KEY'),
+                'api_key': getattr(settings, 'GROQ_API_KEY', None) or os.getenv('GROQ_API_KEY'),
                 'model': 'llama-3.1-8b-instant',
                 'temperature': 0.7,
                 'streaming': False
             }
-            
-            # Ensure API key is set based on provider
-            if llm_config.get('provider') == 'groq' and not llm_config.get('api_key'):
-                groq_key = os.getenv('GROQ_API_KEY')
-                if groq_key:
-                    llm_config['api_key'] = groq_key
+
+            def ensure_api_key(conf: Dict[str, Any]) -> None:
+                provider = conf.get('provider')
+                if provider == 'groq' and not conf.get('api_key'):
+                    key = getattr(settings, 'GROQ_API_KEY', None) or os.getenv('GROQ_API_KEY')
+                    if key:
+                        conf['api_key'] = key
+                    else:
+                        raise HTTPException(status_code=400, detail='GROQ_API_KEY not found in environment variables')
+                elif provider == 'gemini' and not conf.get('api_key'):
+                    key = getattr(settings, 'GEMINI_API_KEY', None) or os.getenv('GEMINI_API_KEY')
+                    if key:
+                        conf['api_key'] = key
+                    else:
+                        raise HTTPException(status_code=400, detail='GEMINI_API_KEY not found in environment variables')
+                elif provider == 'openai' and not conf.get('api_key'):
+                    key = getattr(settings, 'OPENAI_API_KEY', None) or os.getenv('OPENAI_API_KEY')
+                    if key:
+                        conf['api_key'] = key
+                    else:
+                        raise HTTPException(status_code=400, detail='OPENAI_API_KEY not found in environment variables')
+
+            def build_engine(conf: Dict[str, Any]):
+                ensure_api_key(conf)
+                return service.get_or_create_chat_engine(
+                    llm_config=conf,
+                    user_id=request.user_id,
+                    memory_type=request.memory_type.value
+                )
+
+            # Try primary provider
+            try:
+                chat_engine = build_engine(dict(llm_config))
+                result = await chat_engine.process_query(
+                    query=request.message,
+                    conversation_id=conversation_id,
+                    user_id=request.user_id
+                )
+                ai_response = result['response']
+            except Exception as primary_err:
+                logger.warning(f"Primary provider failed: {primary_err}")
+                # Provider fallback: switch between groq and gemini if keys exist
+                fallback_conf = dict(llm_config)
+                gem_key = getattr(settings, 'GEMINI_API_KEY', None) or os.getenv('GEMINI_API_KEY')
+                groq_key = getattr(settings, 'GROQ_API_KEY', None) or os.getenv('GROQ_API_KEY')
+                if llm_config.get('provider') != 'gemini' and gem_key:
+                    fallback_conf.update({'provider': 'gemini', 'api_key': gem_key, 'model': 'gemini-1.5-flash'})
+                elif llm_config.get('provider') != 'groq' and groq_key:
+                    fallback_conf.update({'provider': 'groq', 'api_key': groq_key, 'model': 'llama-3.1-8b-instant'})
                 else:
-                    raise HTTPException(status_code=400, detail="GROQ_API_KEY not found in environment variables")
-            elif llm_config.get('provider') == 'gemini' and not llm_config.get('api_key'):
-                gemini_key = os.getenv('GEMINI_API_KEY')
-                if gemini_key:
-                    llm_config['api_key'] = gemini_key
-                else:
-                    raise HTTPException(status_code=400, detail="GEMINI_API_KEY not found in environment variables")
-            elif llm_config.get('provider') == 'openai' and not llm_config.get('api_key'):
-                openai_key = os.getenv('OPENAI_API_KEY')
-                if openai_key:
-                    llm_config['api_key'] = openai_key
-                else:
-                    raise HTTPException(status_code=400, detail="OPENAI_API_KEY not found in environment variables")
-            
-            # Get or create chat engine
-            chat_engine = service.get_or_create_chat_engine(
-                llm_config=llm_config,
-                user_id=request.user_id,
-                memory_type=request.memory_type.value
-            )
-            
-            # Get conversation history for context
-            conversation_history = []
-            for msg in messages[-20:]:  # Use last 20 messages for context
-                conversation_history.append({
-                    "role": msg.role,
-                    "content": msg.content
-                })
-            
-            # Generate response using chat engine
-            result = await chat_engine.process_query(
-                query=request.message,
-                conversation_id=conversation_id,
-                user_id=request.user_id
-            )
-            ai_response = result['response']
-            
+                    raise
+
+                chat_engine = build_engine(fallback_conf)
+                result = await chat_engine.process_query(
+                    query=request.message,
+                    conversation_id=conversation_id,
+                    user_id=request.user_id
+                )
+                ai_response = result['response']
+
+        except HTTPException:
+            raise
         except Exception as e:
-            logger.warning(f"Failed to generate AI response, falling back to mock: {e}")
+            logger.exception("Failed to generate AI response, falling back to mock after retries")
             ai_response = f"I apologize, but I'm currently unable to process your request due to a technical issue. Please try again later. Your message was: {request.message}"
         
         # Store assistant message in database
