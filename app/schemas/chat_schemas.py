@@ -64,7 +64,7 @@ class DocumentSearchRequest(BaseModel):
 class DocumentSearchResponse(BaseModel):
     """Response model for document search"""
     query: str = Field(..., description="Original search query")
-    results: List[Dict[str, Any]] = Field(..., description="Search results")
+    documents: List[Dict[str, Any]] = Field(..., description="Search results")
     total_results: int = Field(..., description="Total number of results")
     search_time: float = Field(..., description="Search execution time in seconds")
 
@@ -122,3 +122,39 @@ class SuccessResponse(BaseModel):
     status: str = Field("success", description="Response status")
     message: str = Field(..., description="Success message")
     timestamp: datetime = Field(default_factory=datetime.now, description="Response timestamp")
+
+
+class ConversationCreateRequest(BaseModel):
+    user_id: Optional[str] = Field(None, description="User ID owning the conversation")
+    title: Optional[str] = Field(None, description="Optional conversation title")
+
+
+class ConversationResponse(BaseModel):
+    id: str
+    user_id: Optional[str] = None
+    title: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+class ConversationsListResponse(BaseModel):
+    conversations: List[ConversationResponse]
+
+
+class RenameConversationRequest(BaseModel):
+    title: str
+
+
+class ChatMessageItem(BaseModel):
+    id: str
+    role: str
+    content: str
+    metadata: Optional[Dict[str, Any]] = None
+    timestamp: datetime
+
+class ConversationMessagesResponse(BaseModel):
+    conversation_id: str
+    messages: List[ChatMessageItem]
+    message_count: int
+    created_at: Optional[datetime] = None
+    last_updated: Optional[datetime] = None
