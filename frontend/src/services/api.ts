@@ -1,18 +1,50 @@
 // API service layer for connecting to FastAPI backend
+
+/**
+ * API service layer for connecting to FastAPI backend
+ * Provides a centralized interface for all API communications
+ */
+
+// Base URL for the API - defaults to localhost if not set in environment
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
 
+
+/**
+ * ApiService class handles all HTTP requests to the FastAPI backend
+ * Implements error handling and request configuration
+ */
+
+
 class ApiService {
+
+   /**
+   * Generic request method that handles common HTTP operations
+   * @param endpoint - The API endpoint to call (e.g., "/documents")
+   * @param options - Fetch API options (method, headers, body, etc.)
+   * @returns Promise with parsed JSON response
+   * @throws Error if the HTTP request fails
+   */
+
+
   private async request(endpoint: string, options: RequestInit = {}) {
+
+    // Construct full URL by combining base URL with endpoint
+
     const url = `${API_BASE_URL}${endpoint}`
-    const config = {
+
+        // Default configuration with JSON content type
+
+        // Default configuration for fetch requests what this code does is to set the Content-Type header to application/json and merge it with any additional headers provided in the options parameter. This ensures that the request will be sent with the correct content type for JSON data.
+    const config = { // Default configuration
       headers: {
         "Content-Type": "application/json",
         ...options.headers,
       },
       ...options,
-    }
+    } // Merge with provided options
 
-    const response = await fetch(url, config)
+    const response = await fetch(url, config) // Perform the fetch request
 
     if (!response.ok) {
       throw new Error(`API Error: ${response.statusText}`)
