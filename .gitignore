@@ -35,3 +35,6 @@ test_chroma_db/
 logs/
 logs/*.log
 app.log
+
+frontend/.next/
+frontend/next-env.d.ts
