@@ -1,3 +1,9 @@
+
+
+
+
+
+
 interface RegisterData {
   email: string;
   password: string;
@@ -98,10 +104,9 @@ class AuthService {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      // Clear all persistence data
+      // Always clear local storage
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      localStorage.removeItem('lastPath'); // Add this line
     }
   }
 

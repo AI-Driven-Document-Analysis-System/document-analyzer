@@ -104,3 +104,20 @@ class UserSubscription:
     expires_at: Optional[datetime] = None
     auto_renew: bool = True
     created_at: datetime = None
+
+@dataclass
+class Conversation:
+    id: UUID
+    user_id: UUID
+    title: Optional[str] = None
+    created_at: datetime = None
+    updated_at: datetime = None
+
+@dataclass
+class ChatMessage:
+    id: UUID
+    conversation_id: UUID
+    role: str
+    content: str
+    metadata: Optional[Dict[str, Any]] = None
+    timestamp: datetime = None

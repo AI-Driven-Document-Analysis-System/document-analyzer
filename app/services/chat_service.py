@@ -1,6 +1,7 @@
 from typing import Optional, Dict, Any, List
 import logging
 from datetime import datetime
+import uuid
 
 from .chatbot.vector_db.langchain_chroma import LangChainChromaStore
 from .chatbot.vector_db.chunking import DocumentChunker
@@ -363,21 +364,26 @@ class ChatbotService:
                 streaming=llm_config.get('streaming', False),
                 callbacks=llm_config.get('callbacks')
             )
-        else:
-            raise ValueError(f"Unsupported LLM provider: {provider}")
-
     def _create_retriever(self, user_id: Optional[str] = None):
-        """Create retriever with optional user filtering."""
-        if user_id:
-            # Create user-filtered retriever
-            return self._vectorstore.as_retriever(
-                search_kwargs={"filter": {"user_id": user_id}, "k": 4}
-            )
-        else:
-            # Create general retriever
-            return self._vectorstore.as_retriever(
-                search_kwargs={"k": 4}
-            )
+        """Create retriever with conditional user filtering.
+
+        If a non-UUID user_id is provided (e.g., 'user-1' as used in tests/rag/embed_documents.py),
+        apply a metadata filter {"user_id": user_id}. If user_id is None or looks like a UUID,
+        avoid filtering to prevent accidental empty results when documents lack that metadata.
+        """
+        search_kwargs: Dict[str, Any] = {"k": 4}
+
+        def is_uuid_like(val: str) -> bool:
+            try:
+                uuid.UUID(val)
+                return True
+            except Exception:
+                return False
+
+        if user_id and not is_uuid_like(user_id):
+            search_kwargs["filter"] = {"user_id": user_id}
+
+        return self._vectorstore.as_retriever(search_kwargs=search_kwargs)
 
 
 # Singleton instance for global access

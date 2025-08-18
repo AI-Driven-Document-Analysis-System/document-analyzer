@@ -11,12 +11,12 @@ from ..db.crud import get_user_crud
 from ..core.security import create_access_token, verify_token, ACCESS_TOKEN_EXPIRE_MINUTES
 from ..core.dependencies import get_current_user
 
-router = APIRouter(prefix="/auth", tags=["authentication"]) # simply what this do is create a new router for the authentication
-security = HTTPBearer() #simply what this do is create a new HTTPBearer security scheme for token authentication
-logger = logging.getLogger(__name__) # simply what this do is create a new logger for the authentication
+router = APIRouter(prefix="/auth", tags=["authentication"])
+security = HTTPBearer()
+logger = logging.getLogger(__name__)
 
-@router.post("/register", response_model=UserResponse) # simply what this do is create a new route for the registration
-async def register(user_data: UserCreate): # simply what this do is create a new route for the registration
+@router.post("/register", response_model=UserResponse)
+async def register(user_data: UserCreate):
     """Register a new user"""
     try:
         logger.info(f"Registration attempt for email: {user_data.email}")
@@ -35,9 +35,9 @@ async def register(user_data: UserCreate): # simply what this do is create a new
             )
         
         # Get user CRUD instance with error handling
-        try: # simply what this do is create a new try catch block for the registration
-            user_crud = get_user_crud() # simply what this do is create a new user_crud instance
-            if not user_crud: # simply what this do is check if the user_crud instance is not None
+        try:
+            user_crud = get_user_crud()
+            if not user_crud:
                 logger.error("Failed to get user CRUD instance")
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -317,4 +317,5 @@ async def auth_health_check():
     except Exception as e:
         logger.error(f"Health check failed: {e}")
         return {"status": "unhealthy", "message": "Service error"}
+
 

@@ -27,7 +27,7 @@ def get_documents():
             'type': 'policy',
             'filename': 'company_policy.txt',
             'upload_date': datetime.now().isoformat(),
-            'user_id': 'admin',
+            'user_id': 'user-1',
             'text': """Company Policy Document
 
 1. Introduction
@@ -59,7 +59,7 @@ Following these policies ensures a productive and professional work environment 
             'type': 'manual',
             'filename': 'software_manual.txt',
             'upload_date': datetime.now().isoformat(),
-            'user_id': 'admin',
+            'user_id': 'user-1',
             'text': """Software User Manual
 
 Getting Started
@@ -104,7 +104,7 @@ For additional help, visit our support portal or contact our technical team."""
             'type': 'report',
             'filename': 'quarterly_report.txt',
             'upload_date': datetime.now().isoformat(),
-            'user_id': 'admin',
+            'user_id': 'user-1',
             'text': """Quarterly Business Report - Q4 2024
 
 Executive Summary

@@ -31,10 +31,10 @@ test_chroma_db/
 !.env.example
 
 # Log files
-*.log
 logs/
-logs/*.log
+*.log
 app.log
 
 frontend/.next/
-frontend/next-env.d.ts
+*.log
+node_modules/

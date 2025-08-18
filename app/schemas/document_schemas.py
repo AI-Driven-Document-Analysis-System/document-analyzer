@@ -42,5 +42,3 @@ class DocumentUploadResponse(BaseModel):
     document: DocumentResponse
     processing: DocumentProcessingResponse
     message: str
-
-
