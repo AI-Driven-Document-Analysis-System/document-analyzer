@@ -1,6 +1,5 @@
-
-
 import React, { useState, useCallback } from "react"
+import '../../styles/components.css';
 
 interface UploadedFile {
   id: string

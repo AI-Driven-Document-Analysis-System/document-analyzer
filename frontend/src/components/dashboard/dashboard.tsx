@@ -1,7 +1,7 @@
-
 //****************************CSS */
 import { useState, useEffect, useMemo } from "react"
 import './Dashboard.css' // Import the CSS file
+import '../../styles/components.css';
 
 // TypeScript interfaces
 interface Document {

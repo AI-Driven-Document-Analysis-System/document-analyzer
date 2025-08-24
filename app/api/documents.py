@@ -1,7 +1,3 @@
-
-
-
-
 ##Minio 
 
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
@@ -81,59 +77,35 @@ async def get_documents(
 ):
     """Get all documents for the current user."""
     try:
-        print("=" * 50)
-        print("DEBUG: get_documents endpoint called")
-        print(f"Current user received: {current_user}")
-        print(f"Limit: {limit}, Offset: {offset}")
-        
-        # Check if current_user is valid
-        if not current_user:
-            print("ERROR: current_user is None or empty")
-            raise HTTPException(status_code=400, detail="No user information provided")
-        
-        # Extract user ID from UserResponse attributes
-        user_id = None
-        if hasattr(current_user, 'id'):
-            user_id = current_user.id
-            print(f"Found user identifier in field 'id': {user_id}")
-        elif hasattr(current_user, 'email'):
-            user_id = current_user.email
-            print(f"Found user identifier in field 'email': {user_id}")
-        else:
-            print(f"ERROR: No user ID found in UserResponse attributes")
-            raise HTTPException(status_code=400, detail="Invalid user token - no user ID found")
-        
-        print(f"Using user_id: {user_id}")
-        
-        # Test database connection and get documents
+        logger.info("Fetching documents for user")
+        user_id = str(current_user.id) if hasattr(current_user, 'id') else str(current_user.email)
+
         with db_manager.get_connection() as conn:
             with conn.cursor() as cursor:
-                # Get documents with processing status
+                # Get all documents with content and processing status
                 query = """
                     SELECT 
                         d.id, d.original_filename, d.file_size, d.upload_timestamp, 
                         d.mime_type, d.user_id, d.file_path_minio,
-                        dp.processing_status, dp.processing_errors
+                        dc.extracted_text IS NOT NULL as has_content,
+                        dp.processing_status, dp.processing_errors,
+                        CASE 
+                            WHEN dc.extracted_text IS NOT NULL THEN true
+                            ELSE false
+                        END as is_processed
                     FROM documents d
+                    LEFT JOIN document_content dc ON d.id = dc.document_id
                     LEFT JOIN document_processing dp ON d.id = dp.document_id
                     WHERE d.user_id = %s
                     ORDER BY d.upload_timestamp DESC
                     LIMIT %s OFFSET %s
                 """
-                print(f"Executing query: {query}")
-                cursor.execute(query, (str(user_id), limit, offset))
+                
+                cursor.execute(query, (user_id, limit, offset))
                 documents = cursor.fetchall()
                 
-                print(f"Query returned {len(documents)} documents")
-                
-                # Get total count
-                cursor.execute("SELECT COUNT(*) FROM documents WHERE user_id = %s", (str(user_id),))
-                total_count = cursor.fetchone()[0]
-                
-                # Convert to list of dictionaries
                 result = []
-                for i, doc in enumerate(documents):
-                    print(f"Processing document {i+1}: {doc}")
+                for doc in documents:
                     doc_dict = {
                         "id": doc[0],
                         "original_filename": doc[1],
@@ -142,13 +114,21 @@ async def get_documents(
                         "content_type": doc[4],
                         "user_id": doc[5],
                         "file_path": doc[6],
-                        "processing_status": doc[7] or "unknown",
-                        "processing_errors": doc[8]
+                        "has_content": doc[7],
+                        "processing_status": doc[8] if doc[8] else "pending",
+                        "processing_errors": doc[9],
+                        "is_processed": doc[10],
+                        "features_available": {
+                            "summarization": doc[7],  # Only if has_content
+                            "chat": doc[7],          # Only if has_content
+                            "analysis": doc[7]       # Only if has_content
+                        }
                     }
                     result.append(doc_dict)
                 
-                print(f"Final result: {result}")
-                print("=" * 50)
+                # Get total count
+                cursor.execute("SELECT COUNT(*) FROM documents WHERE user_id = %s", (user_id,))
+                total_count = cursor.fetchone()[0]
                 
                 return {
                     "documents": result,
@@ -159,7 +139,7 @@ async def get_documents(
                         "has_more": offset + limit < total_count
                     }
                 }
-                    
+
     except HTTPException:
         raise
     except Exception as e:
@@ -263,6 +243,14 @@ async def delete_document(
                 if not result:
                     raise HTTPException(status_code=404, detail="Document not found")
                 
+#overall what this code do is define a router for the document service, which includes the following endpoints:
+#GET /documents: Get a list of documents for the current user.
+#POST /documents: Upload a new document for the current user.
+#GET /documents/{document_id}: Get a specific document by ID.
+#GET /documents/{document_id}/download: Get download URL for a document.
+#DELETE /documents/{document_id}: Delete a document.
+#The code uses the FastAPI framework to define the endpoints and the Pydantic models to define the request and response schemas.
+#The code also uses the SQLAlchemy ORM to interact with the database and the MinIO client to interact with the object storage.
                 file_path = result[0]
                 
                 # Delete document

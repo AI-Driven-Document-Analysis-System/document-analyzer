@@ -4,3 +4,9 @@
 **/.next/cache/**
 frontend/.next/cache/webpack/client-development/1.pack.gz
 frontend/.next/cache/webpack/client-development-fallback/index.pack.gz
+app/__pycache__/main.cpython-312.pyc
+/app/__pycache__
+/app/__pycache__
+*.pyc
+*.txt
+docanalyzer.egg-info/PKG-INFO
