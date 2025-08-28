@@ -44,11 +44,12 @@ const getFileIcon = (type: string) => {
  */
 const getStoredAuthToken = () => {
   try {
+    // FIXED: Use consistent token key 'token' instead of 'authToken'
     // Try localStorage first (persists across browser sessions)
     // Then sessionStorage (persists only for current tab session)
     // Finally fallback to hardcoded demo token
-    return window.localStorage?.getItem('authToken') || 
-           window.sessionStorage?.getItem('authToken') ||
+    return window.localStorage?.getItem('token') || 
+           window.sessionStorage?.getItem('token') ||
            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3OWQwYmVkNS1jMWMxLTRmYWYtODJkNC1mZWQxYTI4NDcyZDUiLCJlbWFpbCI6InRlc3QxQGdtYWlsLmNvbSIsImV4cCI6MTc1NzMyNzc5OH0.h_P47qNaOhJ9r34alekxTlvXxen45dbTXokBans669c';
   } catch (e) {
     // Fallback for environments where localStorage isn't available (like some mobile browsers)

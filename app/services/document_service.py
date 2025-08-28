@@ -164,11 +164,11 @@ class DocumentService:
 
             with db_manager.get_connection() as conn:
                 with conn.cursor() as cursor:
-                    # Insert document
+                    # Insert document - FIXED: Use user_id consistently
                     cursor.execute("""
                         INSERT INTO documents (
                             id, original_filename, file_path_minio, file_size, 
-                            mime_type, document_hash, uploaded_by_user_id, upload_timestamp, 
+                            mime_type, document_hash, user_id, upload_timestamp, 
                             created_at, updated_at
                         )
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)

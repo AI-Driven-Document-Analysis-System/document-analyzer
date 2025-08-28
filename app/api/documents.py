@@ -35,14 +35,12 @@ async def upload_document(
         if not file.filename:
             raise HTTPException(status_code=400, detail="No file provided")
         
-        # Get user ID
+        # Get user ID - FIXED: Use consistent user_id handling
         user_id = None
         if hasattr(current_user, 'id'):
             user_id = str(current_user.id)
-        elif hasattr(current_user, 'email'):
-            user_id = current_user.email
         else:
-            raise HTTPException(status_code=400, detail="Invalid user token")
+            raise HTTPException(status_code=400, detail="Invalid user token - no user ID found")
         
         print(f"Using user_id: {user_id}")
         
@@ -91,14 +89,11 @@ async def get_documents(
             print("ERROR: current_user is None or empty")
             raise HTTPException(status_code=400, detail="No user information provided")
         
-        # Extract user ID from UserResponse attributes
+        # Extract user ID from UserResponse attributes - FIXED: Use only user.id
         user_id = None
         if hasattr(current_user, 'id'):
             user_id = current_user.id
             print(f"Found user identifier in field 'id': {user_id}")
-        elif hasattr(current_user, 'email'):
-            user_id = current_user.email
-            print(f"Found user identifier in field 'email': {user_id}")
         else:
             print(f"ERROR: No user ID found in UserResponse attributes")
             raise HTTPException(status_code=400, detail="Invalid user token - no user ID found")
@@ -176,7 +171,11 @@ async def get_document(
 ):
     """Get a specific document by ID."""
     try:
-        user_id = str(current_user.id) if hasattr(current_user, 'id') else current_user.email
+        # FIXED: Use consistent user_id handling
+        user_id = str(current_user.id) if hasattr(current_user, 'id') else None
+        
+        if not user_id:
+            raise HTTPException(status_code=400, detail="Invalid user token")
         
         with db_manager.get_connection() as conn:
             with conn.cursor() as cursor:
@@ -219,7 +218,11 @@ async def download_document(
 ):
     """Get download URL for a document."""
     try:
-        user_id = str(current_user.id) if hasattr(current_user, 'id') else current_user.email
+        # FIXED: Use consistent user_id handling
+        user_id = str(current_user.id) if hasattr(current_user, 'id') else None
+        
+        if not user_id:
+            raise HTTPException(status_code=400, detail="Invalid user token")
         
         with db_manager.get_connection() as conn:
             with conn.cursor() as cursor:
@@ -249,7 +252,11 @@ async def delete_document(
 ):
     """Delete a document."""
     try:
-        user_id = str(current_user.id) if hasattr(current_user, 'id') else current_user.email
+        # FIXED: Use consistent user_id handling
+        user_id = str(current_user.id) if hasattr(current_user, 'id') else None
+        
+        if not user_id:
+            raise HTTPException(status_code=400, detail="Invalid user token")
         
         with db_manager.get_connection() as conn:
             with conn.cursor() as cursor:
