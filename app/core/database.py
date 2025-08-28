@@ -34,7 +34,24 @@ class DatabaseManager:
 
             if not database_url:
                 logger.error("DATABASE_URL environment variable is not set")
-                raise ValueError("DATABASE_URL not configured")
+                # FIXED: Try to build URL from individual components
+                try:
+                    host = os.getenv("DB_HOST")
+                    port = os.getenv("DB_PORT", "5432")
+                    user = os.getenv("DB_USER")
+                    password = os.getenv("DB_PASSWORD")
+                    database = os.getenv("DB_NAME")
+                    
+                    if all([host, user, password, database]):
+                        database_url = f"postgresql://{user}:{password}@{host}:{port}/{database}"
+                        if os.getenv("DB_SSLMODE") == "require":
+                            database_url += "?sslmode=require"
+                        logger.info("Built DATABASE_URL from individual components")
+                    else:
+                        raise ValueError("Missing required database environment variables")
+                except Exception as e:
+                    logger.error(f"Failed to build DATABASE_URL from components: {e}")
+                    raise ValueError("DATABASE_URL not configured and cannot be built from components")
             
             # Parse the database URL
             if database_url.startswith("postgresql://"):

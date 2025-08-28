@@ -11,7 +11,7 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # JWT settings
 SECRET_KEY = os.getenv("SECRET_KEY", secrets.token_urlsafe(32))
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30 * 24 * 60  # 30 days
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "43200"))  # FIXED: Parse as int and use env var
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against its hash"""

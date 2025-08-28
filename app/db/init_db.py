@@ -121,7 +121,6 @@ def create_tables():
                 page_count INTEGER,
                 language_detected VARCHAR(10),
                 upload_timestamp TIMESTAMP DEFAULT NOW(),
-                uploaded_by_user_id UUID,
                 user_id UUID REFERENCES users(id) ON DELETE CASCADE,
                 created_at TIMESTAMP DEFAULT NOW(),
                 updated_at TIMESTAMP DEFAULT NOW()

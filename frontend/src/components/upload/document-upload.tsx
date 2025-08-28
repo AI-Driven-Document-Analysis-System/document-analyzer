@@ -26,9 +26,9 @@ const getFileIcon = (type: string) => {
 // Mock auth service - replace with your actual implementation
 const getStoredAuthToken = () => {
   try {
-    // Try to get from localStorage first, then sessionStorage
-    return window.localStorage?.getItem('authToken') || 
-           window.sessionStorage?.getItem('authToken') ||
+    // FIXED: Use consistent token key 'token' instead of 'authToken'
+    return window.localStorage?.getItem('token') || 
+           window.sessionStorage?.getItem('token') ||
            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3OWQwYmVkNS1jMWMxLTRmYWYtODJkNC1mZWQxYTI4NDcyZDUiLCJlbWFpbCI6InRlc3QxQGdtYWlsLmNvbSIsImV4cCI6MTc1NzMyNzc5OH0.h_P47qNaOhJ9r34alekxTlvXxen45dbTXokBans669c'; // Your actual token as fallback for demo
   } catch (e) {
     // Fallback token for environments without localStorage
