@@ -175,10 +175,14 @@ export default function Page() {
             </div>
           </div>
           <div className="header-right">
+            <button className="header-btn" title="Search">
+              <i className="fas fa-search"></i>
+            </button>
+            <button className="upload-btn" onClick={() => handleNavigation('/upload')}>
+              <i className="fas fa-cloud-upload-alt"></i>
+              <span>Upload Document</span>
+            </button>
             <div className="header-actions">
-              <button className="header-btn" title="Search">
-                <i className="fas fa-search"></i>
-              </button>
               <button className="header-btn" title="Notifications">
                 <i className="fas fa-bell"></i>
                 <span className="notification-badge">3</span>
@@ -194,10 +198,6 @@ export default function Page() {
                 <i className="fas fa-chevron-down"></i>
               </div>
             </div>
-            <button className="upload-btn" onClick={() => handleNavigation('/upload')}>
-              <i className="fas fa-cloud-upload-alt"></i>
-              <span>Upload Document</span>
-            </button>
           </div>
         </header>
 
