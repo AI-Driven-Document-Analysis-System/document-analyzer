@@ -54,14 +54,40 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
       formData.append('filename', file.name)
       formData.append('content_type', file.type)
 
+      // Attach user_id if we have it in localStorage
+      try {
+        const userStr = localStorage.getItem('user')
+        if (userStr) {
+          const user = JSON.parse(userStr)
+          const uid = user?.id || user?.user?.id || user?.user_id
+          if (uid) {
+            formData.append('override_user_id', String(uid))
+          }
+        }
+      } catch {}
+
       if (!authToken) {
         throw new Error('No authentication token provided')
       }
+
+      // Also set X-User-Id header as a secondary hint
+      let userIdHeader: Record<string, string> = {}
+      try {
+        const userStr = localStorage.getItem('user')
+        if (userStr) {
+          const user = JSON.parse(userStr)
+          const uid = user?.id || user?.user?.id || user?.user_id
+          if (uid) {
+            userIdHeader['X-User-Id'] = String(uid)
+          }
+        }
+      } catch {}
 
       const response = await fetch('http://localhost:8000/api/documents/upload', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${authToken}`,
+          ...userIdHeader,
         },
         body: formData,
       })

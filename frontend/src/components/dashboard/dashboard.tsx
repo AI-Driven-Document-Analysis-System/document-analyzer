@@ -1,6 +1,9 @@
 //****************************CSS */
 import { useState, useEffect, useMemo } from "react"
 import './Dashboard.css' // Import the CSS file
+import '../../styles/components.css';
+//import DocumentViewer from '../DocumentViewer/DocumentViewer';
+
 
 // TypeScript interfaces
 interface Document {
@@ -50,16 +53,195 @@ interface DocumentWithSummary extends FormattedDocument {
   summaryError: string | null
 }
 
+// Inline styles for modal
+const modalStyles = {
+  overlay: {
+    position: 'fixed' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'rgba(0, 0, 0, 0.75)',
+    backdropFilter: 'blur(8px)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 9999,
+    padding: '20px',
+    animation: 'fadeInModal 0.3s ease-out'
+  },
+  container: {
+    background: 'white',
+    borderRadius: '16px',
+    width: '90vw',
+    maxWidth: '1200px',
+    height: '90vh',
+    maxHeight: '900px',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+    overflow: 'hidden',
+    position: 'relative' as const,
+    animation: 'slideInModal 0.3s ease-out'
+  },
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '20px 24px',
+    borderBottom: '1px solid #e5e7eb',
+    background: 'linear-gradient(135deg, #f8fafc, #e2e8f0)',
+    flexShrink: 0
+  },
+  title: {
+    flex: 1
+  },
+  titleH3: {
+    fontSize: '1.25rem',
+    fontWeight: 600,
+    color: '#1a202c',
+    margin: '0 0 4px 0'
+  },
+  titleP: {
+    fontSize: '0.875rem',
+    color: '#718096',
+    margin: 0
+  },
+  closeButton: {
+    background: 'none',
+    border: 'none',
+    fontSize: '24px',
+    color: '#718096',
+    cursor: 'pointer',
+    padding: '8px',
+    borderRadius: '8px',
+    transition: 'all 0.2s ease',
+    lineHeight: 1,
+    marginLeft: '16px'
+  },
+  body: {
+    flex: 1,
+    padding: 0,
+    overflow: 'hidden',
+    position: 'relative' as const,
+    background: '#f7fafc'
+  },
+  viewer: {
+    width: '100%',
+    height: '100%',
+    position: 'relative' as const
+  },
+  iframe: {
+    width: '100%',
+    height: '100%',
+    border: 'none',
+    background: 'white'
+  },
+  imageViewer: {
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '20px',
+    overflow: 'auto'
+  },
+  image: {
+    maxWidth: '100%',
+    maxHeight: '100%',
+    objectFit: 'contain' as const,
+    borderRadius: '8px',
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)'
+  },
+  loading: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100%',
+    color: '#718096'
+  },
+  loadingSpinner: {
+    width: '48px',
+    height: '48px',
+    border: '4px solid #e2e8f0',
+    borderTop: '4px solid #667eea',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite',
+    marginBottom: '16px'
+  },
+  error: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100%',
+    textAlign: 'center' as const,
+    color: '#718096',
+    padding: '40px'
+  },
+  errorIcon: {
+    fontSize: '4rem',
+    marginBottom: '16px',
+    color: '#e53e3e'
+  },
+  errorH4: {
+    fontSize: '1.25rem',
+    color: '#2d3748',
+    marginBottom: '8px'
+  },
+  errorP: {
+    color: '#718096',
+    marginBottom: '24px'
+  },
+  unsupported: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100%',
+    textAlign: 'center' as const,
+    padding: '40px',
+    color: '#718096'
+  },
+  fileIcon: {
+    fontSize: '4rem',
+    marginBottom: '16px',
+    color: '#a0aec0'
+  },
+  downloadBtn: {
+    background: 'linear-gradient(135deg, #667eea, #764ba2)',
+    color: 'white',
+    border: 'none',
+    padding: '12px 24px',
+    borderRadius: '8px',
+    fontSize: '1rem',
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px'
+  }
+};
+
 // Main Dashboard Component
 function Dashboard() {
   const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [documentsWithSummary, setDocumentsWithSummary] = useState<DocumentWithSummary[]>([])
+  // Chat and modal states
   const [activeView, setActiveView] = useState<'documents' | 'chat'>('documents')
   const [selectedDocument, setSelectedDocument] = useState<any>(null)
   const [summaryModalOpen, setSummaryModalOpen] = useState(false)
   const [selectedDocumentForSummary, setSelectedDocumentForSummary] = useState<{id: string, name: string} | null>(null)
+  
+  // Document preview states
+  const [previewDocument, setPreviewDocument] = useState<DocumentWithSummary | null>(null)
+  const [showPreview, setShowPreview] = useState(false)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [loadingPreview, setLoadingPreview] = useState(false)
 
   // Summary options configuration
   const summaryOptions: SummaryOption[] = [
@@ -86,22 +268,86 @@ function Dashboard() {
     }
   ]
 
-  // Mock token for demo - in real app this would come from auth context
+  // JWT token handling
   const getToken = () => {
     const token = localStorage.getItem("token")
-    if (!token) {
-      setError("No authentication token found. Please log in again.")
-      return null
-    }
     return token
   }
 
-  // Fetch user documents
+  // Document preview handler
+  const previewDocumentHandler = async (doc: DocumentWithSummary) => {
+    setLoadingPreview(true)
+    setPreviewDocument(doc)
+    setShowPreview(true)
+
+    try {
+      const token = getToken()
+      if (!token) return
+
+      const response = await fetch(`http://localhost:8000/api/documents/${doc.id}/download`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setPreviewUrl(data.download_url)
+      } else {
+        console.error("Failed to get preview URL")
+        alert("Failed to load document preview")
+      }
+    } catch (err) {
+      console.error("Error getting preview URL:", err)
+      alert("Error loading document preview")
+    } finally {
+      setLoadingPreview(false)
+    }
+  }
+
+  // Close preview
+  const closePreview = () => {
+    setShowPreview(false)
+    setPreviewDocument(null)
+    setPreviewUrl(null)
+  }
+
+  // Fetch user documents with JWT authentication and fallback
   useEffect(() => {
     const fetchDocuments = async () => {
+      const tryFallback = async () => {
+        try {
+          const userStr = localStorage.getItem("user")
+          if (!userStr) {
+            throw new Error("No user info found for fallback fetch")
+          }
+          const user = JSON.parse(userStr)
+          const userId = user?.id || user?.user?.id || user?.user_id
+          if (!userId) {
+            throw new Error("No user_id in local storage user")
+          }
+          const res = await fetch(`http://localhost:8000/api/documents/by-user?user_id=${encodeURIComponent(userId)}`)
+          if (!res.ok) {
+            throw new Error("Fallback fetch failed")
+          }
+          const data = await res.json()
+          setDocuments(data.documents || [])
+          setError(null)
+        } catch (e) {
+          console.error("Fallback documents fetch error:", e)
+          setError("Failed to load documents")
+        } finally {
+          setLoading(false)
+        }
+      }
+
       try {
         const token = getToken()
-        if (!token) return
+        if (!token) {
+          await tryFallback()
+          return
+        }
 
         const response = await fetch("http://localhost:8000/api/documents/", {
           headers: {
@@ -112,22 +358,21 @@ function Dashboard() {
 
         if (response.status === 401) {
           localStorage.removeItem("token")
-          localStorage.removeItem("user")
-          setError("Session expired. Please log in again.")
+          await tryFallback()
           return
         }
 
         if (!response.ok) {
-          throw new Error("Failed to fetch documents")
+          await tryFallback()
+          return
         }
 
         const data = await response.json()
         setDocuments(data.documents || [])
+        setLoading(false)
       } catch (err) {
         console.error("Error fetching documents:", err)
-        setError(err instanceof Error ? err.message : "Failed to load documents")
-      } finally {
-        setLoading(false)
+        await tryFallback()
       }
     }
 
@@ -196,12 +441,11 @@ function Dashboard() {
   const recentDocuments = useMemo((): DocumentWithSummary[] => {
     const formatted = documents
       .sort((a, b) => new Date(b.upload_date).getTime() - new Date(a.upload_date).getTime())
-      .slice(0, 5) // Show more documents
       .map((doc): DocumentWithSummary => ({
         id: doc.id,
         name: doc.original_filename,
         type: doc.content_type?.split("/")[1]?.toUpperCase() || "FILE",
-        status: doc.processing_status === "completed" ? "Completed" : 
+        status: doc.processing_status === "completed" ? "Completed" :
                 doc.processing_status === "processing" ? "Processing" : "Failed",
         uploadedAt: formatRelativeTime(doc.upload_date),
         confidence: doc.processing_status === "completed" ? 95 : null,
@@ -212,250 +456,23 @@ function Dashboard() {
         generatingNew: false,
         summaryError: null
       }))
-    
+
     setDocumentsWithSummary(formatted)
     return formatted
   }, [documents])
 
-  // Toggle summary options for a document
-  const toggleSummaryOptions = (docId: string) => {
-    setDocumentsWithSummary(prev => prev.map(doc => {
-      if (doc.id === docId) {
-        const newShowState = !doc.showSummaryOptions
-        return { 
-          ...doc, 
-          showSummaryOptions: newShowState,
-          selectedModel: newShowState ? doc.selectedModel : null,
-          currentSummary: newShowState ? doc.currentSummary : null,
-          summaryError: null
-        }
-      }
-      return { ...doc, showSummaryOptions: false }
-    }))
-  }
-
-  // Select a model and fetch summary for that model
-  const selectModel = async (docId: string, modelId: string) => {
-    setDocumentsWithSummary(prev => prev.map(doc => 
-      doc.id === docId 
-        ? { 
-            ...doc, 
-            selectedModel: modelId, 
-            loadingSummary: true, 
-            summaryError: null,
-            currentSummary: null 
-          } 
-        : doc
-    ))
-
-    try {
-      const token = getToken()
-      if (!token) return
-
-      const response = await fetch(`http://localhost:8000/api/summarize/document/${docId}`, {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      })
-
-      if (response.status === 401) {
-        localStorage.removeItem("token")
-        localStorage.removeItem("user")
-        setError("Session expired. Please log in again.")
-        return
-      }
-
-      if (response.ok) {
-        const data = await response.json()
-        if (data.success && data.summaries) {
-          const matchingSummaries = data.summaries.filter((summary: Summary) => 
-            summary.summary_type === modelId || 
-            summary.summary_type.toLowerCase() === modelId.toLowerCase() ||
-            summary.summary_type.replace(/[\s_-]/g, '').toLowerCase() === modelId.replace(/[\s_-]/g, '').toLowerCase()
-          )
-
-          if (matchingSummaries.length > 0) {
-            const latestSummary = matchingSummaries.sort((a: Summary, b: Summary) => 
-              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-            )[0]
-
-            setDocumentsWithSummary(prev => prev.map(doc => 
-              doc.id === docId 
-                ? { 
-                    ...doc, 
-                    currentSummary: latestSummary,
-                    loadingSummary: false
-                  }
-                : doc
-            ))
-          } else {
-            setDocumentsWithSummary(prev => prev.map(doc => 
-              doc.id === docId 
-                ? { 
-                    ...doc, 
-                    currentSummary: null,
-                    loadingSummary: false
-                  }
-                : doc
-            ))
-          }
-        } else {
-          setDocumentsWithSummary(prev => prev.map(doc => 
-            doc.id === docId 
-              ? { 
-                  ...doc, 
-                  currentSummary: null,
-                  loadingSummary: false
-                }
-              : doc
-          ))
-        }
-      } else {
-        console.error("Failed to fetch summaries")
-        setDocumentsWithSummary(prev => prev.map(doc => 
-          doc.id === docId 
-            ? { 
-                ...doc, 
-                loadingSummary: false,
-                summaryError: "Failed to load summary"
-              }
-            : doc
-        ))
-      }
-    } catch (err) {
-      console.error("Error fetching summaries:", err)
-      setDocumentsWithSummary(prev => prev.map(doc => 
-        doc.id === docId 
-          ? { 
-              ...doc, 
-              loadingSummary: false, 
-              summaryError: "Failed to load summary" 
-            }
-          : doc
-      ))
-    }
-  }
-
-  // Generate new summary
-  const generateSummary = async (docId: string, summaryType: string) => {
-    setDocumentsWithSummary(prev => prev.map(doc => 
-      doc.id === docId ? { ...doc, generatingNew: true, summaryError: null } : doc
-    ))
-
-    try {
-      const token = getToken()
-      if (!token) return
-
-      const response = await fetch("http://localhost:8000/api/summarize/", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          document_id: docId,
-          summary_type: summaryType
-        })
-      })
-
-      if (response.status === 401) {
-        localStorage.removeItem("token")
-        localStorage.removeItem("user")
-        setError("Session expired. Please log in again.")
-        return
-      }
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.detail || "Failed to generate summary")
-      }
-
-      const data = await response.json()
-      
-      if (data.success) {
-        const newSummary: Summary = {
-          id: Date.now(),
-          summary_type: data.summary_type,
-          summary_text: data.summary_text,
-          word_count: data.word_count,
-          model_used: data.model_used,
-          created_at: data.created_at,
-          from_cache: data.from_cache,
-          document_type: data.document_type,
-          key_points: data.key_points
-        }
-
-        setDocumentsWithSummary(prev => prev.map(doc => 
-          doc.id === docId 
-            ? { 
-                ...doc, 
-                currentSummary: newSummary,
-                generatingNew: false
-              }
-            : doc
-        ))
-      } else {
-        throw new Error("Summary generation failed")
-      }
-    } catch (err: any) {
-      console.error("Error generating summary:", err)
-      setDocumentsWithSummary(prev => prev.map(doc => 
-        doc.id === docId 
-          ? { 
-              ...doc, 
-              generatingNew: false, 
-              summaryError: `Failed to generate summary: ${err.message}` 
-            }
-          : doc
-      ))
-    }
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString()
-  }
-
-  const getSummaryTypeColor = (type: string) => {
-    const colors: { [key: string]: string } = {
-      "Brief Summary": "status-badge status-completed",
-      "brief": "status-badge status-completed",
-      "Detailed Summary": "status-badge status-processing", 
-      "detailed": "status-badge status-processing",
-      "Domain Specific Summary": "status-badge",
-      "Domain-Specific": "status-badge",
-      "domain_specific": "status-badge"
-    }
-    return colors[type] || "status-badge"
-  }
-
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text)
-      // You could add a toast notification here
-    } catch (err) {
-      console.error('Failed to copy text: ', err)
-    }
-  }
-
+  // Other handler functions
   const handleChatWithDoc = (doc: DocumentWithSummary) => {
     setSelectedDocument(doc)
     setActiveView('chat')
   }
 
   const handleSummarizeDoc = (doc: DocumentWithSummary) => {
-    console.log('Summarize button clicked for doc:', doc.name)
     setSelectedDocumentForSummary({
       id: doc.id,
       name: doc.name
     })
     setSummaryModalOpen(true)
-    console.log('Modal should be open now')
-  }
-
-  const closeSummaryModal = () => {
-    setSummaryModalOpen(false)
-    setSelectedDocumentForSummary(null)
   }
 
   if (loading) {
@@ -485,8 +502,7 @@ function Dashboard() {
   return (
     <div className="main-container">
       <div className="max-w-7xl mx-auto space-y-6">
-
-        {/* Stats Grid - Single Compact Row */}
+        {/* Stats Grid */}
         <div className="grid grid-cols-4 gap-4">
           {stats.map((stat) => (
             <div key={stat.title} className="stats-card fade-in">
@@ -504,17 +520,16 @@ function Dashboard() {
           ))}
         </div>
 
-        {/* Search and Chat Feature - Exact Qwen Structure */}
+        {/* Search and Chat Feature */}
         <div className="feature-container">
-          {/* Tabs */}
           <div className="tabs-container d-flex">
-            <button 
+            <button
               className={`tab-btn ${activeView === 'documents' ? 'active' : ''}`}
               onClick={() => setActiveView('documents')}
             >
               <i className="fas fa-search me-2"></i>Search Documents
             </button>
-            <button 
+            <button
               className={`tab-btn ${activeView === 'chat' ? 'active' : ''}`}
               onClick={() => setActiveView('chat')}
             >
@@ -522,23 +537,21 @@ function Dashboard() {
             </button>
           </div>
 
-          {/* Tab Content */}
           <div className="tab-content-container">
-            {/* Search Tab */}
             {activeView === 'documents' && (
               <div id="search-tab" className="tab-content active">
                 <div className="search-input-group">
                   <span className="search-icon"><i className="fas fa-search"></i></span>
-                  <input 
-                    type="text" 
-                    className="form-control" 
+                  <input
+                    type="text"
+                    className="form-control"
                     placeholder="Search across all your documents..."
                   />
                 </div>
 
                 <div id="searchResults">
                   <h5 className="mb-4"><i className="fas fa-history me-2"></i>Recent Documents</h5>
-                  
+
                   {documentsWithSummary.length === 0 ? (
                     <div className="text-center py-5">
                       <i className="fas fa-file-alt" style={{fontSize: '4rem', color: '#dee2e6'}}></i>
@@ -563,23 +576,23 @@ function Dashboard() {
                               PDF • 2.4 MB • Last accessed: {doc.uploadedAt}
                             </div>
                             <div className="result-actions">
-                              <button 
+                              <button
                                 className="btn summarize-btn"
-                                onClick={() => {
-                                  setSelectedDocumentForSummary({
-                                    id: doc.id,
-                                    name: doc.name
-                                  });
-                                  setSummaryModalOpen(true);
-                                }}
+                                onClick={() => handleSummarizeDoc(doc)}
                               >
                                 <i className="fas fa-file-contract me-1"></i>Summarize
                               </button>
-                              <button 
+                              <button
                                 className="btn chat-doc-btn"
                                 onClick={() => handleChatWithDoc(doc)}
                               >
                                 <i className="fas fa-comments me-1"></i>Chat with Doc
+                              </button>
+                              <button
+                                onClick={() => previewDocumentHandler(doc)}
+                                className="btn btn-secondary"
+                              >
+                                <i className="fas fa-eye me-1"></i>Preview
                               </button>
                             </div>
                           </div>
@@ -588,58 +601,14 @@ function Dashboard() {
                     ))
                   )}
                 </div>
-              </div>
-            )}
-
-            {/* Chat Tab */}
-            {activeView === 'chat' && (
-              <div className="tab-content active">
-                {selectedDocument && (
-                  <div className="selected-document-context">
-                    <div className="context-header">
-                      <i className="fas fa-file-alt"></i>
-                      <span>Chatting about: {selectedDocument.filename}</span>
-                      <button 
-                        className="btn btn-sm btn-outline-secondary"
-                        onClick={() => setSelectedDocument(null)}
-                      >
-                        <i className="fas fa-times"></i>
-                      </button>
-                    </div>
-                  </div>
-                )}
-                <div className="chat-messages">
-                  <div className="message bot">
-                    <div className="message-content">
-                      {selectedDocument 
-                        ? `Hello! I'm ready to help you with "${selectedDocument.name}". What would you like to know about this document?`
-                        : "Hello! I'm DocuMind AI. I can help you analyze and understand your documents. What would you like to know?"
-                      }
-                    </div>
-                  </div>
-                  {selectedDocument && (
-                    <div className="message bot">
-                      <div className="message-content">
-                        I can see you've selected "{selectedDocument.name}". I can help you:
-                        <ul>
-                          <li>Summarize key points</li>
-                          <li>Answer specific questions about the content</li>
-                          <li>Extract important data or insights</li>
-                          <li>Compare with other documents</li>
-                        </ul>
-                        What would you like to explore?
-                      </div>
-                    </div>
-                  )}
-                </div>
                 <div className="chat-input-group">
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    placeholder={selectedDocument 
-                      ? `Ask about ${selectedDocument.name}...` 
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder={selectedDocument
+                      ? `Ask about ${selectedDocument.name}...`
                       : "Ask DocuMind AI anything about your documents..."
-                    } 
+                    }
                   />
                   <button className="btn btn-primary">
                     <i className="fas fa-paper-plane"></i>
@@ -650,229 +619,107 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Content Area */}
-        <div className="grid grid-cols-12 gap-6">
-          {/* Right Side - Quick Actions */}
-          <div className="col-span-12">
-            <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
-              <div className="section-header mb-4">
-                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <i className="fas fa-bolt"></i> Quick Actions
-                </h2>
-                <p className="text-gray-600 text-sm mt-1">Common tasks and shortcuts</p>
+        {/* Document Preview Modal */}
+        {showPreview && (
+          <div style={modalStyles.overlay}>
+            <div style={modalStyles.container}>
+              <div style={modalStyles.header}>
+                <div style={modalStyles.title}>
+                  <h3 style={modalStyles.titleH3}>{previewDocument?.name}</h3>
+                  <p style={modalStyles.titleP}>{previewDocument?.type} • {previewDocument?.uploadedAt}</p>
+                </div>
+                <button
+                  onClick={closePreview}
+                  style={modalStyles.closeButton}
+                >
+                  ✕
+                </button>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <button className="flex items-center gap-3 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-left">
-                  <i className="fas fa-cloud-upload-alt text-blue-600 text-xl"></i>
-                  <div>
-                    <div className="font-medium text-gray-900">Upload Document</div>
-                    <div className="text-sm text-gray-600">Add new files for analysis</div>
+
+              <div style={modalStyles.body}>
+                {loadingPreview ? (
+                  <div style={modalStyles.loading}>
+                    <div style={modalStyles.loadingSpinner}></div>
+                    <p>Loading document preview...</p>
                   </div>
-                </button>
-                <button className="flex items-center gap-3 p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors text-left">
-                  <i className="fas fa-brain text-green-600 text-xl"></i>
-                  <div>
-                    <div className="font-medium text-gray-900">Summarize</div>
-                    <div className="text-sm text-gray-600">Generate AI summaries</div>
+                ) : previewUrl ? (
+                  <div style={modalStyles.viewer}>
+                    {previewDocument?.type === 'PDF' ? (
+                      <iframe
+                        src={previewUrl}
+                        style={modalStyles.iframe}
+                        title="Document Preview"
+                      />
+                    ) : previewDocument?.type?.startsWith('image/') ||
+                         ['JPG', 'JPEG', 'PNG', 'GIF'].includes(previewDocument?.type || '') ? (
+                      <div style={modalStyles.imageViewer}>
+                        <img
+                          src={previewUrl}
+                          alt="Document Preview"
+                          style={modalStyles.image}
+                        />
+                      </div>
+                    ) : (
+                      <div style={modalStyles.unsupported}>
+                        <div style={modalStyles.fileIcon}><i className="fas fa-file"></i></div>
+                        <h4 style={modalStyles.titleH3}>Preview not available</h4>
+                        <p style={modalStyles.titleP}>Preview not available for this file type</p>
+                        <a
+                          href={previewUrl}
+                          download={previewDocument?.name}
+                          style={modalStyles.downloadBtn}
+                        >
+                          <i className="fas fa-download"></i>
+                          Download Document
+                        </a>
+                      </div>
+                    )}
                   </div>
-                </button>
-                <button className="flex items-center gap-3 p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors text-left">
-                  <i className="fas fa-search text-purple-600 text-xl"></i>
-                  <div>
-                    <div className="font-medium text-gray-900">Search</div>
-                    <div className="text-sm text-gray-600">Find content in documents</div>
+                ) : (
+                  <div style={modalStyles.error}>
+                    <div style={modalStyles.errorIcon}><i className="fas fa-exclamation-triangle"></i></div>
+                    <h4 style={modalStyles.errorH4}>Failed to load document preview</h4>
+                    <p style={modalStyles.errorP}>Unable to load the document preview</p>
                   </div>
-                </button>
-                <button className="flex items-center gap-3 p-4 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors text-left">
-                  <i className="fas fa-chart-bar text-orange-600 text-xl"></i>
-                  <div>
-                    <div className="font-medium text-gray-900">Analytics</div>
-                    <div className="text-sm text-gray-600">View processing insights</div>
-                  </div>
-                </button>
+                )}
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
-      {/* Working Modal */}
-      {summaryModalOpen && selectedDocumentForSummary && (
-        <div 
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999
-          }}
-          onClick={() => setSummaryModalOpen(false)}
-        >
-          <div 
-            style={{
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              maxWidth: '800px',
-              width: '90%',
-              maxHeight: '90vh',
-              overflow: 'auto',
-              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)'
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div style={{ padding: '1.5rem', borderBottom: '1px solid #dee2e6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h5 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '600' }}>Document Summary</h5>
-              <button 
-                onClick={() => setSummaryModalOpen(false)}
-                style={{ 
-                  background: 'none',
-                  border: 'none', 
-                  fontSize: '2.2rem', 
-                  cursor: 'pointer',
-                  color: '#6c757d',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 'bold',
-                  transition: 'all 0.2s ease'
-                }}
-                onMouseEnter={(e) => (e.target as HTMLButtonElement).style.color = '#495057'}
-                onMouseLeave={(e) => (e.target as HTMLButtonElement).style.color = '#6c757d'}
-              >
-                ×
-              </button>
-            </div>
+      <style jsx>{`
+        @keyframes fadeInModal {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
 
-            {/* Modal Body */}
-            <div style={{ padding: '1.5rem' }}>
-              {/* Document Info */}
-              <div style={{ marginBottom: '1rem' }}>
-                <strong>Document:</strong> {selectedDocumentForSummary.name}
-              </div>
+        @keyframes slideInModal {
+          from {
+            opacity: 0;
+            transform: scale(0.95) translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
 
-              {/* Model Selection and Regenerate */}
-              <div style={{ display: 'flex', alignItems: 'end', gap: '1rem', marginBottom: '1.5rem' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
-                    Summarization Model:
-                  </label>
-                  <select 
-                    style={{ 
-                      width: '100%', 
-                      padding: '0.5rem', 
-                      border: '1px solid #ced4da', 
-                      borderRadius: '4px',
-                      fontSize: '1rem'
-                    }}
-                  >
-                    <option value="pegasus">Pegasus (Default - High Quality)</option>
-                    <option value="bart">BART (Balanced)</option>
-                    <option value="t5">T5 (Flexible for Technical Docs)</option>
-                  </select>
-                </div>
-                <button 
-                  style={{
-                    padding: '0.5rem 1rem',
-                    backgroundColor: '#007bff',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem'
-                  }}
-                >
-                  <i className="fas fa-sync-alt"></i>
-                  Regenerate
-                </button>
-              </div>
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
 
-              {/* Summary Metadata */}
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(4, 1fr)', 
-                gap: '1rem', 
-                marginBottom: '1rem',
-                padding: '1rem',
-                backgroundColor: '#f8f9fa',
-                borderRadius: '4px'
-              }}>
-                <div>
-                  <small style={{ color: '#6c757d' }}>Word Count:</small><br />
-                  <span>245</span>
-                </div>
-                <div>
-                  <small style={{ color: '#6c757d' }}>Model:</small><br />
-                  <span>Pegasus</span>
-                </div>
-                <div>
-                  <small style={{ color: '#6c757d' }}>Cache:</small><br />
-                  <span style={{ 
-                    backgroundColor: '#28a745', 
-                    color: 'white', 
-                    padding: '0.25rem 0.5rem', 
-                    borderRadius: '4px', 
-                    fontSize: '0.75rem' 
-                  }}>
-                    Cached
-                  </span>
-                </div>
-                <div>
-                  <small style={{ color: '#6c757d' }}>Generated:</small><br />
-                  <span>Just now</span>
-                </div>
-              </div>
+        @media (max-width: 768px) {
+          .modal-overlay { padding: 10px; }
+          .modal-container { width: 95vw; height: 95vh; }
+          .modal-header { padding: 16px 20px; }
+          .modal-header h3 { font-size: 1.125rem; }
+          .image-viewer { padding: 16px; }
+        }
 
-              {/* Summary Content */}
-              <div style={{ 
-                border: '1px solid #dee2e6', 
-                borderRadius: '4px', 
-                padding: '1rem', 
-                backgroundColor: '#f8f9fa',
-                marginBottom: '1rem'
-              }}>
-                This document provides a comprehensive overview of computer vision fundamentals and applications. Key growth drivers included expansion in international markets and successful launch of new product lines. Operating expenses increased by 8%, primarily due to R&D investments. Net profit margin improved to 18.5% from 17.2% last year.
-              </div>
-
-              {/* Key Points */}
-              <div>
-                <h6 style={{ marginBottom: '0.5rem' }}>Key Points:</h6>
-                <ul style={{ paddingLeft: '1.5rem' }}>
-                  <li>Computer vision fundamentals covered comprehensively</li>
-                  <li>International market expansion drove growth</li>
-                  <li>R&D investments increased operating expenses by 8%</li>
-                  <li>Net profit margin improved from 17.2% to 18.5%</li>
-                </ul>
-              </div>
-
-              {/* Close Button */}
-              <div style={{ textAlign: 'right', marginTop: '2rem' }}>
-                <button 
-                  onClick={() => setSummaryModalOpen(false)}
-                  style={{
-                    padding: '0.75rem 2rem',
-                    backgroundColor: '#6c757d',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '1rem'
-                  }}
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+        ${showPreview ? 'body { overflow: hidden; }' : ''}
+      `}</style>
     </div>
   )
 }
