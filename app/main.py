@@ -9,6 +9,7 @@ from datetime import datetime
 from .api import auth, summarization, documents, chat  # Add chat import
 from .core.database import db_manager
 from .db.init_db import create_tables
+from .api import profile
 
 # Load environment variables early
 load_dotenv()
@@ -55,6 +56,7 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(summarization.router, prefix="/api")
 app.include_router(documents.router, prefix="/api")  # Add this line
 app.include_router(chat.router, prefix="/api")  # Add chat router
+app.include_router(profile.router, prefix="/api")
 
 @app.get("/")
 async def root():

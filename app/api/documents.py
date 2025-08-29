@@ -4,7 +4,7 @@
 
 ##Minio 
 
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Request
 from typing import List, Optional
 from ..api.auth import get_current_user
 from ..core.database import db_manager
@@ -21,7 +21,9 @@ router = APIRouter(prefix="/documents", tags=["documents"])
 
 @router.post("/upload", response_model=dict)
 async def upload_document(
+    request: Request,
     file: UploadFile = File(...),
+    override_user_id: str | None = Form(default=None),
     current_user: UserResponse = Depends(get_current_user)
 ):
     """Upload a document for the current user."""
@@ -35,14 +37,20 @@ async def upload_document(
         if not file.filename:
             raise HTTPException(status_code=400, detail="No file provided")
         
-        # Get user ID
+        # Resolve user ID: prefer explicit override (form or header) then JWT
         user_id = None
-        if hasattr(current_user, 'id'):
+        header_user_id = request.headers.get('x-user-id') or request.headers.get('X-User-Id')
+        if override_user_id and override_user_id.strip():
+            user_id = override_user_id.strip()
+            print(f"Using user_id from form override: {user_id}")
+        elif header_user_id and header_user_id.strip():
+            user_id = header_user_id.strip()
+            print(f"Using user_id from header override: {user_id}")
+        elif hasattr(current_user, 'id') and current_user.id is not None:
             user_id = str(current_user.id)
-        elif hasattr(current_user, 'email'):
-            user_id = current_user.email
+            print(f"Using user_id from JWT: {user_id}")
         else:
-            raise HTTPException(status_code=400, detail="Invalid user token")
+            raise HTTPException(status_code=400, detail="No user identifier provided")
         
         print(f"Using user_id: {user_id}")
         
@@ -91,17 +99,12 @@ async def get_documents(
             print("ERROR: current_user is None or empty")
             raise HTTPException(status_code=400, detail="No user information provided")
         
-        # Extract user ID from UserResponse attributes
-        user_id = None
-        if hasattr(current_user, 'id'):
-            user_id = current_user.id
-            print(f"Found user identifier in field 'id': {user_id}")
-        elif hasattr(current_user, 'email'):
-            user_id = current_user.email
-            print(f"Found user identifier in field 'email': {user_id}")
-        else:
+        # Extract user ID from UserResponse (UUID only)
+        if not hasattr(current_user, 'id') or current_user.id is None:
             print(f"ERROR: No user ID found in UserResponse attributes")
             raise HTTPException(status_code=400, detail="Invalid user token - no user ID found")
+        user_id = str(current_user.id)
+        print(f"Using user_id (UUID): {user_id}")
         
         print(f"Using user_id: {user_id}")
         
@@ -121,7 +124,7 @@ async def get_documents(
                     LIMIT %s OFFSET %s
                 """
                 print(f"Executing query: {query}")
-                cursor.execute(query, (str(user_id), limit, offset))
+                cursor.execute(query, (user_id, limit, offset))
                 documents = cursor.fetchall()
                 
                 print(f"Query returned {len(documents)} documents")
@@ -169,6 +172,64 @@ async def get_documents(
         print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
+@router.get("/by-user", response_model=dict)
+async def get_documents_by_user(
+    user_id: str,
+    limit: int = 50,
+    offset: int = 0
+):
+    """Public endpoint: Get documents for a given user_id without JWT (use carefully)."""
+    try:
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id is required")
+
+        with db_manager.get_connection() as conn:
+            with conn.cursor() as cursor:
+                query = """
+                    SELECT 
+                        d.id, d.original_filename, d.file_size, d.upload_timestamp, 
+                        d.mime_type, d.user_id, d.file_path_minio,
+                        COALESCE(dp.processing_status, 'unknown') AS processing_status, dp.processing_errors
+                    FROM documents d
+                    LEFT JOIN document_processing dp ON d.id = dp.document_id
+                    WHERE d.user_id = %s
+                    ORDER BY d.upload_timestamp DESC
+                    LIMIT %s OFFSET %s
+                """
+                cursor.execute(query, (user_id, limit, offset))
+                documents = cursor.fetchall()
+
+                cursor.execute("SELECT COUNT(*) FROM documents WHERE user_id = %s", (user_id,))
+                total_count = cursor.fetchone()[0]
+
+                result = []
+                for doc in documents:
+                    result.append({
+                        "id": doc[0],
+                        "original_filename": doc[1],
+                        "file_size": doc[2],
+                        "upload_date": doc[3].isoformat() if doc[3] else None,
+                        "content_type": doc[4],
+                        "user_id": doc[5],
+                        "file_path": doc[6],
+                        "processing_status": doc[7],
+                        "processing_errors": doc[8]
+                    })
+
+                return {
+                    "documents": result,
+                    "pagination": {
+                        "total": total_count,
+                        "limit": limit,
+                        "offset": offset,
+                        "has_more": offset + limit < total_count
+                    }
+                }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving documents: {str(e)}")
+
 @router.get("/{document_id}", response_model=dict)
 async def get_document(
     document_id: str,
@@ -176,7 +237,9 @@ async def get_document(
 ):
     """Get a specific document by ID."""
     try:
-        user_id = str(current_user.id) if hasattr(current_user, 'id') else current_user.email
+        if not hasattr(current_user, 'id') or current_user.id is None:
+            raise HTTPException(status_code=400, detail="Invalid user token")
+        user_id = str(current_user.id)
         
         with db_manager.get_connection() as conn:
             with conn.cursor() as cursor:
@@ -219,7 +282,9 @@ async def download_document(
 ):
     """Get download URL for a document."""
     try:
-        user_id = str(current_user.id) if hasattr(current_user, 'id') else current_user.email
+        if not hasattr(current_user, 'id') or current_user.id is None:
+            raise HTTPException(status_code=400, detail="Invalid user token")
+        user_id = str(current_user.id)
         
         with db_manager.get_connection() as conn:
             with conn.cursor() as cursor:

@@ -1,5 +1,6 @@
 
 
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -14,6 +15,7 @@ import { Sidebar } from "../components/layout/sidebar"
 // import "../styles/globals.css"
 import './globals.css' 
 import { authService } from "../services/authService"
+import UserProfilePage  from "../profile/profile"
 
 const routes = {
   "/dashboard": { component: Dashboard, title: "Dashboard", breadcrumb: ["Dashboard"] },
@@ -21,6 +23,7 @@ const routes = {
   "/summarization": { component: Summarization, title: "Summarization", breadcrumb: ["Analysis", "Summarization"] },
   "/search": { component: SearchInterface, title: "Search", breadcrumb: ["Analysis", "Search"] },
   "/chat": { component: RAGChatbot, title: "AI Chat", breadcrumb: ["Analysis", "AI Chat"] },
+  "/profile": { component: UserProfilePage, title: "Profile",  breadcrumb: ["Account", "Profile"] },
 }
 
 export default function Page() {
@@ -182,4 +185,3 @@ export default function Page() {
     </div>
   )
 }
-

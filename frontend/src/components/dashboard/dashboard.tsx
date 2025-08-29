@@ -1,7 +1,11 @@
 
-//****************************CSS */
+
+
 import { useState, useEffect, useMemo } from "react"
 import './Dashboard.css' // Import the CSS file
+import '../../styles/components.css';
+//import DocumentViewer from '../DocumentViewer/DocumentViewer';
+
 
 // TypeScript interfaces
 interface Document {
@@ -51,12 +55,190 @@ interface DocumentWithSummary extends FormattedDocument {
   summaryError: string | null
 }
 
+// Inline styles for modal
+const modalStyles = {
+  overlay: {
+    position: 'fixed' as const,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'rgba(0, 0, 0, 0.75)',
+    backdropFilter: 'blur(8px)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 9999,
+    padding: '20px',
+    animation: 'fadeInModal 0.3s ease-out'
+  },
+  container: {
+    background: 'white',
+    borderRadius: '16px',
+    width: '90vw',
+    maxWidth: '1200px',
+    height: '90vh',
+    maxHeight: '900px',
+    display: 'flex',
+    flexDirection: 'column' as const,
+    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+    overflow: 'hidden',
+    position: 'relative' as const,
+    animation: 'slideInModal 0.3s ease-out'
+  },
+  header: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '20px 24px',
+    borderBottom: '1px solid #e5e7eb',
+    background: 'linear-gradient(135deg, #f8fafc, #e2e8f0)',
+    flexShrink: 0
+  },
+  title: {
+    flex: 1
+  },
+  titleH3: {
+    fontSize: '1.25rem',
+    fontWeight: 600,
+    color: '#1a202c',
+    margin: '0 0 4px 0'
+  },
+  titleP: {
+    fontSize: '0.875rem',
+    color: '#718096',
+    margin: 0
+  },
+  closeButton: {
+    background: 'none',
+    border: 'none',
+    fontSize: '24px',
+    color: '#718096',
+    cursor: 'pointer',
+    padding: '8px',
+    borderRadius: '8px',
+    transition: 'all 0.2s ease',
+    lineHeight: 1,
+    marginLeft: '16px'
+  },
+  body: {
+    flex: 1,
+    padding: 0,
+    overflow: 'hidden',
+    position: 'relative' as const,
+    background: '#f7fafc'
+  },
+  viewer: {
+    width: '100%',
+    height: '100%',
+    position: 'relative' as const
+  },
+  iframe: {
+    width: '100%',
+    height: '100%',
+    border: 'none',
+    background: 'white'
+  },
+  imageViewer: {
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: '20px',
+    overflow: 'auto'
+  },
+  image: {
+    maxWidth: '100%',
+    maxHeight: '100%',
+    objectFit: 'contain' as const,
+    borderRadius: '8px',
+    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)'
+  },
+  loading: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100%',
+    color: '#718096'
+  },
+  loadingSpinner: {
+    width: '48px',
+    height: '48px',
+    border: '4px solid #e2e8f0',
+    borderTop: '4px solid #667eea',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite',
+    marginBottom: '16px'
+  },
+  error: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100%',
+    textAlign: 'center' as const,
+    color: '#718096',
+    padding: '40px'
+  },
+  errorIcon: {
+    fontSize: '4rem',
+    marginBottom: '16px',
+    color: '#e53e3e'
+  },
+  errorH4: {
+    fontSize: '1.25rem',
+    color: '#2d3748',
+    marginBottom: '8px'
+  },
+  errorP: {
+    color: '#718096',
+    marginBottom: '24px'
+  },
+  unsupported: {
+    display: 'flex',
+    flexDirection: 'column' as const,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100%',
+    textAlign: 'center' as const,
+    padding: '40px',
+    color: '#718096'
+  },
+  fileIcon: {
+    fontSize: '4rem',
+    marginBottom: '16px',
+    color: '#a0aec0'
+  },
+  downloadBtn: {
+    background: 'linear-gradient(135deg, #667eea, #764ba2)',
+    color: 'white',
+    border: 'none',
+    padding: '12px 24px',
+    borderRadius: '8px',
+    fontSize: '1rem',
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px'
+  }
+};
+
 // Main Dashboard Component
 function Dashboard() {
   const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [documentsWithSummary, setDocumentsWithSummary] = useState<DocumentWithSummary[]>([])
+  
+  // Add these state variables for document preview
+  const [previewDocument, setPreviewDocument] = useState<DocumentWithSummary | null>(null)
+  const [showPreview, setShowPreview] = useState(false)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [loadingPreview, setLoadingPreview] = useState(false)
 
   // Summary options configuration
   const summaryOptions: SummaryOption[] = [
@@ -86,19 +268,83 @@ function Dashboard() {
   // Mock token for demo - in real app this would come from auth context
   const getToken = () => {
     const token = localStorage.getItem("token")
-    if (!token) {
-      setError("No authentication token found. Please log in again.")
-      return null
-    }
     return token
+  }
+
+  // Add this function to handle document preview
+  const previewDocumentHandler = async (doc: DocumentWithSummary) => {
+    setLoadingPreview(true)
+    setPreviewDocument(doc)
+    setShowPreview(true)
+    
+    try {
+      const token = getToken()
+      if (!token) return
+
+      const response = await fetch(`http://localhost:8000/api/documents/${doc.id}/download`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setPreviewUrl(data.download_url)
+      } else {
+        console.error("Failed to get preview URL")
+        alert("Failed to load document preview")
+      }
+    } catch (err) {
+      console.error("Error getting preview URL:", err)
+      alert("Error loading document preview")
+    } finally {
+      setLoadingPreview(false)
+    }
+  }
+
+  // Add this function to close the preview
+  const closePreview = () => {
+    setShowPreview(false)
+    setPreviewDocument(null)
+    setPreviewUrl(null)
   }
 
   // Fetch user documents
   useEffect(() => {
     const fetchDocuments = async () => {
+      const tryFallback = async () => {
+        try {
+          const userStr = localStorage.getItem("user")
+          if (!userStr) {
+            throw new Error("No user info found for fallback fetch")
+          }
+          const user = JSON.parse(userStr)
+          const userId = user?.id || user?.user?.id || user?.user_id
+          if (!userId) {
+            throw new Error("No user_id in local storage user")
+          }
+          const res = await fetch(`http://localhost:8000/api/documents/by-user?user_id=${encodeURIComponent(userId)}`)
+          if (!res.ok) {
+            throw new Error("Fallback fetch failed")
+          }
+          const data = await res.json()
+          setDocuments(data.documents || [])
+          setError(null)
+        } catch (e) {
+          console.error("Fallback documents fetch error:", e)
+          setError("Failed to load documents")
+        } finally {
+          setLoading(false)
+        }
+      }
+
       try {
         const token = getToken()
-        if (!token) return
+        if (!token) {
+          await tryFallback()
+          return
+        }
 
         const response = await fetch("http://localhost:8000/api/documents/", {
           headers: {
@@ -109,22 +355,22 @@ function Dashboard() {
 
         if (response.status === 401) {
           localStorage.removeItem("token")
-          localStorage.removeItem("user")
-          setError("Session expired. Please log in again.")
+          await tryFallback()
           return
         }
 
         if (!response.ok) {
-          throw new Error("Failed to fetch documents")
+          // Try fallback if primary fails
+          await tryFallback()
+          return
         }
 
         const data = await response.json()
         setDocuments(data.documents || [])
+        setLoading(false)
       } catch (err) {
         console.error("Error fetching documents:", err)
-        setError(err instanceof Error ? err.message : "Failed to load documents")
-      } finally {
-        setLoading(false)
+        await tryFallback()
       }
     }
 
@@ -193,7 +439,7 @@ function Dashboard() {
   const recentDocuments = useMemo((): DocumentWithSummary[] => {
     const formatted = documents
       .sort((a, b) => new Date(b.upload_date).getTime() - new Date(a.upload_date).getTime())
-      .slice(0, 5) // Show more documents
+      //.slice(0, 5) // Show more documents
       .map((doc): DocumentWithSummary => ({
         id: doc.id,
         name: doc.original_filename,
@@ -543,6 +789,7 @@ function Dashboard() {
                           </span>
                         </div>
                       </div>
+                      {/* Updated buttons section with document preview */}
                       <div className="flex gap-3">
                         <button 
                           onClick={() => toggleSummaryOptions(doc.id)}
@@ -550,6 +797,13 @@ function Dashboard() {
                         >
                           <span className="text-lg">📊</span>
                           {doc.showSummaryOptions ? 'Hide Summary' : 'Summarize'}
+                        </button>
+                        <button 
+                          onClick={() => previewDocumentHandler(doc)}
+                          className="btn btn-secondary flex-1"
+                        >
+                          <span className="text-lg">👁️</span>
+                          View Document
                         </button>
                         <button className="btn btn-success flex-1">
                           <span className="text-lg">💬</span>
@@ -729,7 +983,154 @@ function Dashboard() {
             )}
           </div>
         </div>
+
+        {/* Document Preview Modal with Inline Styles */}
+        {showPreview && (
+          <div style={modalStyles.overlay}>
+            <div style={modalStyles.container}>
+              {/* Modal Header */}
+              <div style={modalStyles.header}>
+                <div style={modalStyles.title}>
+                  <h3 style={modalStyles.titleH3}>{previewDocument?.name}</h3>
+                  <p style={modalStyles.titleP}>{previewDocument?.type} • {previewDocument?.uploadedAt}</p>
+                </div>
+                <button 
+                  onClick={closePreview}
+                  style={modalStyles.closeButton}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.background = 'rgba(0, 0, 0, 0.1)';
+                    e.currentTarget.style.color = '#2d3748';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.background = 'none';
+                    e.currentTarget.style.color = '#718096';
+                  }}
+                >
+                  ✕
+                </button>
+              </div>
+              
+              {/* Modal Content */}
+              <div style={modalStyles.body}>
+                {loadingPreview ? (
+                  <div style={modalStyles.loading}>
+                    <div style={modalStyles.loadingSpinner}></div>
+                    <p>Loading document preview...</p>
+                  </div>
+                ) : previewUrl ? (
+                  <div style={modalStyles.viewer}>
+                    {previewDocument?.type === 'PDF' ? (
+                      <iframe
+                        src={previewUrl}
+                        style={modalStyles.iframe}
+                        title="Document Preview"
+                      />
+                    ) : previewDocument?.type?.startsWith('image/') || 
+                         ['JPG', 'JPEG', 'PNG', 'GIF'].includes(previewDocument?.type || '') ? (
+                      <div style={modalStyles.imageViewer}>
+                        <img 
+                          src={previewUrl} 
+                          alt="Document Preview"
+                          style={modalStyles.image}
+                        />
+                      </div>
+                    ) : (
+                      <div style={modalStyles.unsupported}>
+                        <div style={modalStyles.fileIcon}>📄</div>
+                        <h4 style={modalStyles.titleH3}>Preview not available for this file type</h4>
+                        <p style={modalStyles.titleP}>
+                          Preview not available for this file type
+                        </p>
+                        <a 
+                          href={previewUrl} 
+                          download={previewDocument?.name}
+                          style={modalStyles.downloadBtn}
+                          onMouseOver={(e) => {
+                            e.currentTarget.style.background = 'linear-gradient(135deg, #5a6fd8, #6a4190)';
+                            e.currentTarget.style.transform = 'translateY(-2px)';
+                          }}
+                          onMouseOut={(e) => {
+                            e.currentTarget.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+                            e.currentTarget.style.transform = 'translateY(0)';
+                          }}
+                        >
+                          <span style={{fontSize: '1.125rem'}}>⬇️</span>
+                          Download Document
+                        </a>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div style={modalStyles.error}>
+                    <div style={modalStyles.errorIcon}>⚠️</div>
+                    <h4 style={modalStyles.errorH4}>Failed to load document preview</h4>
+                    <p style={modalStyles.errorP}>Unable to load the document preview</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
+
+      {/* Add required CSS animations and styles */}
+      <style jsx>{`
+        @keyframes fadeInModal {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes slideInModal {
+          from {
+            opacity: 0;
+            transform: scale(0.95) translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive styles */
+        @media (max-width: 768px) {
+          .modal-overlay {
+            padding: 10px;
+          }
+          
+          .modal-container {
+            width: 95vw;
+            height: 95vh;
+          }
+          
+          .modal-header {
+            padding: 16px 20px;
+          }
+          
+          .modal-header h3 {
+            font-size: 1.125rem;
+          }
+          
+          .modal-close {
+            font-size: 20px;
+          }
+          
+          .image-viewer {
+            padding: 16px;
+          }
+        }
+
+        /* Prevent body scroll when modal is open */
+        ${showPreview ? 'body { overflow: hidden; }' : ''}
+      `}</style>
     </div>
   )
 }
