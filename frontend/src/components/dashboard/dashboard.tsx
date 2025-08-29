@@ -1,4 +1,3 @@
-
 //****************************CSS */
 import { useState, useEffect, useMemo } from "react"
 import './Dashboard.css' // Import the CSS file
@@ -59,6 +58,8 @@ function Dashboard() {
   const [documentsWithSummary, setDocumentsWithSummary] = useState<DocumentWithSummary[]>([])
   const [activeView, setActiveView] = useState<'documents' | 'chat'>('documents')
   const [selectedDocument, setSelectedDocument] = useState<any>(null)
+  const [summaryModalOpen, setSummaryModalOpen] = useState(false)
+  const [selectedDocumentForSummary, setSelectedDocumentForSummary] = useState<{id: string, name: string} | null>(null)
 
   // Summary options configuration
   const summaryOptions: SummaryOption[] = [
@@ -442,6 +443,21 @@ function Dashboard() {
     setActiveView('chat')
   }
 
+  const handleSummarizeDoc = (doc: DocumentWithSummary) => {
+    console.log('Summarize button clicked for doc:', doc.name)
+    setSelectedDocumentForSummary({
+      id: doc.id,
+      name: doc.name
+    })
+    setSummaryModalOpen(true)
+    console.log('Modal should be open now')
+  }
+
+  const closeSummaryModal = () => {
+    setSummaryModalOpen(false)
+    setSelectedDocumentForSummary(null)
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -547,7 +563,16 @@ function Dashboard() {
                               PDF • 2.4 MB • Last accessed: {doc.uploadedAt}
                             </div>
                             <div className="result-actions">
-                              <button className="btn summarize-btn">
+                              <button 
+                                className="btn summarize-btn"
+                                onClick={() => {
+                                  setSelectedDocumentForSummary({
+                                    id: doc.id,
+                                    name: doc.name
+                                  });
+                                  setSummaryModalOpen(true);
+                                }}
+                              >
                                 <i className="fas fa-file-contract me-1"></i>Summarize
                               </button>
                               <button 
@@ -670,6 +695,184 @@ function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Working Modal */}
+      {summaryModalOpen && selectedDocumentForSummary && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999
+          }}
+          onClick={() => setSummaryModalOpen(false)}
+        >
+          <div 
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              maxWidth: '800px',
+              width: '90%',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{ padding: '1.5rem', borderBottom: '1px solid #dee2e6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h5 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '600' }}>Document Summary</h5>
+              <button 
+                onClick={() => setSummaryModalOpen(false)}
+                style={{ 
+                  background: 'none',
+                  border: 'none', 
+                  fontSize: '2.2rem', 
+                  cursor: 'pointer',
+                  color: '#6c757d',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 'bold',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => (e.target as HTMLButtonElement).style.color = '#495057'}
+                onMouseLeave={(e) => (e.target as HTMLButtonElement).style.color = '#6c757d'}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '1.5rem' }}>
+              {/* Document Info */}
+              <div style={{ marginBottom: '1rem' }}>
+                <strong>Document:</strong> {selectedDocumentForSummary.name}
+              </div>
+
+              {/* Model Selection and Regenerate */}
+              <div style={{ display: 'flex', alignItems: 'end', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+                    Summarization Model:
+                  </label>
+                  <select 
+                    style={{ 
+                      width: '100%', 
+                      padding: '0.5rem', 
+                      border: '1px solid #ced4da', 
+                      borderRadius: '4px',
+                      fontSize: '1rem'
+                    }}
+                  >
+                    <option value="pegasus">Pegasus (Default - High Quality)</option>
+                    <option value="bart">BART (Balanced)</option>
+                    <option value="t5">T5 (Flexible for Technical Docs)</option>
+                  </select>
+                </div>
+                <button 
+                  style={{
+                    padding: '0.5rem 1rem',
+                    backgroundColor: '#007bff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  <i className="fas fa-sync-alt"></i>
+                  Regenerate
+                </button>
+              </div>
+
+              {/* Summary Metadata */}
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(4, 1fr)', 
+                gap: '1rem', 
+                marginBottom: '1rem',
+                padding: '1rem',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '4px'
+              }}>
+                <div>
+                  <small style={{ color: '#6c757d' }}>Word Count:</small><br />
+                  <span>245</span>
+                </div>
+                <div>
+                  <small style={{ color: '#6c757d' }}>Model:</small><br />
+                  <span>Pegasus</span>
+                </div>
+                <div>
+                  <small style={{ color: '#6c757d' }}>Cache:</small><br />
+                  <span style={{ 
+                    backgroundColor: '#28a745', 
+                    color: 'white', 
+                    padding: '0.25rem 0.5rem', 
+                    borderRadius: '4px', 
+                    fontSize: '0.75rem' 
+                  }}>
+                    Cached
+                  </span>
+                </div>
+                <div>
+                  <small style={{ color: '#6c757d' }}>Generated:</small><br />
+                  <span>Just now</span>
+                </div>
+              </div>
+
+              {/* Summary Content */}
+              <div style={{ 
+                border: '1px solid #dee2e6', 
+                borderRadius: '4px', 
+                padding: '1rem', 
+                backgroundColor: '#f8f9fa',
+                marginBottom: '1rem'
+              }}>
+                This document provides a comprehensive overview of computer vision fundamentals and applications. Key growth drivers included expansion in international markets and successful launch of new product lines. Operating expenses increased by 8%, primarily due to R&D investments. Net profit margin improved to 18.5% from 17.2% last year.
+              </div>
+
+              {/* Key Points */}
+              <div>
+                <h6 style={{ marginBottom: '0.5rem' }}>Key Points:</h6>
+                <ul style={{ paddingLeft: '1.5rem' }}>
+                  <li>Computer vision fundamentals covered comprehensively</li>
+                  <li>International market expansion drove growth</li>
+                  <li>R&D investments increased operating expenses by 8%</li>
+                  <li>Net profit margin improved from 17.2% to 18.5%</li>
+                </ul>
+              </div>
+
+              {/* Close Button */}
+              <div style={{ textAlign: 'right', marginTop: '2rem' }}>
+                <button 
+                  onClick={() => setSummaryModalOpen(false)}
+                  style={{
+                    padding: '0.75rem 2rem',
+                    backgroundColor: '#6c757d',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '1rem'
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
