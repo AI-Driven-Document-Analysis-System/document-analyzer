@@ -119,16 +119,19 @@ export function RAGChatbot() {
 
   return (
     <div className="bg-gray-50 min-h-screen">
-      <div className="flex h-screen overflow-hidden">
+      <div className="flex h-screen" style={{ height: '100vh', overflow: 'hidden' }}>
         {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col p-6" style={{ backgroundColor: '#f8fafc' }}>
-          <div className="flex-1 flex flex-col bg-white rounded-xl shadow-md" style={{ position: 'relative', height: 'calc(100vh - 100px)' }}>
-            <div style={{ 
-              flex: 1, 
-              overflowY: 'auto', 
-              padding: '24px',
-              paddingBottom: '100px'
-            }}>
+        <div className="flex-1 flex flex-col p-6" style={{ backgroundColor: '#f8fafc', overflow: 'hidden' }}>
+          <div className="flex-1 flex flex-col bg-white rounded-xl shadow-md" style={{ position: 'relative', height: 'calc(100vh - 100px)', overflow: 'hidden' }}>
+            <div 
+              style={{ 
+                flex: 1, 
+                overflowY: 'auto', 
+                overflowX: 'hidden',
+                padding: '24px',
+                paddingBottom: '100px'
+              }}
+            >
               {messages.map((message) => (
                 <div key={message.id} style={{ marginBottom: '24px' }}>
                   {message.type === "assistant" ? (
@@ -340,7 +343,22 @@ export function RAGChatbot() {
         </div>
 
         {/* Improved Sidebar */}
-        <div style={{ width: '350px', minWidth: '350px', flexShrink: 0, backgroundColor: '#1f2937', color: 'white', minHeight: '100vh' }} className="flex flex-col">
+<div 
+  style={{ 
+    width: '350px', 
+    minWidth: '350px', 
+    flexShrink: 0, 
+    backgroundColor: '#1f2937', 
+    color: 'white', 
+    minHeight: '100vh',
+    overflowY: 'auto',
+    overflowX: 'hidden'
+  }} 
+  className="flex flex-col"
+  onWheel={(e) => {
+    e.stopPropagation();
+  }}
+>
           {/* Sidebar Header */}
           <div style={{ borderBottom: '1px solid #4b5563', padding: '16px' }}>
             <h2 style={{ fontSize: '18px', fontWeight: '600', color: 'white', margin: 0 }}>Assistant Panel</h2>
@@ -348,7 +366,7 @@ export function RAGChatbot() {
           </div>
 
           {/* Sidebar Content */}
-          <div className="flex-1 overflow-y-auto">
+          <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
             {/* Sources Section */}
             <div style={{ borderBottom: '1px solid #4b5563' }}>
               <div 
