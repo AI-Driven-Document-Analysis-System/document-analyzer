@@ -1,4 +1,3 @@
-
 //****************************CSS */
 import { useState, useEffect, useMemo } from "react"
 import './Dashboard.css' // Import the CSS file
@@ -57,6 +56,10 @@ function Dashboard() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [documentsWithSummary, setDocumentsWithSummary] = useState<DocumentWithSummary[]>([])
+  const [activeView, setActiveView] = useState<'documents' | 'chat'>('documents')
+  const [selectedDocument, setSelectedDocument] = useState<any>(null)
+  const [summaryModalOpen, setSummaryModalOpen] = useState(false)
+  const [selectedDocumentForSummary, setSelectedDocumentForSummary] = useState<{id: string, name: string} | null>(null)
 
   // Summary options configuration
   const summaryOptions: SummaryOption[] = [
@@ -65,21 +68,21 @@ function Dashboard() {
       name: 'Brief Summary',
       description: 'Quick overview with key points (50-150 words)',
       model: 'BART',
-      icon: '📝'
+      icon: 'fas fa-file-text'
     },
     {
       id: 'detailed',
       name: 'Detailed Summary',
       description: 'Comprehensive analysis with full context (80-250 words)',
       model: 'PEGASUS',
-      icon: '📄'
+      icon: 'fas fa-file-alt'
     },
     {
       id: 'domain_specific',
       name: 'Domain-Specific',
       description: 'Specialized summary based on document type (70-200 words)',
       model: 'Auto-Selected',
-      icon: '🎯'
+      icon: 'fas fa-bullseye'
     }
   ]
 
@@ -162,28 +165,28 @@ function Dashboard() {
         title: "Total Documents",
         value: total.toLocaleString(),
         change: "+12%",
-        icon: "📄",
+        icon: "fas fa-file-alt",
         positive: true
       },
       {
         title: "Processed Today",
         value: processedToday.toString(),
         change: "+23%",
-        icon: "✅",
+        icon: "fas fa-check-circle",
         positive: true
       },
       {
         title: "Processing Queue",
         value: inQueue.toString(),
         change: inQueue > 0 ? "-5%" : "0%",
-        icon: "⏰",
+        icon: "fas fa-clock",
         positive: inQueue === 0
       },
       {
         title: "Success Rate",
         value: `${successRate}%`,
         change: "+0.5%",
-        icon: "📈",
+        icon: "fas fa-chart-line",
         positive: true
       },
     ]
@@ -429,11 +432,30 @@ function Dashboard() {
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text)
-      alert("Summary copied to clipboard!")
+      // You could add a toast notification here
     } catch (err) {
-      console.error("Failed to copy:", err)
-      alert("Failed to copy summary")
+      console.error('Failed to copy text: ', err)
     }
+  }
+
+  const handleChatWithDoc = (doc: DocumentWithSummary) => {
+    setSelectedDocument(doc)
+    setActiveView('chat')
+  }
+
+  const handleSummarizeDoc = (doc: DocumentWithSummary) => {
+    console.log('Summarize button clicked for doc:', doc.name)
+    setSelectedDocumentForSummary({
+      id: doc.id,
+      name: doc.name
+    })
+    setSummaryModalOpen(true)
+    console.log('Modal should be open now')
+  }
+
+  const closeSummaryModal = () => {
+    setSummaryModalOpen(false)
+    setSelectedDocumentForSummary(null)
   }
 
   if (loading) {
@@ -452,7 +474,7 @@ function Dashboard() {
       <div className="min-h-screen flex items-center justify-center p-6">
         <div className="error-message max-w-md w-full">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">⚠️</span>
+            <i className="fas fa-exclamation-triangle text-2xl text-yellow-500"></i>
             <p>{error}</p>
           </div>
         </div>
@@ -463,26 +485,13 @@ function Dashboard() {
   return (
     <div className="main-container">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="dashboard-header">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1>Dashboard</h1>
-              <p className="opacity-90 mt-1">Welcome back! Here's what's happening with your documents.</p>
-            </div>
-            <button className="btn btn-upload">
-              <span className="text-lg">📤</span>
-              Upload Document
-            </button>
-          </div>
-        </div>
 
         {/* Stats Grid - Single Compact Row */}
         <div className="grid grid-cols-4 gap-4">
           {stats.map((stat) => (
             <div key={stat.title} className="stats-card fade-in">
               <div className="stats-header">
-                <span className="stats-icon">{stat.icon}</span>
+                <i className={`stats-icon ${stat.icon}`}></i>
                 <span className={`stats-change ${stat.positive ? 'positive' : 'negative'}`}>
                   {stat.change}
                 </span>
@@ -495,241 +504,375 @@ function Dashboard() {
           ))}
         </div>
 
-        {/* Recent Documents */}
-        <div className="document-card">
-          <div className="section-header">
-            <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              📄 Recent Documents
-            </h2>
-            <p className="text-gray-600 text-sm mt-1">Your latest document processing activities</p>
+        {/* Search and Chat Feature - Exact Qwen Structure */}
+        <div className="feature-container">
+          {/* Tabs */}
+          <div className="tabs-container d-flex">
+            <button 
+              className={`tab-btn ${activeView === 'documents' ? 'active' : ''}`}
+              onClick={() => setActiveView('documents')}
+            >
+              <i className="fas fa-search me-2"></i>Search Documents
+            </button>
+            <button 
+              className={`tab-btn ${activeView === 'chat' ? 'active' : ''}`}
+              onClick={() => setActiveView('chat')}
+            >
+              <i className="fas fa-robot me-2"></i>Ask DocuMind AI
+            </button>
           </div>
-          <div className="p-6">
-            {documentsWithSummary.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-state-icon">📄</div>
-                <p>No documents uploaded yet.</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {documentsWithSummary.map((doc) => (
-                  <div key={doc.id} className="document-card">
-                    {/* Document Card */}
-                    <div className="document-card-header">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-gray-900">{doc.name}</h4>
-                          <div className="flex items-center gap-4 mt-1">
-                            <span className="status-badge">{doc.type}</span>
-                            <span className="text-xs text-gray-500">{doc.uploadedAt}</span>
+
+          {/* Tab Content */}
+          <div className="tab-content-container">
+            {/* Search Tab */}
+            {activeView === 'documents' && (
+              <div id="search-tab" className="tab-content active">
+                <div className="search-input-group">
+                  <span className="search-icon"><i className="fas fa-search"></i></span>
+                  <input 
+                    type="text" 
+                    className="form-control" 
+                    placeholder="Search across all your documents..."
+                  />
+                </div>
+
+                <div id="searchResults">
+                  <h5 className="mb-4"><i className="fas fa-history me-2"></i>Recent Documents</h5>
+                  
+                  {documentsWithSummary.length === 0 ? (
+                    <div className="text-center py-5">
+                      <i className="fas fa-file-alt" style={{fontSize: '4rem', color: '#dee2e6'}}></i>
+                      <p className="mt-3 text-muted">No documents uploaded yet.</p>
+                    </div>
+                  ) : (
+                    documentsWithSummary.map((doc) => (
+                      <div key={doc.id} className="result-item">
+                        <div className="d-flex">
+                          <div className="result-icon">
+                            <i className="fas fa-file-invoice"></i>
+                          </div>
+                          <div className="flex-grow-1">
+                            <div className="result-title">
+                              {doc.name}
+                              <span className="doc-type-tag tag-invoice">{doc.type}</span>
+                            </div>
+                            <div className="result-snippet">
+                              Financial summary for Q4 2023 showing a 12% increase in revenue compared to previous year...
+                            </div>
+                            <div className="result-meta">
+                              PDF • 2.4 MB • Last accessed: {doc.uploadedAt}
+                            </div>
+                            <div className="result-actions">
+                              <button 
+                                className="btn summarize-btn"
+                                onClick={() => {
+                                  setSelectedDocumentForSummary({
+                                    id: doc.id,
+                                    name: doc.name
+                                  });
+                                  setSummaryModalOpen(true);
+                                }}
+                              >
+                                <i className="fas fa-file-contract me-1"></i>Summarize
+                              </button>
+                              <button 
+                                className="btn chat-doc-btn"
+                                onClick={() => handleChatWithDoc(doc)}
+                              >
+                                <i className="fas fa-comments me-1"></i>Chat with Doc
+                              </button>
+                            </div>
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          {doc.confidence !== null && (
-                            <div className="text-right">
-                              <div className="text-sm font-medium">{doc.confidence}%</div>
-                              <div className="progress-bar w-16">
-                                <div 
-                                  className="progress-fill" 
-                                  style={{ width: `${doc.confidence}%` }}
-                                ></div>
-                              </div>
-                            </div>
-                          )}
-                          <span className={`${
-                            doc.status === "Completed" ? "status-completed" : 
-                            doc.status === "Processing" ? "status-processing" : "status-failed"
-                          }`}>
-                            {doc.status}
-                          </span>
-                        </div>
                       </div>
-                      <div className="flex gap-3">
-                        <button 
-                          onClick={() => toggleSummaryOptions(doc.id)}
-                          className="btn btn-primary flex-1"
-                        >
-                          <span className="text-lg">📊</span>
-                          {doc.showSummaryOptions ? 'Hide Summary' : 'Summarize'}
-                        </button>
-                        <button className="btn btn-success flex-1">
-                          <span className="text-lg">💬</span>
-                          Chat with Doc
-                        </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Chat Tab */}
+            {activeView === 'chat' && (
+              <div className="tab-content active">
+                {selectedDocument && (
+                  <div className="selected-document-context">
+                    <div className="context-header">
+                      <i className="fas fa-file-alt"></i>
+                      <span>Chatting about: {selectedDocument.filename}</span>
+                      <button 
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={() => setSelectedDocument(null)}
+                      >
+                        <i className="fas fa-times"></i>
+                      </button>
+                    </div>
+                  </div>
+                )}
+                <div className="chat-messages">
+                  <div className="message bot">
+                    <div className="message-content">
+                      {selectedDocument 
+                        ? `Hello! I'm ready to help you with "${selectedDocument.name}". What would you like to know about this document?`
+                        : "Hello! I'm DocuMind AI. I can help you analyze and understand your documents. What would you like to know?"
+                      }
+                    </div>
+                  </div>
+                  {selectedDocument && (
+                    <div className="message bot">
+                      <div className="message-content">
+                        I can see you've selected "{selectedDocument.name}". I can help you:
+                        <ul>
+                          <li>Summarize key points</li>
+                          <li>Answer specific questions about the content</li>
+                          <li>Extract important data or insights</li>
+                          <li>Compare with other documents</li>
+                        </ul>
+                        What would you like to explore?
                       </div>
                     </div>
-
-                    {/* Summary Section */}
-                    {doc.showSummaryOptions && (
-                      <div className="summary-section">
-                        <h5 className="font-medium text-gray-900 mb-4">Document Summary</h5>
-                        
-                        {doc.summaryError && (
-                          <div className="error-message mb-4">
-                            <p>{doc.summaryError}</p>
-                          </div>
-                        )}
-
-                        {/* Model Selection */}
-                        <div className="mb-4">
-                          <h6 className="text-sm font-medium text-gray-700 mb-3">Select Summary Type</h6>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            {summaryOptions.map((option) => (
-                              <button
-                                key={option.id}
-                                onClick={() => selectModel(doc.id, option.id)}
-                                className={`summary-option ${
-                                  doc.selectedModel === option.id ? 'selected' : ''
-                                }`}
-                              >
-                                <div className="flex items-center gap-3">
-                                  <span className="text-xl">{option.icon}</span>
-                                  <div className="text-left">
-                                    <div className="font-medium text-sm">{option.name}</div>
-                                    <div className="text-xs text-gray-600">{option.description}</div>
-                                    <div className="text-xs text-gray-500 mt-1">Model: {option.model}</div>
-                                  </div>
-                                </div>
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Summary Content or Generate Option */}
-                        {doc.selectedModel && (
-                          <div className="border-t pt-4">
-                            {doc.loadingSummary ? (
-                              <div className="text-center py-8">
-                                <div className="loading-spinner mx-auto"></div>
-                                <p className="mt-2 text-sm text-gray-600">Loading summary...</p>
-                              </div>
-                            ) : doc.currentSummary ? (
-                              /* Show Existing Summary */
-                              <div className="fade-in">
-                                <div className="flex items-center justify-between mb-4">
-                                  <h6 className="text-sm font-medium text-gray-700">Summary Content</h6>
-                                  <div className="flex items-center gap-2">
-                                    {doc.currentSummary.from_cache && (
-                                      <span className="status-badge status-completed">
-                                        📋 From Cache
-                                      </span>
-                                    )}
-                                    <span className={getSummaryTypeColor(doc.currentSummary.summary_type)}>
-                                      {doc.currentSummary.summary_type}
-                                    </span>
-                                  </div>
-                                </div>
-
-                                {/* Summary Details */}
-                                <div className="mb-4 p-3 bg-gray-50 rounded-lg border">
-                                  <div className="grid grid-cols-3 gap-4 text-xs">
-                                    <div>
-                                      <span className="text-gray-500">Words:</span> {doc.currentSummary.word_count}
-                                    </div>
-                                    <div>
-                                      <span className="text-gray-500">Model:</span> {doc.currentSummary.model_used}
-                                    </div>
-                                    <div>
-                                      <span className="text-gray-500">Generated:</span> {formatDate(doc.currentSummary.created_at)}
-                                    </div>
-                                  </div>
-                                </div>
-
-                                {/* Summary Text */}
-                                <div className="summary-content mb-4">
-                                  <p className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
-                                    {doc.currentSummary.summary_text}
-                                  </p>
-                                </div>
-
-                                {/* Key Points */}
-                                {doc.currentSummary.key_points && doc.currentSummary.key_points.length > 0 && (
-                                  <div className="key-points mb-4">
-                                    <h6 className="text-xs font-medium text-gray-700 mb-2">Key Points</h6>
-                                    <ul className="space-y-1">
-                                      {doc.currentSummary.key_points.map((point, index) => (
-                                        <li key={index} className="key-point flex items-start gap-2 text-sm">
-                                          <span className="text-blue-500 mt-1">•</span>
-                                          <span className="text-gray-700">{point}</span>
-                                        </li>
-                                      ))}
-                                    </ul>
-                                  </div>
-                                )}
-
-                                {/* Action Buttons */}
-                                <div className="action-buttons">
-                                  <button 
-                                    onClick={() => copyToClipboard(doc.currentSummary!.summary_text)}
-                                    className="btn btn-copy"
-                                  >
-                                    <span>📋</span>
-                                    Copy
-                                  </button>
-                                  <button className="btn btn-export">
-                                    <span>📄</span>
-                                    Export
-                                  </button>
-                                  <button className="btn btn-email">
-                                    <span>📧</span>
-                                    Email
-                                  </button>
-                                  <button 
-                                    onClick={() => generateSummary(doc.id, doc.selectedModel!)}
-                                    disabled={doc.generatingNew}
-                                    className="btn btn-regenerate"
-                                  >
-                                    {doc.generatingNew ? "Generating..." : (
-                                      <>
-                                        <span>🔄</span>
-                                        Regenerate
-                                      </>
-                                    )}
-                                  </button>
-                                </div>
-                              </div>
-                            ) : (
-                              /* Show Generate Option */
-                              <div className="text-center py-8">
-                                <div className="text-3xl mb-3">🤖</div>
-                                <p className="text-gray-600 mb-2">No summary available for this model</p>
-                                <p className="text-gray-500 text-sm mb-4">Generate a new summary with the selected model</p>
-                                
-                                <button
-                                  onClick={() => generateSummary(doc.id, doc.selectedModel!)}
-                                  disabled={doc.generatingNew}
-                                  className="btn btn-generate"
-                                >
-                                  {doc.generatingNew ? (
-                                    <>
-                                      <div className="loading-spinner w-4 h-4 inline-block mr-2"></div>
-                                      Generating...
-                                    </>
-                                  ) : (
-                                    <>
-                                      <span className="text-lg">✨</span>
-                                      Generate Summary
-                                    </>
-                                  )}
-                                </button>
-
-                                {doc.generatingNew && (
-                                  <div className="mt-4 text-sm text-blue-600">
-                                    This may take a few moments...
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  )}
+                </div>
+                <div className="chat-input-group">
+                  <input 
+                    type="text" 
+                    className="form-control" 
+                    placeholder={selectedDocument 
+                      ? `Ask about ${selectedDocument.name}...` 
+                      : "Ask DocuMind AI anything about your documents..."
+                    } 
+                  />
+                  <button className="btn btn-primary">
+                    <i className="fas fa-paper-plane"></i>
+                  </button>
+                </div>
               </div>
             )}
           </div>
         </div>
+
+        {/* Content Area */}
+        <div className="grid grid-cols-12 gap-6">
+          {/* Right Side - Quick Actions */}
+          <div className="col-span-12">
+            <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+              <div className="section-header mb-4">
+                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                  <i className="fas fa-bolt"></i> Quick Actions
+                </h2>
+                <p className="text-gray-600 text-sm mt-1">Common tasks and shortcuts</p>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <button className="flex items-center gap-3 p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors text-left">
+                  <i className="fas fa-cloud-upload-alt text-blue-600 text-xl"></i>
+                  <div>
+                    <div className="font-medium text-gray-900">Upload Document</div>
+                    <div className="text-sm text-gray-600">Add new files for analysis</div>
+                  </div>
+                </button>
+                <button className="flex items-center gap-3 p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors text-left">
+                  <i className="fas fa-brain text-green-600 text-xl"></i>
+                  <div>
+                    <div className="font-medium text-gray-900">Summarize</div>
+                    <div className="text-sm text-gray-600">Generate AI summaries</div>
+                  </div>
+                </button>
+                <button className="flex items-center gap-3 p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors text-left">
+                  <i className="fas fa-search text-purple-600 text-xl"></i>
+                  <div>
+                    <div className="font-medium text-gray-900">Search</div>
+                    <div className="text-sm text-gray-600">Find content in documents</div>
+                  </div>
+                </button>
+                <button className="flex items-center gap-3 p-4 bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors text-left">
+                  <i className="fas fa-chart-bar text-orange-600 text-xl"></i>
+                  <div>
+                    <div className="font-medium text-gray-900">Analytics</div>
+                    <div className="text-sm text-gray-600">View processing insights</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* Working Modal */}
+      {summaryModalOpen && selectedDocumentForSummary && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999
+          }}
+          onClick={() => setSummaryModalOpen(false)}
+        >
+          <div 
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '8px',
+              maxWidth: '800px',
+              width: '90%',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div style={{ padding: '1.5rem', borderBottom: '1px solid #dee2e6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h5 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '600' }}>Document Summary</h5>
+              <button 
+                onClick={() => setSummaryModalOpen(false)}
+                style={{ 
+                  background: 'none',
+                  border: 'none', 
+                  fontSize: '2.2rem', 
+                  cursor: 'pointer',
+                  color: '#6c757d',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 'bold',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => (e.target as HTMLButtonElement).style.color = '#495057'}
+                onMouseLeave={(e) => (e.target as HTMLButtonElement).style.color = '#6c757d'}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div style={{ padding: '1.5rem' }}>
+              {/* Document Info */}
+              <div style={{ marginBottom: '1rem' }}>
+                <strong>Document:</strong> {selectedDocumentForSummary.name}
+              </div>
+
+              {/* Model Selection and Regenerate */}
+              <div style={{ display: 'flex', alignItems: 'end', gap: '1rem', marginBottom: '1.5rem' }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
+                    Summarization Model:
+                  </label>
+                  <select 
+                    style={{ 
+                      width: '100%', 
+                      padding: '0.5rem', 
+                      border: '1px solid #ced4da', 
+                      borderRadius: '4px',
+                      fontSize: '1rem'
+                    }}
+                  >
+                    <option value="pegasus">Pegasus (Default - High Quality)</option>
+                    <option value="bart">BART (Balanced)</option>
+                    <option value="t5">T5 (Flexible for Technical Docs)</option>
+                  </select>
+                </div>
+                <button 
+                  style={{
+                    padding: '0.5rem 1rem',
+                    backgroundColor: '#007bff',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}
+                >
+                  <i className="fas fa-sync-alt"></i>
+                  Regenerate
+                </button>
+              </div>
+
+              {/* Summary Metadata */}
+              <div style={{ 
+                display: 'grid', 
+                gridTemplateColumns: 'repeat(4, 1fr)', 
+                gap: '1rem', 
+                marginBottom: '1rem',
+                padding: '1rem',
+                backgroundColor: '#f8f9fa',
+                borderRadius: '4px'
+              }}>
+                <div>
+                  <small style={{ color: '#6c757d' }}>Word Count:</small><br />
+                  <span>245</span>
+                </div>
+                <div>
+                  <small style={{ color: '#6c757d' }}>Model:</small><br />
+                  <span>Pegasus</span>
+                </div>
+                <div>
+                  <small style={{ color: '#6c757d' }}>Cache:</small><br />
+                  <span style={{ 
+                    backgroundColor: '#28a745', 
+                    color: 'white', 
+                    padding: '0.25rem 0.5rem', 
+                    borderRadius: '4px', 
+                    fontSize: '0.75rem' 
+                  }}>
+                    Cached
+                  </span>
+                </div>
+                <div>
+                  <small style={{ color: '#6c757d' }}>Generated:</small><br />
+                  <span>Just now</span>
+                </div>
+              </div>
+
+              {/* Summary Content */}
+              <div style={{ 
+                border: '1px solid #dee2e6', 
+                borderRadius: '4px', 
+                padding: '1rem', 
+                backgroundColor: '#f8f9fa',
+                marginBottom: '1rem'
+              }}>
+                This document provides a comprehensive overview of computer vision fundamentals and applications. Key growth drivers included expansion in international markets and successful launch of new product lines. Operating expenses increased by 8%, primarily due to R&D investments. Net profit margin improved to 18.5% from 17.2% last year.
+              </div>
+
+              {/* Key Points */}
+              <div>
+                <h6 style={{ marginBottom: '0.5rem' }}>Key Points:</h6>
+                <ul style={{ paddingLeft: '1.5rem' }}>
+                  <li>Computer vision fundamentals covered comprehensively</li>
+                  <li>International market expansion drove growth</li>
+                  <li>R&D investments increased operating expenses by 8%</li>
+                  <li>Net profit margin improved from 17.2% to 18.5%</li>
+                </ul>
+              </div>
+
+              {/* Close Button */}
+              <div style={{ textAlign: 'right', marginTop: '2rem' }}>
+                <button 
+                  onClick={() => setSummaryModalOpen(false)}
+                  style={{
+                    padding: '0.75rem 2rem',
+                    backgroundColor: '#6c757d',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '1rem'
+                  }}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

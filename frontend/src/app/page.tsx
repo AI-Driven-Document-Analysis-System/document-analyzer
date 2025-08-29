@@ -31,7 +31,7 @@ export default function Page() {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [currentRoute, setCurrentRoute] = useState("/dashboard") // Safe default
   const [sidebarOpen, setSidebarOpen] = useState(true) // Safe default
-  const [user, setUser] = useState(null)
+  const [user, setUser] = useState<{username?: string} | null>(null)
   const [isClientReady, setIsClientReady] = useState(false) // Track when client is ready
 
   // FIXED: Handle client-side hydration and state restoration
@@ -159,18 +159,45 @@ export default function Page() {
 
       <div className={`main-content ${sidebarOpen ? "sidebar-open" : "sidebar-closed"}`}>
         <header className="app-header">
-          <button className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
-            ☰
-          </button>
-          <div className="breadcrumb">
-            {breadcrumb.map((item, index) => (
-              <span key={item}>
-                {index > 0 && <span className="breadcrumb-separator"> / </span>}
-                <span className={index === breadcrumb.length - 1 ? "breadcrumb-current" : "breadcrumb-link"}>
-                  {item}
+          <div className="header-left">
+            <button className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
+              <i className="fas fa-bars"></i>
+            </button>
+            <div className="breadcrumb">
+              {breadcrumb.map((item, index) => (
+                <span key={item}>
+                  {index > 0 && <span className="breadcrumb-separator"> / </span>}
+                  <span className={index === breadcrumb.length - 1 ? "breadcrumb-current" : "breadcrumb-link"}>
+                    {item}
+                  </span>
                 </span>
-              </span>
-            ))}
+              ))}
+            </div>
+          </div>
+          <div className="header-right">
+            <button className="header-btn" title="Search">
+              <i className="fas fa-search"></i>
+            </button>
+            <button className="upload-btn" onClick={() => handleNavigation('/upload')}>
+              <i className="fas fa-cloud-upload-alt"></i>
+              <span>Upload Document</span>
+            </button>
+            <div className="header-actions">
+              <button className="header-btn" title="Notifications">
+                <i className="fas fa-bell"></i>
+                <span className="notification-badge">3</span>
+              </button>
+              <button className="header-btn" title="Settings">
+                <i className="fas fa-cog"></i>
+              </button>
+              <div className="user-profile">
+                <div className="user-avatar">
+                  <i className="fas fa-user"></i>
+                </div>
+                <span className="user-name">{user?.username || 'User'}</span>
+                <i className="fas fa-chevron-down"></i>
+              </div>
+            </div>
           </div>
         </header>
 

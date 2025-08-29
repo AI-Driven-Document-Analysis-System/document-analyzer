@@ -17,10 +17,10 @@ interface DocumentUploadProps {
 }
 
 const getFileIcon = (type: string) => {
-  if (type.includes("pdf")) return "📄"
-  if (type.includes("image")) return "🖼️"
-  if (type.includes("spreadsheet") || type.includes("excel")) return "📊"
-  return "📁"
+  if (type.includes("pdf")) return "fas fa-file-pdf"
+  if (type.includes("image")) return "fas fa-image"
+  if (type.includes("spreadsheet") || type.includes("excel")) return "fas fa-file-excel"
+  return "fas fa-folder"
 }
 
 // Mock auth service - replace with your actual implementation
@@ -206,7 +206,7 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
         <p className="text-gray-600">Upload your documents for AI-powered analysis and processing</p>
         {!authToken && (
           <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-yellow-800">⚠️ Please log in to upload documents</p>
+            <p className="text-yellow-800"><i className="fas fa-exclamation-triangle"></i> Please log in to upload documents</p>
           </div>
         )}
       </div>
@@ -239,7 +239,7 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
             />
             <div className="flex flex-col items-center gap-4 pointer-events-none">
-              <div className="text-6xl">📤</div>
+              <div className="text-6xl text-blue-500"><i className="fas fa-cloud-upload-alt"></i></div>
               <div>
                 <p className="text-lg font-medium text-gray-900">
                   {isDragActive ? "Drop files here..." : "Drag & drop files here"}
@@ -272,7 +272,7 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
                 const fileIcon = getFileIcon(uploadFile.file.type)
                 return (
                   <div key={uploadFile.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border">
-                    <div className="text-2xl">{fileIcon}</div>
+                    <div className="text-2xl text-blue-600"><i className={fileIcon}></i></div>
 
                     <div className="flex-1 min-w-0">
                       <h4 className="font-medium text-gray-900 truncate">{uploadFile.file.name}</h4>
@@ -313,13 +313,13 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
                     </div>
 
                     <div className="flex items-center gap-2">
-                      {uploadFile.status === "completed" && <span className="text-green-600">✅</span>}
-                      {uploadFile.status === "error" && <span className="text-red-600">❌</span>}
+                      {uploadFile.status === "completed" && <span className="text-green-600"><i className="fas fa-check-circle"></i></span>}
+                      {uploadFile.status === "error" && <span className="text-red-600"><i className="fas fa-times-circle"></i></span>}
                       <button 
                         className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 transition-colors" 
                         onClick={() => removeFile(uploadFile.id)}
                       >
-                        ✕
+                        <i className="fas fa-times"></i>
                       </button>
                     </div>
                   </div>

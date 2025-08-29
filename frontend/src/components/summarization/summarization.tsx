@@ -48,21 +48,21 @@ export default function Summarization() {
       id: "brief", 
       name: "Brief Summary", 
       desc: "Quick overview using BART model", 
-      icon: "📋",
+      icon: "fas fa-clipboard-list",
       model: "BART" // BART is good for concise, factual summaries
     },
     { 
       id: "detailed", 
       name: "Detailed Summary", 
       desc: "Comprehensive analysis using Pegasus model", 
-      icon: "📖",
+      icon: "fas fa-book-open",
       model: "Pegasus" // Pegasus excels at longer, more detailed summaries
     },
     { 
       id: "domain_specific", 
       name: "Domain Specific", 
       desc: "Specialized summary using T5 model", 
-      icon: "🎯",
+      icon: "fas fa-bullseye",
       model: "Domain Specific Model" // T5 can be fine-tuned for specific domains/contexts
     }
   ];
@@ -314,7 +314,7 @@ export default function Summarization() {
       {error && (
         <div className="bg-red-50 border border-red-300 rounded-xl p-5 mb-6 shadow-sm">
           <div className="flex items-center">
-            <span className="text-red-600 mr-3 text-xl">❌</span>
+            <i className="fas fa-times-circle text-red-600 mr-3 text-xl"></i>
             <span className="text-red-800 text-base font-medium">{error}</span>
           </div>
         </div>
@@ -324,7 +324,7 @@ export default function Summarization() {
       {progress && !isGenerating && (
         <div className="bg-blue-50 border border-blue-300 rounded-xl p-5 mb-6 shadow-sm">
           <div className="flex items-center">
-            <span className="text-blue-600 mr-3 text-xl">ℹ️</span>
+            <i className="fas fa-info-circle text-blue-600 mr-3 text-xl"></i>
             <span className="text-blue-800 text-base font-medium">{progress}</span>
           </div>
         </div>
@@ -339,7 +339,7 @@ export default function Summarization() {
           {/* Document Selection Section */}
           <div className="bg-white rounded-xl border border-gray-300 shadow-lg">
             <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-bold flex items-center gap-3">📄 Select Document</h2>
+              <h2 className="text-xl font-bold flex items-center gap-3"><i className="fas fa-file-alt"></i> Select Document</h2>
             </div>
             <div className="p-6">
               {/* Dropdown to select from available documents */}
@@ -390,7 +390,7 @@ export default function Summarization() {
           {/* AI Summary Options Section */}
           <div className="bg-white rounded-xl border border-gray-300 shadow-lg">
             <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-bold flex items-center gap-3">🤖 AI Summary Options</h2>
+              <h2 className="text-xl font-bold flex items-center gap-3"><i className="fas fa-robot"></i> AI Summary Options</h2>
             </div>
             <div className="p-6 space-y-6">
               
@@ -413,12 +413,12 @@ export default function Summarization() {
                       <label htmlFor={option.id} className="flex-1 cursor-pointer">
                         {/* Option header with icon and name */}
                         <div className="flex items-center gap-3 mb-2">
-                          <span className="text-xl">{option.icon}</span>
+                          <i className={`text-xl ${option.icon}`}></i>
                           <span className="font-bold text-base">{option.name}</span>
                         </div>
                         {/* Option description and model info */}
                         <p className="text-sm text-gray-600 ml-7 mb-1">{option.desc}</p>
-                        <p className="text-xs text-blue-600 ml-7 font-medium">🧠 Model: {option.model}</p>
+                        <p className="text-xs text-blue-600 ml-7 font-medium"><i className="fas fa-brain"></i> Model: {option.model}</p>
                       </label>
                     </div>
                   ))}
@@ -463,7 +463,7 @@ export default function Summarization() {
                 ) : (
                   <>
                     {/* Show selected option icon and name */}
-                    {selectedSummaryOption?.icon} Generate {selectedSummaryOption?.name}
+                    <i className={selectedSummaryOption?.icon}></i> Generate {selectedSummaryOption?.name}
                   </>
                 )}
               </button>
@@ -479,11 +479,11 @@ export default function Summarization() {
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-bold flex items-center gap-3">✨ AI Generated Summary</h2>
+                  <h2 className="text-xl font-bold flex items-center gap-3"><i className="fas fa-magic"></i> AI Generated Summary</h2>
                   {/* Show generation metadata when summary exists */}
                   {generatedSummary && (
                     <p className="text-base text-gray-600 flex items-center gap-3 mt-2">
-                      <span>🤖</span>
+                      <i className="fas fa-robot"></i>
                       Generated using {generatedSummary.model_used} • {generatedSummary.summary_type}
                     </p>
                   )}
@@ -501,7 +501,15 @@ export default function Summarization() {
                           : 'bg-blue-50 text-blue-700 border-2 border-blue-300 hover:bg-blue-100 hover:border-blue-400' // Default state
                       }`}
                     >
-                      {copySuccess ? '✅ Copied!' : '📋 Copy Text'}
+                      {copySuccess ? (
+                        <>
+                          <i className="fas fa-check"></i> Copied!
+                        </>
+                      ) : (
+                        <>
+                          <i className="fas fa-clipboard"></i> Copy Text
+                        </>
+                      )}
                     </button>
                     
                     {/* Export to file button */}
@@ -509,7 +517,7 @@ export default function Summarization() {
                       onClick={handleExport}
                       className="px-6 py-3 text-base font-bold bg-purple-50 text-purple-700 border-2 border-purple-300 rounded-xl hover:bg-purple-100 hover:border-purple-400 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                     >
-                      💾 Export File
+                      <i className="fas fa-download"></i> Export File
                     </button>
                   </div>
                 )}
@@ -558,7 +566,7 @@ export default function Summarization() {
               ) : (
                 // Show welcome/instructions when no summary exists
                 <div className="flex flex-col items-center justify-center text-center h-96">
-                  <div className="text-8xl mb-6">🤖</div>
+                  <div className="text-8xl mb-6 text-blue-500"><i className="fas fa-robot"></i></div>
                   <h3 className="text-2xl font-bold text-gray-700 mb-4">AI Ready to Generate Summaries</h3>
                   <p className="text-lg text-gray-600 max-w-2xl leading-relaxed">
                     Select your document and summary type. Choose from BART for brief summaries, 

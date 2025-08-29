@@ -13,31 +13,31 @@ const navigationItems = [
   {
     title: "Overview",
     items: [
-      { title: "Dashboard", url: "/dashboard", icon: "🏠" },
-      { title: "Upload Documents", url: "/upload", icon: "📤" },
-      { title: "My Documents", url: "/documents", icon: "📄" },
+      { title: "Dashboard", url: "/dashboard", icon: "fas fa-home" },
+      { title: "Upload Documents", url: "/upload", icon: "fas fa-cloud-upload-alt" },
+      { title: "My Documents", url: "/documents", icon: "fas fa-file-alt" },
     ],
   },
   {
     title: "Analysis",
     items: [
-      { title: "Document Viewer", url: "/viewer", icon: "👁️" },
-      { title: "Classification", url: "/classification", icon: "🏷️" },
-      { title: "Summarization", url: "/summarization", icon: "🧠" },
-      { title: "Search", url: "/search", icon: "🔍" },
-      { title: "AI Chat", url: "/chat", icon: "💬" },
+      { title: "Document Viewer", url: "/viewer", icon: "fas fa-eye" },
+      { title: "Classification", url: "/classification", icon: "fas fa-tags" },
+      { title: "Summarization", url: "/summarization", icon: "fas fa-brain" },
+      { title: "Search", url: "/search", icon: "fas fa-search" },
+      { title: "AI Chat", url: "/chat", icon: "fas fa-robot" },
     ],
   },
   {
     title: "Insights",
-    items: [{ title: "Analytics", url: "/analytics", icon: "📊" }],
+    items: [{ title: "Analytics", url: "/analytics", icon: "fas fa-chart-bar" }],
   },
   {
     title: "Account",
     items: [
-      { title: "Profile", url: "/profile", icon: "👤" },
-      { title: "Subscription", url: "/subscription", icon: "💳" },
-      { title: "Settings", url: "/settings", icon: "⚙️" },
+      { title: "Profile", url: "/profile", icon: "fas fa-user" },
+      { title: "Subscription", url: "/subscription", icon: "fas fa-credit-card" },
+      { title: "Settings", url: "/settings", icon: "fas fa-cog" },
     ],
   },
 ]
@@ -47,8 +47,10 @@ export function Sidebar({ isOpen, onNavigate, currentRoute, onToggle, user, onLo
     <div className={`sidebar ${isOpen ? "open" : "closed"}`}>
       <div className="sidebar-header">
         <div className="sidebar-logo">
-          <div className="sidebar-logo-icon">📄</div>
-          <span className="sidebar-logo-text">DocAnalyzer</span>
+          <div className="sidebar-logo-icon">
+            <i className="fas fa-brain"></i>
+          </div>
+          <span className="sidebar-logo-text">DocuMind AI</span>
         </div>
       </div>
 
@@ -62,7 +64,7 @@ export function Sidebar({ isOpen, onNavigate, currentRoute, onToggle, user, onLo
                   className={`nav-link ${currentRoute === item.url ? "active" : ""}`}
                   onClick={() => onNavigate(item.url)}
                 >
-                  <span className="nav-icon">{item.icon}</span>
+                  <i className={`nav-icon ${item.icon}`}></i>
                   <span>{item.title}</span>
                 </button>
               </div>
@@ -81,7 +83,7 @@ export function Sidebar({ isOpen, onNavigate, currentRoute, onToggle, user, onLo
             <div className="user-email">{user?.email}</div>
           </div>
           <button className="logout-button" onClick={onLogout} title="Logout">
-            🚪
+            <i className="fas fa-sign-out-alt"></i>
           </button>
         </div>
       </div>
