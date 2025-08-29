@@ -23,6 +23,22 @@ const initialMessages: Message[] = [
       "Hello! I'm your AI document assistant. I can help you find information, answer questions, and analyze content from your uploaded documents. What would you like to know?",
     timestamp: new Date(),
   },
+  {
+    id: "2",
+    type: "user", 
+    content: "Can you summarize the key points from the Q4 financial report?",
+    timestamp: new Date(),
+  },
+  {
+    id: "3",
+    type: "assistant",
+    content: "Based on your documents, I found relevant information about financial performance. The Q4 report shows a 15% increase in revenue year-over-year, with strong growth in the technology sector. The market analysis indicates positive trends in consumer behavior and emerging technologies.",
+    timestamp: new Date(),
+    sources: [
+      { title: "Financial Report Q4.pdf", type: "Financial Document", confidence: 95 },
+      { title: "Market Analysis.pdf", type: "Research Paper", confidence: 88 }
+    ]
+  }
 ]
 
 export function RAGChatbot() {
@@ -105,90 +121,141 @@ export function RAGChatbot() {
     <div className="bg-gray-50 min-h-screen">
       <div className="flex h-screen overflow-hidden">
         {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col p-6 min-w-0">
-          <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">AI Document Chat</h1>
-            <p className="text-gray-600">Ask questions about your documents and get intelligent answers</p>
-          </div>
-
-          <div className="flex-1 flex flex-col bg-white rounded-xl shadow-md p-6">
-            <div className="mb-4">
-              <h2 className="text-xl font-semibold text-gray-800">Document Assistant</h2>
-              <p className="text-gray-500 text-sm">Powered by RAG (Retrieval-Augmented Generation) technology</p>
-            </div>
-
-            <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-2" style={{ maxHeight: "calc(100vh - 250px)" }}>
+        <div className="flex-1 flex flex-col p-6" style={{ backgroundColor: '#f8fafc' }}>
+          <div className="flex-1 flex flex-col bg-white rounded-xl shadow-md" style={{ position: 'relative', height: 'calc(100vh - 100px)' }}>
+            <div style={{ 
+              flex: 1, 
+              overflowY: 'auto', 
+              padding: '24px',
+              paddingBottom: '100px'
+            }}>
               {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex gap-3 ${message.type === "user" ? "justify-end" : "justify-start"}`}
-                >
-                  {message.type === "assistant" && (
-                    <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white flex-shrink-0">
-                      <i className="fas fa-robot"></i>
-                    </div>
-                  )}
-
-                  <div className={`max-w-[80%] ${message.type === "user" ? "order-2" : ""}`}>
-                    <div
-                      className={`p-4 rounded-lg ${
-                        message.type === "user" ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-900"
-                      }`}
-                    >
-                      <p className="text-sm leading-relaxed">{message.content}</p>
-                    </div>
-
-                    {message.sources && (
-                      <div className="mt-3 space-y-2">
-                        <p className="text-xs text-gray-500 font-medium">Sources:</p>
-                        {message.sources.map((source, index) => (
-                          <div key={index} className="flex items-center gap-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
-                            <i className="fas fa-file-pdf text-red-400"></i>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">{source.title}</p>
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs text-gray-500">{source.type}</span>
-                                <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">{source.confidence}% match</span>
+                <div key={message.id} style={{ marginBottom: '24px' }}>
+                  {message.type === "assistant" ? (
+                    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', marginBottom: '16px' }}>
+                      <div style={{ 
+                        width: '40px', 
+                        height: '40px', 
+                        borderRadius: '50%', 
+                        backgroundColor: '#3b82f6', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        color: 'white'
+                      }}>
+                        <i className="fas fa-robot" style={{ fontSize: '16px' }}></i>
+                      </div>
+                      <div className="max-w-[80%]">
+                        <div className="p-4 rounded-lg" style={{ backgroundColor: '#f3f4f6', color: '#111827' }}>
+                          <p className="text-sm leading-relaxed">{message.content}</p>
+                        </div>
+                        {message.sources && (
+                          <div className="mt-3 space-y-2">
+                            <p className="text-xs text-gray-500 font-medium">Sources:</p>
+                            {message.sources.map((source, index) => (
+                              <div key={index} className="flex items-center gap-2 p-3 rounded-lg border" style={{ backgroundColor: '#eff6ff', borderColor: '#bfdbfe' }}>
+                                <i className="fas fa-file-pdf" style={{ color: '#ef4444' }}></i>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate" style={{ color: '#111827' }}>{source.title}</p>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs" style={{ color: '#6b7280' }}>{source.type}</span>
+                                    <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#dcfce7', color: '#166534' }}>{source.confidence}% match</span>
+                                  </div>
+                                </div>
                               </div>
-                            </div>
+                            ))}
                           </div>
-                        ))}
+                        )}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', marginTop: '12px' }}>
+                          <button style={{ 
+                            padding: '6px 8px', 
+                            border: '1px solid #e5e7eb', 
+                            borderRadius: '6px', 
+                            backgroundColor: 'transparent',
+                            color: '#6b7280',
+                            cursor: 'pointer',
+                            fontSize: '12px'
+                          }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                            <i className="far fa-thumbs-up"></i>
+                          </button>
+                          <button style={{ 
+                            padding: '6px 8px', 
+                            border: '1px solid #e5e7eb', 
+                            borderRadius: '6px', 
+                            backgroundColor: 'transparent',
+                            color: '#6b7280',
+                            cursor: 'pointer',
+                            fontSize: '12px'
+                          }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                            <i className="far fa-thumbs-down"></i>
+                          </button>
+                          <button style={{ 
+                            padding: '6px 8px', 
+                            border: '1px solid #e5e7eb', 
+                            borderRadius: '6px', 
+                            backgroundColor: 'transparent',
+                            color: '#6b7280',
+                            cursor: 'pointer',
+                            fontSize: '12px'
+                          }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                            <i className="far fa-copy"></i>
+                          </button>
+                        </div>
                       </div>
-                    )}
-
-                    {message.type === "assistant" && (
-                      <div className="flex items-center gap-2 mt-3">
-                        <button className="p-2 border border-gray-300 rounded text-gray-500 hover:bg-gray-100 transition-colors">
-                          <i className="far fa-copy"></i>
-                        </button>
-                        <button className="p-2 border border-gray-300 rounded text-gray-500 hover:bg-gray-100 transition-colors">
-                          <i className="far fa-thumbs-up"></i>
-                        </button>
-                        <button className="p-2 border border-gray-300 rounded text-gray-500 hover:bg-gray-100 transition-colors">
-                          <i className="far fa-thumbs-down"></i>
-                        </button>
+                    </div>
+                  ) : (
+                    <div style={{ width: '100%', display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+                      <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', maxWidth: '70%' }}>
+                        <div style={{ 
+                          backgroundColor: '#3b82f6', 
+                          color: 'white', 
+                          padding: '12px 16px', 
+                          borderRadius: '18px',
+                          maxWidth: '100%',
+                          wordWrap: 'break-word'
+                        }}>
+                          <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.5' }}>{message.content}</p>
+                        </div>
+                        <div style={{ 
+                          width: '40px', 
+                          height: '40px', 
+                          borderRadius: '50%', 
+                          backgroundColor: '#6b7280', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          flexShrink: 0,
+                          color: 'white'
+                        }}>
+                          <i className="fas fa-user" style={{ fontSize: '16px' }}></i>
+                        </div>
                       </div>
-                    )}
-                  </div>
-
-                  {message.type === "user" && (
-                    <div className="w-10 h-10 bg-gray-500 rounded-full flex items-center justify-center text-white flex-shrink-0">
-                      <i className="fas fa-user"></i>
                     </div>
                   )}
                 </div>
               ))}
 
               {isTyping && (
-                <div className="flex gap-3">
-                  <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white flex-shrink-0">
-                    <i className="fas fa-robot"></i>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', marginBottom: '16px' }}>
+                  <div style={{ 
+                    width: '40px', 
+                    height: '40px', 
+                    borderRadius: '50%', 
+                    backgroundColor: '#3b82f6', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    flexShrink: 0,
+                    color: 'white'
+                  }}>
+                    <i className="fas fa-robot" style={{ fontSize: '16px' }}></i>
                   </div>
-                  <div className="bg-gray-100 p-4 rounded-lg">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
+                  <div style={{ backgroundColor: '#f3f4f6', padding: '16px', borderRadius: '12px' }}>
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      <div style={{ width: '8px', height: '8px', backgroundColor: '#9ca3af', borderRadius: '50%', animation: 'bounce 1.4s infinite ease-in-out' }}></div>
+                      <div style={{ width: '8px', height: '8px', backgroundColor: '#9ca3af', borderRadius: '50%', animation: 'bounce 1.4s infinite ease-in-out', animationDelay: '0.16s' }}></div>
+                      <div style={{ width: '8px', height: '8px', backgroundColor: '#9ca3af', borderRadius: '50%', animation: 'bounce 1.4s infinite ease-in-out', animationDelay: '0.32s' }}></div>
                     </div>
                   </div>
                 </div>
@@ -197,21 +264,76 @@ export function RAGChatbot() {
             </div>
 
             {/* Input Area */}
-            <div className="flex gap-2">
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '12px', 
+              padding: '16px 24px',
+              borderTop: '1px solid #e5e7eb',
+              backgroundColor: 'white',
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              borderBottomLeftRadius: '12px',
+              borderBottomRightRadius: '12px'
+            }}>
               <input
                 type="text"
                 placeholder="Ask a question about your documents..."
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                style={{
+                  flex: 1,
+                  padding: '12px 16px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '24px',
+                  fontSize: '14px',
+                  backgroundColor: '#f9fafb',
+                  outline: 'none',
+                  transition: 'all 0.2s ease'
+                }}
+                onFocus={(e) => {
+                  e.target.style.borderColor = '#3b82f6'
+                  e.target.style.backgroundColor = 'white'
+                  e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)'
+                }}
+                onBlur={(e) => {
+                  e.target.style.borderColor = '#d1d5db'
+                  e.target.style.backgroundColor = '#f9fafb'
+                  e.target.style.boxShadow = 'none'
+                }}
               />
               <button 
                 onClick={handleSendMessage} 
-                disabled={!inputValue.trim() || isTyping} 
-                className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-5 py-3 transition duration-200 flex items-center disabled:opacity-50"
+                disabled={!inputValue.trim() || isTyping}
+                style={{
+                  width: '44px',
+                  height: '44px',
+                  borderRadius: '50%',
+                  backgroundColor: inputValue.trim() && !isTyping ? '#3b82f6' : '#d1d5db',
+                  border: 'none',
+                  color: 'white',
+                  cursor: inputValue.trim() && !isTyping ? 'pointer' : 'not-allowed',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.2s ease',
+                  flexShrink: 0
+                }}
+                onMouseEnter={(e) => {
+                  if (inputValue.trim() && !isTyping) {
+                    e.currentTarget.style.backgroundColor = '#2563eb'
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (inputValue.trim() && !isTyping) {
+                    e.currentTarget.style.backgroundColor = '#3b82f6'
+                  }
+                }}
               >
-                <i className="fas fa-paper-plane"></i>
+                <i className="fas fa-paper-plane" style={{ fontSize: '16px' }}></i>
               </button>
             </div>
           </div>
