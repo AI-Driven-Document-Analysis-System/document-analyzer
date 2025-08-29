@@ -81,7 +81,7 @@ export function SearchInterface() {
                 style={{ paddingLeft: "2.5rem", height: "48px" }}
                 onKeyPress={(e) => e.key === "Enter" && handleSearch()}
               />
-              <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">🔍</span>
+              <i className="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-500"></i>
             </div>
             <button
               onClick={handleSearch}
@@ -96,7 +96,7 @@ export function SearchInterface() {
               onClick={() => setShowFilters(!showFilters)}
               style={{ height: "48px", padding: "0 1rem" }}
             >
-              🔧
+              <i className="fas fa-filter text-gray-600"></i>
             </button>
           </div>
         </div>
@@ -154,6 +154,20 @@ export function SearchInterface() {
         </div>
       )}
 
+      {/* Search Stats - Moved to top */}
+      <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+        <span className="font-medium">Found {searchResults.length} documents in 0.23 seconds</span>
+        <div className="flex items-center gap-4">
+          <span>Sort by:</span>
+          <select className="form-select" style={{ width: "128px" }}>
+            <option value="relevance">Relevance</option>
+            <option value="date">Date</option>
+            <option value="name">Name</option>
+            <option value="type">Type</option>
+          </select>
+        </div>
+      </div>
+
       {/* Search Results */}
       <div className="space-y-4">
         {searchResults.map((result) => (
@@ -162,7 +176,7 @@ export function SearchInterface() {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="text-xl">📄</span>
+                    <i className="fas fa-file-pdf text-red-500 text-xl"></i>
                     <h3 className="text-lg font-semibold text-gray-900 hover:text-blue-600 cursor-pointer">
                       {result.title}
                     </h3>
@@ -172,23 +186,23 @@ export function SearchInterface() {
                   <p className="text-gray-600 mb-3">{result.excerpt}</p>
 
                   <div className="flex items-center gap-4 text-sm text-gray-500 mb-3">
-                    <div className="flex items-center gap-1">📅 {new Date(result.uploadDate).toLocaleDateString()}</div>
-                    <div className="flex items-center gap-1">📄 {result.pages} pages</div>
-                    <div className="flex items-center gap-1">⭐ {result.confidence}% match</div>
+                    <div className="flex items-center gap-1"><i className="fas fa-calendar text-blue-500"></i> {new Date(result.uploadDate).toLocaleDateString()}</div>
+                    <div className="flex items-center gap-1"><i className="fas fa-file-alt text-gray-500"></i> {result.pages} pages</div>
+                    <div className="flex items-center gap-1"><i className="fas fa-star text-yellow-500"></i> {result.confidence}% match</div>
                   </div>
 
                   <div className="flex items-center gap-2">
                     {result.tags.map((tag) => (
                       <span key={tag} className="badge badge-primary text-xs">
-                        🏷️ {tag}
+                        <i className="fas fa-tag text-blue-400 mr-1"></i>{tag}
                       </span>
                     ))}
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-2 ml-4">
-                  <button className="btn btn-sm btn-outline">👁️ View</button>
-                  <button className="btn btn-sm btn-outline">💾 Download</button>
+                  <button className="btn btn-sm btn-outline"><i className="fas fa-eye text-blue-500 mr-1"></i>View</button>
+                  <button className="btn btn-sm btn-outline"><i className="fas fa-download text-green-500 mr-1"></i>Download</button>
                 </div>
               </div>
             </div>
@@ -196,23 +210,6 @@ export function SearchInterface() {
         ))}
       </div>
 
-      {/* Search Stats */}
-      <div className="card">
-        <div className="card-content">
-          <div className="flex items-center justify-between text-sm text-gray-500">
-            <span>Found {searchResults.length} documents in 0.23 seconds</span>
-            <div className="flex items-center gap-4">
-              <span>Sort by:</span>
-              <select className="form-select" style={{ width: "128px" }}>
-                <option value="relevance">Relevance</option>
-                <option value="date">Date</option>
-                <option value="name">Name</option>
-                <option value="type">Type</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }

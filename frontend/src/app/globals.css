@@ -1995,15 +1995,27 @@ body {
 }
 
 .summarize-btn {
-  background-color: #6f42c1;
-  border-color: #6f42c1;
-  color: white;
+  background-color: #0d6efd !important;
+  border: 2px solid #0d6efd !important;
+  color: #ffffff !important;
+  padding: 8px 16px;
+  border-radius: 25px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(13, 110, 253, 0.2);
 }
 
 .chat-doc-btn {
-  background-color: #20c997;
-  border-color: #20c997;
-  color: white;
+  background-color: #ffffff !important;
+  border: 2px solid #0d6efd !important;
+  color: #0d6efd !important;
+  padding: 8px 16px;
+  border-radius: 25px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(13, 110, 253, 0.1);
 }
 
 /* Document Type Tags */
@@ -2092,13 +2104,19 @@ body {
 }
 
 .summarize-btn:hover {
-  background-color: #0d6efd;
-  border-color: #0d6efd;
+  background-color: #0b5ed7 !important;
+  border-color: #0b5ed7 !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3);
 }
 
 .chat-doc-btn:hover {
-  background-color: #0b5ed7;
-  border-color: #0b5ed7;
+  background-color: #f8f9fa !important;
+  border-color: #0b5ed7 !important;
+  color: #0b5ed7 !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.2);
 }
 
 /* Tab hover effects */
