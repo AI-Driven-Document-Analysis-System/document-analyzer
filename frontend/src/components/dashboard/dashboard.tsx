@@ -65,21 +65,21 @@ function Dashboard() {
       name: 'Brief Summary',
       description: 'Quick overview with key points (50-150 words)',
       model: 'BART',
-      icon: '📝'
+      icon: 'fas fa-file-text'
     },
     {
       id: 'detailed',
       name: 'Detailed Summary',
       description: 'Comprehensive analysis with full context (80-250 words)',
       model: 'PEGASUS',
-      icon: '📄'
+      icon: 'fas fa-file-alt'
     },
     {
       id: 'domain_specific',
       name: 'Domain-Specific',
       description: 'Specialized summary based on document type (70-200 words)',
       model: 'Auto-Selected',
-      icon: '🎯'
+      icon: 'fas fa-bullseye'
     }
   ]
 
@@ -162,28 +162,28 @@ function Dashboard() {
         title: "Total Documents",
         value: total.toLocaleString(),
         change: "+12%",
-        icon: "📄",
+        icon: "fas fa-file-alt",
         positive: true
       },
       {
         title: "Processed Today",
         value: processedToday.toString(),
         change: "+23%",
-        icon: "✅",
+        icon: "fas fa-check-circle",
         positive: true
       },
       {
         title: "Processing Queue",
         value: inQueue.toString(),
         change: inQueue > 0 ? "-5%" : "0%",
-        icon: "⏰",
+        icon: "fas fa-clock",
         positive: inQueue === 0
       },
       {
         title: "Success Rate",
         value: `${successRate}%`,
         change: "+0.5%",
-        icon: "📈",
+        icon: "fas fa-chart-line",
         positive: true
       },
     ]
@@ -452,7 +452,7 @@ function Dashboard() {
       <div className="min-h-screen flex items-center justify-center p-6">
         <div className="error-message max-w-md w-full">
           <div className="flex items-center gap-3">
-            <span className="text-2xl">⚠️</span>
+            <i className="fas fa-exclamation-triangle text-2xl text-yellow-500"></i>
             <p>{error}</p>
           </div>
         </div>
@@ -463,26 +463,13 @@ function Dashboard() {
   return (
     <div className="main-container">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="dashboard-header">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1>Dashboard</h1>
-              <p className="opacity-90 mt-1">Welcome back! Here's what's happening with your documents.</p>
-            </div>
-            <button className="btn btn-upload">
-              <span className="text-lg">📤</span>
-              Upload Document
-            </button>
-          </div>
-        </div>
 
         {/* Stats Grid - Single Compact Row */}
         <div className="grid grid-cols-4 gap-4">
           {stats.map((stat) => (
             <div key={stat.title} className="stats-card fade-in">
               <div className="stats-header">
-                <span className="stats-icon">{stat.icon}</span>
+                <i className={`stats-icon ${stat.icon}`}></i>
                 <span className={`stats-change ${stat.positive ? 'positive' : 'negative'}`}>
                   {stat.change}
                 </span>
@@ -499,14 +486,14 @@ function Dashboard() {
         <div className="document-card">
           <div className="section-header">
             <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              📄 Recent Documents
+              <i className="fas fa-file-alt"></i> Recent Documents
             </h2>
             <p className="text-gray-600 text-sm mt-1">Your latest document processing activities</p>
           </div>
           <div className="p-6">
             {documentsWithSummary.length === 0 ? (
               <div className="empty-state">
-                <div className="empty-state-icon">📄</div>
+                <div className="empty-state-icon"><i className="fas fa-file-alt"></i></div>
                 <p>No documents uploaded yet.</p>
               </div>
             ) : (
@@ -548,11 +535,11 @@ function Dashboard() {
                           onClick={() => toggleSummaryOptions(doc.id)}
                           className="btn btn-primary flex-1"
                         >
-                          <span className="text-lg">📊</span>
+                          <i className="fas fa-chart-bar"></i>
                           {doc.showSummaryOptions ? 'Hide Summary' : 'Summarize'}
                         </button>
                         <button className="btn btn-success flex-1">
-                          <span className="text-lg">💬</span>
+                          <i className="fas fa-comments"></i>
                           Chat with Doc
                         </button>
                       </div>
@@ -582,7 +569,7 @@ function Dashboard() {
                                 }`}
                               >
                                 <div className="flex items-center gap-3">
-                                  <span className="text-xl">{option.icon}</span>
+                                  <i className={`text-xl ${option.icon}`}></i>
                                   <div className="text-left">
                                     <div className="font-medium text-sm">{option.name}</div>
                                     <div className="text-xs text-gray-600">{option.description}</div>
@@ -610,7 +597,7 @@ function Dashboard() {
                                   <div className="flex items-center gap-2">
                                     {doc.currentSummary.from_cache && (
                                       <span className="status-badge status-completed">
-                                        📋 From Cache
+                                        <i className="fas fa-clipboard"></i> From Cache
                                       </span>
                                     )}
                                     <span className={getSummaryTypeColor(doc.currentSummary.summary_type)}>
@@ -662,15 +649,15 @@ function Dashboard() {
                                     onClick={() => copyToClipboard(doc.currentSummary!.summary_text)}
                                     className="btn btn-copy"
                                   >
-                                    <span>📋</span>
+                                    <i className="fas fa-clipboard"></i>
                                     Copy
                                   </button>
                                   <button className="btn btn-export">
-                                    <span>📄</span>
+                                    <i className="fas fa-file-export"></i>
                                     Export
                                   </button>
                                   <button className="btn btn-email">
-                                    <span>📧</span>
+                                    <i className="fas fa-envelope"></i>
                                     Email
                                   </button>
                                   <button 
@@ -680,7 +667,7 @@ function Dashboard() {
                                   >
                                     {doc.generatingNew ? "Generating..." : (
                                       <>
-                                        <span>🔄</span>
+                                        <i className="fas fa-sync-alt"></i>
                                         Regenerate
                                       </>
                                     )}
@@ -690,7 +677,7 @@ function Dashboard() {
                             ) : (
                               /* Show Generate Option */
                               <div className="text-center py-8">
-                                <div className="text-3xl mb-3">🤖</div>
+                                <div className="text-3xl mb-3"><i className="fas fa-robot"></i></div>
                                 <p className="text-gray-600 mb-2">No summary available for this model</p>
                                 <p className="text-gray-500 text-sm mb-4">Generate a new summary with the selected model</p>
                                 
@@ -706,7 +693,7 @@ function Dashboard() {
                                     </>
                                   ) : (
                                     <>
-                                      <span className="text-lg">✨</span>
+                                      <i className="fas fa-magic"></i>
                                       Generate Summary
                                     </>
                                   )}
