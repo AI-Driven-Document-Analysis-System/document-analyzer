@@ -9,34 +9,34 @@ python -m venv .venv
 
 ### 2. Install Base Dependencies
 ```bash
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 ### 3. Install Feature-Specific Dependencies
 
 **For RAG functionality:**
 ```bash
-pip install -e .[rag]
+python -m pip install -e .[rag]
 ```
 
 **For Summarization:**
 ```bash
-pip install -e .[summarization]
+python -m pip install -e .[summarization]
 ```
 
 **For Classification:**
 ```bash
-pip install -e .[classification]
+python -m pip install -e .[classification]
 ```
 
 **Install multiple features:**
 ```bash
-pip install -e .[rag,summarization]
+python -m pip install -e .[rag,summarization]
 ```
 
 **Install everything:**
 ```bash
-pip install -e .[all]
+python -m pip install -e .[all]
 ```
 
 ### 4. Setup Environment Variables
