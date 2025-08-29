@@ -279,7 +279,7 @@ function Dashboard() {
     setLoadingPreview(true)
     setPreviewDocument(doc)
     setShowPreview(true)
-
+    
     try {
       const token = getToken()
       if (!token) return
@@ -445,7 +445,7 @@ function Dashboard() {
         id: doc.id,
         name: doc.original_filename,
         type: doc.content_type?.split("/")[1]?.toUpperCase() || "FILE",
-        status: doc.processing_status === "completed" ? "Completed" :
+        status: doc.processing_status === "completed" ? "Completed" : 
                 doc.processing_status === "processing" ? "Processing" : "Failed",
         uploadedAt: formatRelativeTime(doc.upload_date),
         confidence: doc.processing_status === "completed" ? 95 : null,
@@ -456,7 +456,7 @@ function Dashboard() {
         generatingNew: false,
         summaryError: null
       }))
-
+    
     setDocumentsWithSummary(formatted)
     return formatted
   }, [documents])
@@ -523,13 +523,13 @@ function Dashboard() {
         {/* Search and Chat Feature */}
         <div className="feature-container">
           <div className="tabs-container d-flex">
-            <button
+            <button 
               className={`tab-btn ${activeView === 'documents' ? 'active' : ''}`}
               onClick={() => setActiveView('documents')}
             >
               <i className="fas fa-search me-2"></i>Search Documents
             </button>
-            <button
+            <button 
               className={`tab-btn ${activeView === 'chat' ? 'active' : ''}`}
               onClick={() => setActiveView('chat')}
             >
@@ -542,16 +542,16 @@ function Dashboard() {
               <div id="search-tab" className="tab-content active">
                 <div className="search-input-group">
                   <span className="search-icon"><i className="fas fa-search"></i></span>
-                  <input
-                    type="text"
-                    className="form-control"
+                  <input 
+                    type="text" 
+                    className="form-control" 
                     placeholder="Search across all your documents..."
                   />
                 </div>
 
                 <div id="searchResults">
                   <h5 className="mb-4"><i className="fas fa-history me-2"></i>Recent Documents</h5>
-
+                  
                   {documentsWithSummary.length === 0 ? (
                     <div className="text-center py-5">
                       <i className="fas fa-file-alt" style={{fontSize: '4rem', color: '#dee2e6'}}></i>
@@ -576,19 +576,19 @@ function Dashboard() {
                               PDF • 2.4 MB • Last accessed: {doc.uploadedAt}
                             </div>
                             <div className="result-actions">
-                              <button
+                              <button 
                                 className="btn summarize-btn"
                                 onClick={() => handleSummarizeDoc(doc)}
                               >
                                 <i className="fas fa-file-contract me-1"></i>Summarize
                               </button>
-                              <button
+                              <button 
                                 className="btn chat-doc-btn"
                                 onClick={() => handleChatWithDoc(doc)}
                               >
                                 <i className="fas fa-comments me-1"></i>Chat with Doc
                               </button>
-                              <button
+                              <button 
                                 onClick={() => previewDocumentHandler(doc)}
                                 className="btn btn-secondary"
                               >
@@ -599,63 +599,6 @@ function Dashboard() {
                         </div>
                       </div>
                     ))
-                  )}
-                </div>
-                <div className="chat-input-group">
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder={selectedDocument
-                      ? `Ask about ${selectedDocument.name}...`
-                      : "Ask DocuMind AI anything about your documents..."
-                    }
-                  />
-                  <button className="btn btn-primary">
-                    <i className="fas fa-paper-plane"></i>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Chat Tab */}
-            {activeView === 'chat' && (
-              <div className="tab-content active">
-                {selectedDocument && (
-                  <div className="selected-document-context">
-                    <div className="context-header">
-                      <i className="fas fa-file-alt"></i>
-                      <span>Chatting about: {selectedDocument.name}</span>
-                      <button 
-                        className="btn btn-sm btn-outline-secondary"
-                        onClick={() => setSelectedDocument(null)}
-                      >
-                        <i className="fas fa-times"></i>
-                      </button>
-                    </div>
-                  </div>
-                )}
-                <div className="chat-messages">
-                  <div className="message bot">
-                    <div className="message-content">
-                      {selectedDocument 
-                        ? `Hello! I'm ready to help you with "${selectedDocument.name}". What would you like to know about this document?`
-                        : "Hello! I'm DocuMind AI. I can help you analyze and understand your documents. What would you like to know?"
-                      }
-                    </div>
-                  </div>
-                  {selectedDocument && (
-                    <div className="message bot">
-                      <div className="message-content">
-                        I can see you've selected "{selectedDocument.name}". I can help you:
-                        <ul>
-                          <li>Summarize key points</li>
-                          <li>Answer specific questions about the content</li>
-                          <li>Extract important data or insights</li>
-                          <li>Compare with other documents</li>
-                        </ul>
-                        What would you like to explore?
-                      </div>
-                    </div>
                   )}
                 </div>
                 <div className="chat-input-group">
@@ -685,14 +628,14 @@ function Dashboard() {
                   <h3 style={modalStyles.titleH3}>{previewDocument?.name}</h3>
                   <p style={modalStyles.titleP}>{previewDocument?.type} • {previewDocument?.uploadedAt}</p>
                 </div>
-                <button
+                <button 
                   onClick={closePreview}
                   style={modalStyles.closeButton}
                 >
                   ✕
                 </button>
               </div>
-
+              
               <div style={modalStyles.body}>
                 {loadingPreview ? (
                   <div style={modalStyles.loading}>
@@ -707,11 +650,11 @@ function Dashboard() {
                         style={modalStyles.iframe}
                         title="Document Preview"
                       />
-                    ) : previewDocument?.type?.startsWith('image/') ||
+                    ) : previewDocument?.type?.startsWith('image/') || 
                          ['JPG', 'JPEG', 'PNG', 'GIF'].includes(previewDocument?.type || '') ? (
                       <div style={modalStyles.imageViewer}>
-                        <img
-                          src={previewUrl}
+                        <img 
+                          src={previewUrl} 
                           alt="Document Preview"
                           style={modalStyles.image}
                         />
@@ -721,8 +664,8 @@ function Dashboard() {
                         <div style={modalStyles.fileIcon}><i className="fas fa-file"></i></div>
                         <h4 style={modalStyles.titleH3}>Preview not available</h4>
                         <p style={modalStyles.titleP}>Preview not available for this file type</p>
-                        <a
-                          href={previewUrl}
+                        <a 
+                          href={previewUrl} 
                           download={previewDocument?.name}
                           style={modalStyles.downloadBtn}
                         >
@@ -777,174 +720,6 @@ function Dashboard() {
 
         ${showPreview ? 'body { overflow: hidden; }' : ''}
       `}</style>
-
-      {/* Summarize Modal */}
-      {summaryModalOpen && selectedDocumentForSummary && (
-        <div 
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 9999
-          }}
-          onClick={() => setSummaryModalOpen(false)}
-        >
-          <div 
-            style={{
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              maxWidth: '800px',
-              width: '90%',
-              maxHeight: '90vh',
-              overflow: 'auto',
-              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)'
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div style={{ padding: '1.5rem', borderBottom: '1px solid #dee2e6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h5 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '600' }}>Document Summary</h5>
-              <button 
-                onClick={() => setSummaryModalOpen(false)}
-                style={{ 
-                  background: 'none',
-                  border: 'none', 
-                  fontSize: '2.2rem', 
-                  cursor: 'pointer',
-                  color: '#6c757d',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: 'bold',
-                  transition: 'all 0.2s ease'
-                }}
-              >
-                ×
-              </button>
-            </div>
-
-            <div style={{ padding: '1.5rem' }}>
-              <div style={{ marginBottom: '1rem' }}>
-                <strong>Document:</strong> {selectedDocumentForSummary.name}
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'end', gap: '1rem', marginBottom: '1.5rem' }}>
-                <div style={{ flex: 1 }}>
-                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500' }}>
-                    Summarization Model:
-                  </label>
-                  <select 
-                    style={{ 
-                      width: '100%', 
-                      padding: '0.5rem', 
-                      border: '1px solid #ced4da', 
-                      borderRadius: '4px',
-                      fontSize: '1rem'
-                    }}
-                  >
-                    <option value="pegasus">Pegasus (Default - High Quality)</option>
-                    <option value="bart">BART (Balanced)</option>
-                    <option value="t5">T5 (Flexible for Technical Docs)</option>
-                  </select>
-                </div>
-                <button 
-                  style={{
-                    padding: '0.5rem 1rem',
-                    backgroundColor: '#007bff',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem'
-                  }}
-                >
-                  <i className="fas fa-sync-alt"></i>
-                  Regenerate
-                </button>
-              </div>
-
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: 'repeat(4, 1fr)', 
-                gap: '1rem', 
-                marginBottom: '1rem',
-                padding: '1rem',
-                backgroundColor: '#f8f9fa',
-                borderRadius: '4px'
-              }}>
-                <div>
-                  <small style={{ color: '#6c757d' }}>Word Count:</small><br />
-                  <span>245</span>
-                </div>
-                <div>
-                  <small style={{ color: '#6c757d' }}>Model:</small><br />
-                  <span>Pegasus</span>
-                </div>
-                <div>
-                  <small style={{ color: '#6c757d' }}>Cache:</small><br />
-                  <span style={{ 
-                    backgroundColor: '#28a745', 
-                    color: 'white', 
-                    padding: '0.25rem 0.5rem', 
-                    borderRadius: '4px', 
-                    fontSize: '0.75rem' 
-                  }}>
-                    Cached
-                  </span>
-                </div>
-                <div>
-                  <small style={{ color: '#6c757d' }}>Generated:</small><br />
-                  <span>Just now</span>
-                </div>
-              </div>
-
-              <div style={{ 
-                border: '1px solid #dee2e6', 
-                borderRadius: '4px', 
-                padding: '1rem', 
-                backgroundColor: '#f8f9fa',
-                marginBottom: '1rem'
-              }}>
-                This document provides a comprehensive overview of computer vision fundamentals and applications. Key growth drivers included expansion in international markets and successful launch of new product lines. Operating expenses increased by 8%, primarily due to R&D investments. Net profit margin improved to 18.5% from 17.2% last year.
-              </div>
-
-              <div>
-                <h6 style={{ marginBottom: '0.5rem' }}>Key Points:</h6>
-                <ul style={{ paddingLeft: '1.5rem' }}>
-                  <li>Computer vision fundamentals covered comprehensively</li>
-                  <li>International market expansion drove growth</li>
-                  <li>R&D investments increased operating expenses by 8%</li>
-                  <li>Net profit margin improved from 17.2% to 18.5%</li>
-                </ul>
-              </div>
-
-              <div style={{ textAlign: 'right', marginTop: '2rem' }}>
-                <button 
-                  onClick={() => setSummaryModalOpen(false)}
-                  style={{
-                    padding: '0.75rem 2rem',
-                    backgroundColor: '#6c757d',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    fontSize: '1rem'
-                  }}
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
