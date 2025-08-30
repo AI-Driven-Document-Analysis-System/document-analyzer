@@ -19,24 +19,74 @@ const initialMessages: Message[] = [
   {
     id: "1",
     type: "assistant",
-    content:
-      "Hello! I'm your AI document assistant. I can help you find information, answer questions, and analyze content from your uploaded documents. What would you like to know?",
-    timestamp: new Date(),
+    content: "Hello! I'm your AI document assistant. I can help you find information, answer questions, and analyze content from your uploaded documents. What would you like to know?",
+    timestamp: new Date()
   },
   {
-    id: "2",
-    type: "user", 
+    id: "2", 
+    type: "user",
     content: "Can you summarize the key points from the Q4 financial report?",
-    timestamp: new Date(),
+    timestamp: new Date()
   },
   {
     id: "3",
-    type: "assistant",
+    type: "assistant", 
     content: "Based on your documents, I found relevant information about financial performance. The Q4 report shows a 15% increase in revenue year-over-year, with strong growth in the technology sector. The market analysis indicates positive trends in consumer behavior and emerging technologies.",
     timestamp: new Date(),
     sources: [
-      { title: "Financial Report Q4.pdf", type: "Financial Document", confidence: 95 },
-      { title: "Market Analysis.pdf", type: "Research Paper", confidence: 88 }
+      { title: "Financial Report Q4.pdf", type: "Quarterly financial summary with revenue analysis", confidence: 95 },
+      { title: "Market Analysis.pdf", type: "Consumer trends and market predictions", confidence: 88 }
+    ]
+  },
+  {
+    id: "4",
+    type: "user",
+    content: "What are the upcoming product features mentioned in our roadmap?",
+    timestamp: new Date()
+  },
+  {
+    id: "5",
+    type: "assistant",
+    content: "According to the product roadmap and strategic planning documents, the upcoming features include AI-powered analytics, mobile app enhancements, and cloud integration capabilities. The development timeline spans Q1-Q3 2024 with phased rollouts.",
+    timestamp: new Date(),
+    sources: [
+      { title: "Product Roadmap.docx", type: "Upcoming product features and timelines", confidence: 92 },
+      { title: "Strategic Plan 2024.pdf", type: "Annual strategic planning document", confidence: 85 },
+      { title: "Development Timeline.xlsx", type: "Project schedules and milestones", confidence: 78 }
+    ]
+  },
+  {
+    id: "6",
+    type: "user",
+    content: "Can you analyze our budget projections for next year?",
+    timestamp: new Date()
+  },
+  {
+    id: "7",
+    type: "assistant",
+    content: "The budget analysis shows projected revenue growth of 18% with controlled operational expenses. Key investments are planned for R&D and marketing initiatives. The financial forecast indicates strong profitability margins.",
+    timestamp: new Date(),
+    sources: [
+      { title: "Budget Forecast 2024.xlsx", type: "Annual budget planning and projections", confidence: 94 },
+      { title: "Financial Projections.pdf", type: "Revenue and expense forecasting", confidence: 89 }
+    ]
+  },
+  {
+    id: "8",
+    type: "user",
+    content: "What does our competitive analysis reveal?",
+    timestamp: new Date()
+  },
+  {
+    id: "9",
+    type: "assistant",
+    content: "The competitive analysis reveals strong market positioning with key advantages in technology innovation and customer satisfaction. Main competitors are focusing on pricing strategies while we maintain quality leadership.",
+    timestamp: new Date(),
+    sources: [
+      { title: "Competitor Analysis.pdf", type: "Market competition and positioning study", confidence: 91 },
+      { title: "Industry Report 2024.docx", type: "Comprehensive industry analysis", confidence: 86 },
+      { title: "Customer Survey Results.xlsx", type: "Customer satisfaction and feedback data", confidence: 83 },
+      { title: "Market Research.pdf", type: "Consumer behavior and trends analysis", confidence: 79 }
     ]
   }
 ]
@@ -50,6 +100,11 @@ export function RAGChatbot() {
     sources: true,
     history: false,
     knowledge: false
+  })
+  const [selectedMessageSources, setSelectedMessageSources] = useState<any[]>(() => {
+    // Find the latest assistant message with sources
+    const latestAssistantMessage = [...initialMessages].reverse().find(msg => msg.type === 'assistant' && msg.sources);
+    return latestAssistantMessage?.sources || [];
   })
 
   const toggleSection = (section: keyof typeof expandedSections) => {
@@ -135,7 +190,15 @@ export function RAGChatbot() {
               {messages.map((message) => (
                 <div key={message.id} style={{ marginBottom: '24px' }}>
                   {message.type === "assistant" ? (
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', marginBottom: '16px' }}>
+                    <div 
+                      style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', marginBottom: '16px', cursor: 'pointer' }}
+                      onDoubleClick={() => {
+                        if (message.sources) {
+                          setSelectedMessageSources(message.sources);
+                          setExpandedSections(prev => ({ ...prev, sources: true }));
+                        }
+                      }}
+                    >
                       <div style={{ 
                         width: '40px', 
                         height: '40px', 
@@ -154,20 +217,25 @@ export function RAGChatbot() {
                           <p className="text-sm leading-relaxed">{message.content}</p>
                         </div>
                         {message.sources && (
-                          <div className="mt-3 space-y-2">
-                            <p className="text-xs text-gray-500 font-medium">Sources:</p>
-                            {message.sources.map((source, index) => (
-                              <div key={index} className="flex items-center gap-2 p-3 rounded-lg border" style={{ backgroundColor: '#eff6ff', borderColor: '#bfdbfe' }}>
-                                <i className="fas fa-file-pdf" style={{ color: '#ef4444' }}></i>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium truncate" style={{ color: '#111827' }}>{source.title}</p>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-xs" style={{ color: '#6b7280' }}>{source.type}</span>
-                                    <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: '#dcfce7', color: '#166534' }}>{source.confidence}% match</span>
-                                  </div>
+                          <div style={{ marginTop: '12px' }}>
+                            <p style={{ fontSize: '12px', color: '#6b7280', fontWeight: '500', margin: '0 0 8px 0' }}>Sources:</p>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                              {message.sources.map((source, index) => (
+                                <div key={index} style={{ 
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  backgroundColor: '#f1f5f9',
+                                  border: '1px solid #e2e8f0',
+                                  borderRadius: '16px',
+                                  padding: '4px 8px',
+                                  fontSize: '10px',
+                                  color: '#475569',
+                                  cursor: 'pointer'
+                                }}>
+                                  <span style={{ fontWeight: '500' }}>{source.title}</span>
                                 </div>
-                              </div>
-                            ))}
+                              ))}
+                            </div>
                           </div>
                         )}
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', marginTop: '12px' }}>
@@ -385,30 +453,37 @@ export function RAGChatbot() {
                 <i className={`fas ${expandedSections.sources ? 'fa-chevron-up' : 'fa-chevron-down'}`} style={{ color: '#d1d5db' }}></i>
               </div>
               {expandedSections.sources && (
-                <div style={{ padding: '0 16px 16px 16px' }}>
-                  <div style={{ padding: '12px', backgroundColor: '#374151', borderRadius: '8px', border: '1px solid #4b5563', marginBottom: '12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                      <i className="fas fa-file-pdf" style={{ color: '#f87171' }}></i>
-                      <p style={{ fontWeight: '500', fontSize: '14px', color: 'white', flex: 1, wordBreak: 'break-words' }}>Financial Report Q4.pdf</p>
-                      <span style={{ fontSize: '12px', backgroundColor: '#059669', color: '#dcfce7', padding: '2px 8px', borderRadius: '9999px' }}>95%</span>
-                    </div>
-                    <p style={{ fontSize: '10px', color: '#d1d5db', lineHeight: '1.2' }}>Quarterly financial summary with revenue analysis</p>
-                  </div>
-                  <div style={{ padding: '12px', backgroundColor: '#374151', borderRadius: '8px', border: '1px solid #4b5563', marginBottom: '12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                      <i className="fas fa-file-pdf" style={{ color: '#f87171' }}></i>
-                      <p style={{ fontWeight: '500', fontSize: '14px', color: 'white', flex: 1, wordBreak: 'break-words' }}>Market Analysis.pdf</p>
-                      <span style={{ fontSize: '12px', backgroundColor: '#059669', color: '#dcfce7', padding: '2px 8px', borderRadius: '9999px' }}>88%</span>
-                    </div>
-                    <p style={{ fontSize: '10px', color: '#d1d5db', lineHeight: '1.2' }}>Consumer trends and market predictions</p>
-                  </div>
-                  <div style={{ padding: '12px', backgroundColor: '#374151', borderRadius: '8px', border: '1px solid #4b5563' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                      <i className="fas fa-file-word" style={{ color: '#3b82f6' }}></i>
-                      <p style={{ fontWeight: '500', fontSize: '14px', color: 'white', flex: 1, wordBreak: 'break-words' }}>Product Roadmap.docx</p>
-                      <span style={{ fontSize: '12px', backgroundColor: '#059669', color: '#dcfce7', padding: '2px 8px', borderRadius: '9999px' }}>76%</span>
-                    </div>
-                    <p style={{ fontSize: '10px', color: '#d1d5db', lineHeight: '1.2' }}>Upcoming product features and timelines</p>
+                <div style={{ padding: '16px' }}>
+                  <p style={{ fontSize: '12px', color: '#d1d5db', margin: '0 0 12px 0' }}>Documents used for responses</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {selectedMessageSources.length > 0 ? (
+                      selectedMessageSources.map((source, index) => (
+                        <div key={index} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', backgroundColor: '#374151', borderRadius: '6px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <i className={
+                              source.title.toLowerCase().includes('.pdf') ? 'fas fa-file-pdf' : 
+                              source.title.toLowerCase().includes('.xlsx') ? 'fas fa-file-excel' : 
+                              'fas fa-file-alt'
+                            } style={{ 
+                              color: source.title.toLowerCase().includes('.pdf') ? '#ef4444' : 
+                                     source.title.toLowerCase().includes('.xlsx') ? '#10b981' : 
+                                     '#3b82f6', 
+                              marginRight: '8px' 
+                            }}></i>
+                            <div>
+                              <p style={{ fontSize: '12px', fontWeight: '500', color: 'white', margin: 0 }}>{source.title}</p>
+                              <p style={{ fontSize: '10px', color: '#d1d5db', margin: 0 }}>{source.type}</p>
+                            </div>
+                          </div>
+                          <span style={{ fontSize: '10px', backgroundColor: '#10b981', color: 'white', padding: '2px 6px', borderRadius: '10px' }}>{source.confidence}%</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div style={{ textAlign: 'center', padding: '20px', color: '#9ca3af' }}>
+                        <i className="fas fa-info-circle" style={{ fontSize: '24px', marginBottom: '8px' }}></i>
+                        <p style={{ fontSize: '12px', margin: 0 }}>No sources for this response</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
