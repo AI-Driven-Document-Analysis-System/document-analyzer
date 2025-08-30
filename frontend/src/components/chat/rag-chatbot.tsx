@@ -126,8 +126,11 @@ export function RAGChatbot() {
   }, [messages])
 
 
-  // Disable body scroll when component mounts
+  // Reset page to top and disable body scroll when component mounts
   useEffect(() => {
+    // Reset page to top
+    window.scrollTo(0, 0)
+    
     // Save original overflow values
     const originalBodyOverflow = document.body.style.overflow
     const originalHtmlOverflow = document.documentElement.style.overflow
