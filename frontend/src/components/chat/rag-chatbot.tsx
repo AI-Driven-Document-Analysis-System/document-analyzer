@@ -96,6 +96,7 @@ export function RAGChatbot() {
   const [inputValue, setInputValue] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const chatContainerRef = useRef<HTMLDivElement>(null)
   const [expandedSections, setExpandedSections] = useState({
     sources: true,
     history: false,
@@ -107,13 +108,22 @@ export function RAGChatbot() {
     return latestAssistantMessage?.sources || [];
   })
 
-
   const toggleSection = (section: keyof typeof expandedSections) => {
     setExpandedSections(prev => ({
       ...prev,
       [section]: !prev[section]
     }))
   }
+
+  const scrollChatToBottom = () => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
+    }
+  }
+
+  useEffect(() => {
+    scrollChatToBottom()
+  }, [messages])
 
 
   // Disable body scroll when component mounts
@@ -190,6 +200,7 @@ export function RAGChatbot() {
         <div className="flex-1 flex flex-col" style={{ backgroundColor: '#f8fafc' }}>
           <div className="flex-1 flex flex-col bg-white" style={{ position: 'relative', height: 'calc(100vh - 60px)' }}>
             <div 
+              ref={chatContainerRef}
               data-chat-messages="true"
               style={{ 
                 flex: 1, 
