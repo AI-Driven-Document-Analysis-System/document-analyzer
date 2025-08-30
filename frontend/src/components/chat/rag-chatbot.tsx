@@ -613,7 +613,7 @@ export function RAGChatbot() {
               </div>
               {expandedSections.sources && (
                 <div style={{ padding: '16px' }}>
-                  <p style={{ fontSize: '12px', color: '#d1d5db', margin: '0 0 12px 0' }}>Documents used for responses</p>
+                  <p style={{ fontSize: '12px', color: '#d1d5db', margin: '0 0 12px 0' }}>Double-click on assistant chat responses to view sources</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {selectedMessageSources.length > 0 ? (
                       selectedMessageSources.map((source, index) => (
@@ -668,14 +668,16 @@ export function RAGChatbot() {
               {expandedSections.history && (
                 <div style={{ padding: '0 16px 16px 16px' }}>
                   {getChatHistory().map((chat) => (
-                    <div key={chat.id} style={{ padding: '12px', backgroundColor: '#374151', borderRadius: '8px', border: '1px solid #4b5563', marginBottom: '8px', cursor: 'pointer', transition: 'background-color 0.2s' }}
+                    <div key={chat.id} style={{ padding: '8px 12px', backgroundColor: '#374151', borderRadius: '8px', border: '1px solid #4b5563', marginBottom: '6px', cursor: 'pointer', transition: 'background-color 0.2s' }}
                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4b5563'}
                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#374151'}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <i className="fas fa-comment" style={{ color: '#d1d5db' }}></i>
-                        <p style={{ fontWeight: '500', fontSize: '14px', color: 'white', wordBreak: 'break-word' }}>{chat.title}</p>
+                        <i className="fas fa-comment" style={{ color: '#d1d5db', fontSize: '14px' }}></i>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontWeight: '500', fontSize: '12px', color: 'white', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{chat.title}</p>
+                          <p style={{ fontSize: '10px', color: '#d1d5db', margin: '2px 0 0 0' }}>{chat.timestamp}</p>
+                        </div>
                       </div>
-                      <p style={{ fontSize: '12px', color: '#d1d5db', marginTop: '4px' }}>{chat.timestamp}</p>
                     </div>
                   ))}
                 </div>
