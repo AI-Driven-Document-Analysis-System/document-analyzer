@@ -123,6 +123,23 @@ export function RAGChatbot() {
     scrollToBottom()
   }, [messages])
 
+  // Disable body scroll when component mounts
+  useEffect(() => {
+    // Save original overflow values
+    const originalBodyOverflow = document.body.style.overflow
+    const originalHtmlOverflow = document.documentElement.style.overflow
+    
+    // Disable scrolling
+    document.body.style.overflow = 'hidden'
+    document.documentElement.style.overflow = 'hidden'
+    
+    // Cleanup function to restore original values
+    return () => {
+      document.body.style.overflow = originalBodyOverflow
+      document.documentElement.style.overflow = originalHtmlOverflow
+    }
+  }, [])
+
   const handleSendMessage = async () => {
     if (!inputValue.trim()) return
 
@@ -175,7 +192,7 @@ export function RAGChatbot() {
 
   return (
     <div className="bg-gray-50" style={{ height: '100vh', overflow: 'hidden' }}>
-      <div className="flex" style={{ height: '100vh' }}>
+      <div className="flex" style={{ height: '100vh', overflow: 'hidden' }}>
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col" style={{ backgroundColor: '#f8fafc' }}>
           <div className="flex-1 flex flex-col bg-white" style={{ position: 'relative', height: 'calc(100vh - 60px)' }}>
