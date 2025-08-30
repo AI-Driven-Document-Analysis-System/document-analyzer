@@ -115,13 +115,6 @@ export function RAGChatbot() {
     }))
   }
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
-
-  useEffect(() => {
-    scrollToBottom()
-  }, [messages])
 
   // Disable body scroll when component mounts
   useEffect(() => {
@@ -543,7 +536,7 @@ export function RAGChatbot() {
                          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#374151'}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <i className="fas fa-comment" style={{ color: '#d1d5db' }}></i>
-                        <p style={{ fontWeight: '500', fontSize: '14px', color: 'white', wordBreak: 'break-words' }}>{chat.title}</p>
+                        <p style={{ fontWeight: '500', fontSize: '14px', color: 'white', wordBreak: 'break-word' }}>{chat.title}</p>
                       </div>
                       <p style={{ fontSize: '12px', color: '#d1d5db', marginTop: '4px' }}>{chat.timestamp}</p>
                     </div>
