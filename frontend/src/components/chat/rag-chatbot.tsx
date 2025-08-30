@@ -186,7 +186,21 @@ export function RAGChatbot() {
                 overflowY: 'auto', 
                 overflowX: 'hidden',
                 padding: '16px',
-                paddingBottom: '80px'
+                paddingBottom: '80px',
+                overscrollBehavior: 'contain',
+                scrollBehavior: 'smooth'
+              }}
+              onWheel={(e) => {
+                const element = e.currentTarget;
+                const { scrollTop, scrollHeight, clientHeight } = element;
+                
+                // Prevent scrolling beyond content
+                if (e.deltaY > 0 && scrollTop >= scrollHeight - clientHeight) {
+                  e.preventDefault();
+                }
+                if (e.deltaY < 0 && scrollTop <= 0) {
+                  e.preventDefault();
+                }
               }}
             >
               {messages.map((message) => (
