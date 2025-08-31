@@ -3,12 +3,73 @@ from typing import List, Dict, Any
 from datetime import datetime, timedelta
 import logging
 from ..core.database import db_manager
-from ..schemas.user_schemas import UserResponse
-from .auth import get_current_user
+from ..schemas.user_schemas import UserResponse, ChangeEmailRequest, ChangePasswordRequest
+from ..core.dependencies import get_current_user
+from ..db.crud import get_user_crud
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/profile", tags=["profile"])
+
+@router.post("/change-email")
+async def change_email(
+    request: ChangeEmailRequest,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Change user email address"""
+    try:
+        user_crud = get_user_crud()
+        if not user_crud:
+            raise HTTPException(status_code=500, detail="Database connection error")
+        
+        # Change email
+        updated_user = user_crud.change_user_email(
+            user_id=current_user.id,
+            new_email=request.new_email,
+            password=request.password
+        )
+        
+        if not updated_user:
+            raise HTTPException(status_code=400, detail="Invalid password or email already exists")
+        
+        logger.info(f"User {current_user.id} changed email to {request.new_email}")
+        return {"message": "Email changed successfully", "new_email": request.new_email}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error changing email: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@router.post("/change-password")
+async def change_password(
+    request: ChangePasswordRequest,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Change user password"""
+    try:
+        user_crud = get_user_crud()
+        if not user_crud:
+            raise HTTPException(status_code=500, detail="Database connection error")
+        
+        # Change password
+        updated_user = user_crud.change_user_password(
+            user_id=current_user.id,
+            current_password=request.current_password,
+            new_password=request.new_password
+        )
+        
+        if not updated_user:
+            raise HTTPException(status_code=400, detail="Invalid current password")
+        
+        logger.info(f"User {current_user.id} changed password successfully")
+        return {"message": "Password changed successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error changing password: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @router.get("/me")
 async def get_user_profile(

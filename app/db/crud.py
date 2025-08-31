@@ -115,6 +115,78 @@ class UserCRUD:
             logger.error(f"Error updating user: {e}")
             raise
 
+    def change_user_email(self, user_id: UUID, new_email: str, password: str) -> Optional[User]:
+        """Change user email after verifying current password"""
+        try:
+            # First verify the current password
+            user = self.get_user_by_id(user_id)
+            if not user:
+                return None
+            
+            if not verify_password(password, user.password_hash):
+                return None
+            
+            # Check if new email already exists
+            existing_user = self.get_user_by_email(new_email)
+            if existing_user and existing_user.id != user_id:
+                return None
+            
+            # Update email
+            query = """
+                UPDATE users 
+                SET email = %s, updated_at = %s
+                WHERE id = %s
+                RETURNING *
+            """
+            
+            now = datetime.utcnow()
+            params = (new_email, now, user_id)
+            
+            result = self.db.execute_one(query, params)
+            
+            if result:
+                return User(**dict(result))
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error changing user email: {e}")
+            raise
+
+    def change_user_password(self, user_id: UUID, current_password: str, new_password: str) -> Optional[User]:
+        """Change user password after verifying current password"""
+        try:
+            # First verify the current password
+            user = self.get_user_by_id(user_id)
+            if not user:
+                return None
+            
+            if not verify_password(current_password, user.password_hash):
+                return None
+            
+            # Hash new password
+            new_password_hash = get_password_hash(new_password)
+            
+            # Update password
+            query = """
+                UPDATE users 
+                SET password_hash = %s, updated_at = %s
+                WHERE id = %s
+                RETURNING *
+            """
+            
+            now = datetime.utcnow()
+            params = (new_password_hash, now, user_id)
+            
+            result = self.db.execute_one(query, params)
+            
+            if result:
+                return User(**dict(result))
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error changing user password: {e}")
+            raise
+
 class DocumentCRUD:
     def __init__(self, db_manager):
         self.db = db_manager

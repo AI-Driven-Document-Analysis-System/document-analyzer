@@ -9,12 +9,10 @@
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api"
 
-
 /**
  * ApiService class handles all HTTP requests to the FastAPI backend
  * Implements error handling and request configuration
  */
-
 
 class ApiService {
 
@@ -26,19 +24,20 @@ class ApiService {
    * @throws Error if the HTTP request fails
    */
 
-
   private async request(endpoint: string, options: RequestInit = {}) {
 
     // Construct full URL by combining base URL with endpoint
 
     const url = `${API_BASE_URL}${endpoint}`
 
-        // Default configuration with JSON content type
+    // Get authentication token
+    const token = localStorage.getItem("token")
 
-        // Default configuration for fetch requests what this code does is to set the Content-Type header to application/json and merge it with any additional headers provided in the options parameter. This ensures that the request will be sent with the correct content type for JSON data.
+    // Default configuration with JSON content type and auth header
     const config = { // Default configuration
       headers: {
         "Content-Type": "application/json",
+        ...(token && { "Authorization": `Bearer ${token}` }),
         ...options.headers,
       },
       ...options,
@@ -58,10 +57,19 @@ class ApiService {
     const formData = new FormData()
     formData.append("file", file)
 
-    return this.request("/documents/upload", {
+    const token = localStorage.getItem("token")
+    
+    return fetch(`${API_BASE_URL}/documents/upload`, {
       method: "POST",
       body: formData,
-      headers: {}, // Remove Content-Type to let browser set it for FormData
+      headers: {
+        ...(token && { "Authorization": `Bearer ${token}` }),
+      },
+    }).then(response => {
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.statusText}`)
+      }
+      return response.json()
     })
   }
 
@@ -73,27 +81,43 @@ class ApiService {
     return this.request(`/documents/${id}`)
   }
 
-  // Summarization endpoints
-  async generateSummary(documentId: string, model: string, options: any) {
-    return this.request("/summarization/generate", {
-      method: "POST",
-      body: JSON.stringify({
-        document_id: documentId,
-        model,
-        ...options,
-      }),
-    })
-  }
-
   // Search endpoints
   async searchDocuments(query: string, filters: any) {
-    return this.request("/search/documents", {
+    return this.request("/documents/search", {
       method: "POST",
       body: JSON.stringify({
         query,
         filters,
       }),
     })
+  }
+
+  async getDocumentTypes() {
+    return this.request("/documents/types")
+  }
+
+  // Document actions
+  async downloadDocument(documentId: string) {
+    return this.request(`/documents/${documentId}/download`)
+  }
+
+  // Summarization endpoints
+  async generateSummary(documentId: string, summaryType: string) {
+    return this.request("/summarize", {
+      method: "POST",
+      body: JSON.stringify({
+        document_id: documentId,
+        summary_type: summaryType
+      }),
+    })
+  }
+
+  async getSummaryOptions() {
+    return this.request("/summarize/options")
+  }
+
+  async getDocumentSummaries(documentId: string) {
+    return this.request(`/summarize/document/${documentId}`)
   }
 
   // RAG Chat endpoints

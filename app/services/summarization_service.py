@@ -433,7 +433,13 @@ def _get_model_pipeline(model_name: str):
     if model_name not in models:
         raise ValueError(f"Unknown model: {model_name}")
     
-    return pipeline("summarization", model=models[model_name], framework="pt")
+    try:
+        return pipeline("summarization", model=models[model_name], framework="pt")
+    except Exception as e:
+        logger.error(f"Error loading model {model_name}: {e}")
+        # Fallback to BART if model loading fails
+        logger.info("Falling back to BART model...")
+        return pipeline("summarization", model="facebook/bart-large-cnn", framework="pt")
 
 def _preprocess_text_for_model(text: str, model_name: str) -> str:
     """Preprocess text based on model requirements."""
@@ -453,11 +459,22 @@ def _handle_long_text(text: str, model_name: str, max_length: int, min_length: i
     
     if len(text) <= max_input_length:
         processed_text = _preprocess_text_for_model(text, model_name)
-        result = summarizer(processed_text, 
-                          max_length=max_length, 
-                          min_length=min_length, 
-                          do_sample=False)
-        return result[0]["summary_text"]
+        try:
+            result = summarizer(processed_text, 
+                              max_length=max_length, 
+                              min_length=min_length, 
+                              do_sample=False)
+            return result[0]["summary_text"]
+        except Exception as e:
+            logger.error(f"Error with single chunk summarization: {e}")
+            # Try with shorter text
+            shorter_text = text[:max_input_length//2]
+            processed_text = _preprocess_text_for_model(shorter_text, model_name)
+            result = summarizer(processed_text, 
+                              max_length=max_length, 
+                              min_length=min_length, 
+                              do_sample=False)
+            return result[0]["summary_text"]
     else:
         # Handle long text with chunks
         chunks = [text[i:i+max_input_length] for i in range(0, len(text), max_input_length//2)]
@@ -467,21 +484,34 @@ def _handle_long_text(text: str, model_name: str, max_length: int, min_length: i
         chunk_min_length = max(min_length//len(chunks), 10)
         
         for chunk in chunks:
-            processed_chunk = _preprocess_text_for_model(chunk, model_name)
-            result = summarizer(processed_chunk, 
-                              max_length=chunk_max_length, 
-                              min_length=chunk_min_length, 
-                              do_sample=False)
-            summaries.append(result[0]["summary_text"])
+            try:
+                processed_chunk = _preprocess_text_for_model(chunk, model_name)
+                result = summarizer(processed_chunk, 
+                                  max_length=chunk_max_length, 
+                                  min_length=chunk_min_length, 
+                                  do_sample=False)
+                summaries.append(result[0]["summary_text"])
+            except Exception as e:
+                logger.error(f"Error processing chunk: {e}")
+                # Skip problematic chunks
+                continue
+        
+        if not summaries:
+            raise Exception("Failed to process any text chunks")
         
         combined = " ".join(summaries)
         if len(combined.split()) > max_length:
-            processed_combined = _preprocess_text_for_model(combined, model_name)
-            result = summarizer(processed_combined, 
-                              max_length=max_length, 
-                              min_length=min_length, 
-                              do_sample=False)
-            return result[0]["summary_text"]
+            try:
+                processed_combined = _preprocess_text_for_model(combined, model_name)
+                result = summarizer(processed_combined, 
+                                  max_length=max_length, 
+                                  min_length=min_length, 
+                                  do_sample=False)
+                return result[0]["summary_text"]
+            except Exception as e:
+                logger.error(f"Error re-summarizing combined text: {e}")
+                # Return truncated version if re-summarization fails
+                return " ".join(combined.split()[:max_length])
         
         return combined
 
@@ -510,4 +540,24 @@ def summarize_with_options(text: str, options: dict) -> str:
             return summary.strip()
         except Exception as fallback_error:
             logger.error(f"Fallback also failed: {fallback_error}")
-            raise Exception(f"Both primary and fallback models failed")
+            raise Exception(f"Both primary and fallback models failed: {str(e)}")
+
+def get_model_info():
+    """Return information about each model's strengths."""
+    return {
+        "bart": {
+            "name": "BART (Bidirectional and Auto-Regressive Transformers)",
+            "strengths": ["Detailed summaries", "Comprehensive analysis", "Good for longer content"],
+            "best_for": ["Detailed Summary", "Long documents", "Academic content"]
+        },
+        "pegasus": {
+            "name": "Pegasus (Pre-training with Extracted Gap-sentences)",
+            "strengths": ["Abstractive summarization", "Concise summaries", "News articles"],
+            "best_for": ["Brief Summary", "Abstract Summary", "News content"]
+        },
+        "t5": {
+            "name": "T5 (Text-To-Text Transfer Transformer)", 
+            "strengths": ["Flexible text generation", "Structured output", "Business content"],
+            "best_for": ["Executive Summary", "Technical Summary", "Structured content"]
+        }
+    }

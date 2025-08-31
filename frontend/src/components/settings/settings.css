@@ -1,0 +1,332 @@
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f7f9fc;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --border-color: #e2e8f0;
+  --accent-color: #3b82f6;
+  --accent-hover: #2563eb;
+  --danger-color: #ef4444;
+  --success-color: #10b981;
+  --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  --radius: 12px;
+  --transition: all 0.2s ease;
+}
+
+[data-theme='dark'] {
+  --bg-primary: #111827;
+  --bg-secondary: #1f2937;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --border-color: #334155;
+  --accent-color: #60a5fa;
+  --accent-hover: #3b82f6;
+  --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+}
+
+.settings-container {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--bg-secondary);
+  min-height: 100vh;
+  color: var(--text-primary);
+}
+
+.settings-layout {
+  max-width: 1200px;
+  margin: 40px auto;
+  padding: 20px;
+}
+
+.settings-header {
+  margin-bottom: 32px;
+}
+
+.settings-header h1 {
+  font-size: 28px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.settings-header p {
+  color: var(--text-secondary);
+  font-size: 15px;
+  margin-top: 8px;
+}
+
+.settings-message {
+  padding: 12px 16px;
+  margin-bottom: 24px;
+  border-radius: var(--radius);
+  font-weight: 500;
+}
+
+.settings-message.success {
+  background-color: #ecfdf5;
+  color: var(--success-color);
+  border: 1px solid #a7f3d0;
+}
+
+.settings-message.error {
+  background-color: #fef2f2;
+  color: var(--danger-color);
+  border: 1px solid #fecaca;
+}
+
+.settings-body {
+  display: flex;
+  gap: 32px;
+}
+
+.settings-sidebar {
+  width: 260px;
+  flex-shrink: 0;
+}
+
+.settings-sidebar ul {
+  list-style: none;
+}
+
+.settings-sidebar li button {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: none;
+  background: none;
+  text-align: left;
+  color: var(--text-secondary);
+  cursor: pointer;
+  gap: 12px;
+  font-size: 15px;
+  transition: var(--transition);
+}
+
+.settings-sidebar li button:hover {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transform: translateX(4px);
+}
+
+.settings-sidebar li button.active {
+  background-color: #e0f2fe;
+  color: var(--accent-color);
+  font-weight: 500;
+}
+
+.settings-sidebar li button i {
+  width: 20px;
+  text-align: center;
+  font-size: 16px;
+}
+
+.settings-content {
+  flex: 1;
+}
+
+.settings-card {
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+  overflow: hidden;
+}
+
+.settings-card h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 24px 16px;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.settings-card h2 i {
+  color: var(--accent-color);
+}
+
+.settings-section {
+  padding: 24px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.settings-section:last-child {
+  border-bottom: none;
+}
+
+.settings-section h3 {
+  font-size: 17px;
+  margin-bottom: 16px;
+  color: var(--text-primary);
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.form-group input,
+.settings-section select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 15px;
+}
+
+.form-group input:focus,
+.settings-section select:focus {
+  outline: none;
+  border-color: var(--accent-color);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.settings-section button[type='submit'],
+.btn-primary,
+.btn-secondary {
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.settings-section button[type='submit'] {
+  background-color: var(--accent-color);
+  color: white;
+}
+
+.settings-section button[type='submit']:hover:not(:disabled) {
+  background-color: var(--accent-hover);
+}
+
+.settings-section button[type='submit']:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background-color: var(--accent-color);
+  color: white;
+  width: 100%;
+}
+
+.btn-primary:hover:not(.disabled) {
+  background-color: var(--accent-hover);
+}
+
+.btn-secondary {
+  background-color: #f1f5f9;
+  color: #475569;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.btn-secondary:hover:not(.disabled) {
+  background-color: #e2e8f0;
+}
+
+.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.toggle-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 50px;
+  height: 26px;
+  background-color: #d1d5db;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.toggle-switch.active {
+  background-color: var(--accent-color);
+}
+
+.toggle-switch span {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  border-radius: 50%;
+  transition: var(--transition);
+}
+
+.toggle-switch.active span {
+  transform: translateX(24px);
+}
+
+.radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.radio-group label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.radio-group input {
+  margin: 0;
+}
+
+.notification-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.plan-info {
+  background-color: #eff6ff;
+  border: 1px solid #bfdbfe;
+  padding: 16px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.plan-info h4 {
+  font-weight: 600;
+  color: #1e40af;
+  margin-bottom: 4px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .settings-body {
+    flex-direction: column;
+  }
+
+  .settings-sidebar {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+}
