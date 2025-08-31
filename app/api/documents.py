@@ -230,6 +230,40 @@ async def get_documents_by_user(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving documents: {str(e)}")
 
+@router.get("/types", response_model=dict)
+async def get_document_types(
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Get all available document types from classifications."""
+    try:
+        if not hasattr(current_user, 'id') or current_user.id is None:
+            raise HTTPException(status_code=400, detail="Invalid user token")
+        user_id = str(current_user.id)
+        
+        with db_manager.get_connection() as conn:
+            with conn.cursor() as cursor:
+                query = """
+                    SELECT DISTINCT dc.document_type
+                    FROM document_classifications dc
+                    JOIN documents d ON dc.document_id = d.id
+                    WHERE d.user_id = %s
+                    ORDER BY dc.document_type
+                """
+                cursor.execute(query, (user_id,))
+                types = cursor.fetchall()
+                
+                document_types = ["All Types"] + [doc_type[0] for doc_type in types if doc_type[0]]
+                
+                return {
+                    "document_types": document_types
+                }
+                
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting document types: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting document types: {str(e)}")
+
 @router.get("/{document_id}", response_model=dict)
 async def get_document(
     document_id: str,
@@ -339,6 +373,154 @@ async def delete_document(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error deleting document: {str(e)}")
+
+@router.post("/search", response_model=dict)
+async def search_documents(
+    request: Request,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Search documents with filters and return results with classifications."""
+    try:
+        if not hasattr(current_user, 'id') or current_user.id is None:
+            raise HTTPException(status_code=400, detail="Invalid user token")
+        user_id = str(current_user.id)
+        
+        # Parse request body
+        body = await request.json()
+        query = body.get("query", "")
+        filters = body.get("filters", {})
+        document_type = filters.get("document_type", "All Types")
+        date_range = filters.get("date_range", "all")
+        limit = filters.get("limit", 50)
+        offset = filters.get("offset", 0)
+        
+        with db_manager.get_connection() as conn:
+            with conn.cursor() as cursor:
+                # Build the base query
+                base_query = """
+                    SELECT DISTINCT
+                        d.id, d.original_filename, d.file_size, d.upload_timestamp, 
+                        d.mime_type, d.user_id, d.file_path_minio, d.page_count,
+                        dp.processing_status, dp.processing_errors,
+                        dc.document_type, dc.confidence_score,
+                        dc_content.extracted_text
+                    FROM documents d
+                    LEFT JOIN document_processing dp ON d.id = dp.document_id
+                    LEFT JOIN document_classifications dc ON d.id = dc.document_id
+                    LEFT JOIN document_content dc_content ON d.id = dc_content.document_id
+                    WHERE d.user_id = %s
+                """
+                
+                params = [user_id]
+                param_count = 1
+                
+                # Add search query filter
+                if query:
+                    base_query += f" AND (d.original_filename ILIKE %s OR dc_content.extracted_text ILIKE %s)"
+                    params.extend([f"%{query}%", f"%{query}%"])
+                    param_count += 2
+                
+                # Add document type filter
+                if document_type and document_type != "All Types":
+                    base_query += f" AND dc.document_type = %s"
+                    params.append(document_type)
+                    param_count += 1
+                
+                # Add date range filter
+                if date_range != "all":
+                    if date_range == "today":
+                        base_query += f" AND DATE(d.upload_timestamp) = CURRENT_DATE"
+                    elif date_range == "week":
+                        base_query += f" AND d.upload_timestamp >= CURRENT_DATE - INTERVAL '7 days'"
+                    elif date_range == "month":
+                        base_query += f" AND d.upload_timestamp >= CURRENT_DATE - INTERVAL '30 days'"
+                    elif date_range == "year":
+                        base_query += f" AND d.upload_timestamp >= CURRENT_DATE - INTERVAL '1 year'"
+                
+                # Add ordering and pagination
+                base_query += " ORDER BY d.upload_timestamp DESC LIMIT %s OFFSET %s"
+                params.extend([limit, offset])
+                
+                cursor.execute(base_query, params)
+                documents = cursor.fetchall()
+                
+                # Get total count for pagination
+                count_query = """
+                    SELECT COUNT(DISTINCT d.id)
+                    FROM documents d
+                    LEFT JOIN document_processing dp ON d.id = dp.document_id
+                    LEFT JOIN document_classifications dc ON d.id = dc.document_id
+                    LEFT JOIN document_content dc_content ON d.id = dc_content.document_id
+                    WHERE d.user_id = %s
+                """
+                
+                count_params = [user_id]
+                count_param_count = 1
+                
+                if query:
+                    count_query += f" AND (d.original_filename ILIKE %s OR dc_content.extracted_text ILIKE %s)"
+                    count_params.extend([f"%{query}%", f"%{query}%"])
+                    count_param_count += 2
+                
+                if document_type and document_type != "All Types":
+                    count_query += f" AND dc.document_type = %s"
+                    count_params.append(document_type)
+                    count_param_count += 1
+                
+                if date_range != "all":
+                    if date_range == "today":
+                        count_query += f" AND DATE(d.upload_timestamp) = CURRENT_DATE"
+                    elif date_range == "week":
+                        count_query += f" AND d.upload_timestamp >= CURRENT_DATE - INTERVAL '7 days'"
+                    elif date_range == "month":
+                        count_query += f" AND d.upload_timestamp >= CURRENT_DATE - INTERVAL '30 days'"
+                    elif date_range == "year":
+                        count_query += f" AND d.upload_timestamp >= CURRENT_DATE - INTERVAL '1 year'"
+                
+                cursor.execute(count_query, count_params)
+                total_count = cursor.fetchone()[0]
+                
+                # Format results
+                result = []
+                for doc in documents:
+                    # Extract excerpt from content (first 200 characters)
+                    excerpt = ""
+                    if doc[12]:  # extracted_text
+                        excerpt = doc[12][:200] + "..." if len(doc[12]) > 200 else doc[12]
+                    
+                    doc_dict = {
+                        "id": doc[0],
+                        "title": doc[1],
+                        "type": doc[10] or "Unknown",  # document_type
+                        "excerpt": excerpt,
+                        "uploadDate": doc[3].isoformat() if doc[3] else None,
+                        "confidence": float(doc[11]) * 100 if doc[11] else 0,  # confidence_score
+                        "pages": doc[7] or 0,  # page_count
+                        "file_size": doc[2],
+                        "content_type": doc[4],
+                        "processing_status": doc[8] or "unknown",
+                        "file_path": doc[6]
+                    }
+                    result.append(doc_dict)
+                
+                return {
+                    "documents": result,
+                    "total_results": total_count,
+                    "query": query,
+                    "filters": filters,
+                    "pagination": {
+                        "total": total_count,
+                        "limit": limit,
+                        "offset": offset,
+                        "has_more": offset + limit < total_count
+                    }
+                }
+                
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error searching documents: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error searching documents: {str(e)}")
 
 #overall what this code do is define a router for the document service, which includes the following endpoints:
 #GET /documents: Get a list of documents for the current user.

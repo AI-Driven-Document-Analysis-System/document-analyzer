@@ -1,727 +1,746 @@
-//****************************CSS */
-import { useState, useEffect, useMemo } from "react"
-import './Dashboard.css' // Import the CSS file
-import '../../styles/components.css';
-//import DocumentViewer from '../DocumentViewer/DocumentViewer';
+// //****************************CSS */
+// import { useState, useEffect, useMemo } from "react"
+// import './Dashboard.css' // Import the CSS file
+// import '../../styles/components.css';
 
+// // TypeScript interfaces
+// interface Document {
+//   id: string
+//   original_filename: string
+//   content_type: string
+//   processing_status: 'completed' | 'processing' | 'failed'
+//   upload_date: string
+//   user_id: string
+// }
 
-// TypeScript interfaces
-interface Document {
-  id: string
-  original_filename: string
-  content_type: string
-  processing_status: 'completed' | 'processing' | 'failed'
-  upload_date: string
-  user_id: string
-}
+// interface Summary {
+//   id: number | string
+//   summary_text: string
+//   summary_type: string
+//   word_count: number
+//   model_used: string
+//   created_at: string
+//   from_cache: boolean
+//   key_points?: string[] | null
+//   document_type?: string | null
+// }
 
-interface Summary {
-  id: number | string
-  summary_text: string
-  summary_type: string
-  word_count: number
-  model_used: string
-  created_at: string
-  from_cache: boolean
-  key_points?: string[] | null
-  document_type?: string | null
-}
+// interface FormattedDocument {
+//   id: string
+//   name: string
+//   type: string
+//   status: string
+//   uploadedAt: string
+//   confidence: number | null
+// }
 
-interface FormattedDocument {
-  id: string
-  name: string
-  type: string
-  status: string
-  uploadedAt: string
-  confidence: number | null
-}
+// interface SummaryOption {
+//   id: string
+//   name: string
+//   description: string
+//   model: string
+//   icon: string
+// }
 
-interface SummaryOption {
-  id: string
-  name: string
-  description: string
-  model: string
-  icon: string
-}
+// interface DocumentWithSummary extends FormattedDocument {
+//   showSummaryOptions: boolean
+//   selectedModel: string | null
+//   currentSummary: Summary | null
+//   loadingSummary: boolean
+//   generatingNew: boolean
+//   summaryError: string | null
+// }
 
-interface DocumentWithSummary extends FormattedDocument {
-  showSummaryOptions: boolean
-  selectedModel: string | null
-  currentSummary: Summary | null
-  loadingSummary: boolean
-  generatingNew: boolean
-  summaryError: string | null
-}
+// // Main Dashboard Component
+// function Dashboard() {
+//   const [documents, setDocuments] = useState<Document[]>([])
+//   const [loading, setLoading] = useState(true)
+//   const [error, setError] = useState<string | null>(null)
+//   const [documentsWithSummary, setDocumentsWithSummary] = useState<DocumentWithSummary[]>([])
 
-// Inline styles for modal
-const modalStyles = {
-  overlay: {
-    position: 'fixed' as const,
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'rgba(0, 0, 0, 0.75)',
-    backdropFilter: 'blur(8px)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 9999,
-    padding: '20px',
-    animation: 'fadeInModal 0.3s ease-out'
-  },
-  container: {
-    background: 'white',
-    borderRadius: '16px',
-    width: '90vw',
-    maxWidth: '1200px',
-    height: '90vh',
-    maxHeight: '900px',
-    display: 'flex',
-    flexDirection: 'column' as const,
-    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-    overflow: 'hidden',
-    position: 'relative' as const,
-    animation: 'slideInModal 0.3s ease-out'
-  },
-  header: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '20px 24px',
-    borderBottom: '1px solid #e5e7eb',
-    background: 'linear-gradient(135deg, #f8fafc, #e2e8f0)',
-    flexShrink: 0
-  },
-  title: {
-    flex: 1
-  },
-  titleH3: {
-    fontSize: '1.25rem',
-    fontWeight: 600,
-    color: '#1a202c',
-    margin: '0 0 4px 0'
-  },
-  titleP: {
-    fontSize: '0.875rem',
-    color: '#718096',
-    margin: 0
-  },
-  closeButton: {
-    background: 'none',
-    border: 'none',
-    fontSize: '24px',
-    color: '#718096',
-    cursor: 'pointer',
-    padding: '8px',
-    borderRadius: '8px',
-    transition: 'all 0.2s ease',
-    lineHeight: 1,
-    marginLeft: '16px'
-  },
-  body: {
-    flex: 1,
-    padding: 0,
-    overflow: 'hidden',
-    position: 'relative' as const,
-    background: '#f7fafc'
-  },
-  viewer: {
-    width: '100%',
-    height: '100%',
-    position: 'relative' as const
-  },
-  iframe: {
-    width: '100%',
-    height: '100%',
-    border: 'none',
-    background: 'white'
-  },
-  imageViewer: {
-    width: '100%',
-    height: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: '20px',
-    overflow: 'auto'
-  },
-  image: {
-    maxWidth: '100%',
-    maxHeight: '100%',
-    objectFit: 'contain' as const,
-    borderRadius: '8px',
-    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)'
-  },
-  loading: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100%',
-    color: '#718096'
-  },
-  loadingSpinner: {
-    width: '48px',
-    height: '48px',
-    border: '4px solid #e2e8f0',
-    borderTop: '4px solid #667eea',
-    borderRadius: '50%',
-    animation: 'spin 1s linear infinite',
-    marginBottom: '16px'
-  },
-  error: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100%',
-    textAlign: 'center' as const,
-    color: '#718096',
-    padding: '40px'
-  },
-  errorIcon: {
-    fontSize: '4rem',
-    marginBottom: '16px',
-    color: '#e53e3e'
-  },
-  errorH4: {
-    fontSize: '1.25rem',
-    color: '#2d3748',
-    marginBottom: '8px'
-  },
-  errorP: {
-    color: '#718096',
-    marginBottom: '24px'
-  },
-  unsupported: {
-    display: 'flex',
-    flexDirection: 'column' as const,
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: '100%',
-    textAlign: 'center' as const,
-    padding: '40px',
-    color: '#718096'
-  },
-  fileIcon: {
-    fontSize: '4rem',
-    marginBottom: '16px',
-    color: '#a0aec0'
-  },
-  downloadBtn: {
-    background: 'linear-gradient(135deg, #667eea, #764ba2)',
-    color: 'white',
-    border: 'none',
-    padding: '12px 24px',
-    borderRadius: '8px',
-    fontSize: '1rem',
-    fontWeight: 600,
-    cursor: 'pointer',
-    transition: 'all 0.3s ease',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px'
-  }
-};
+//   // Summary options configuration
+//   const summaryOptions: SummaryOption[] = [
+//     {
+//       id: 'brief',
+//       name: 'Brief Summary',
+//       description: 'Quick overview with key points (50-150 words)',
+//       model: 'BART',
+//       icon: '📝'
+//     },
+//     {
+//       id: 'detailed',
+//       name: 'Detailed Summary',
+//       description: 'Comprehensive analysis with full context (80-250 words)',
+//       model: 'PEGASUS',
+//       icon: '📄'
+//     },
+//     {
+//       id: 'domain_specific',
+//       name: 'Domain-Specific',
+//       description: 'Specialized summary based on document type (70-200 words)',
+//       model: 'Auto-Selected',
+//       icon: '🎯'
+//     }
+//   ]
 
-// Main Dashboard Component
-function Dashboard() {
-  const [documents, setDocuments] = useState<Document[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [documentsWithSummary, setDocumentsWithSummary] = useState<DocumentWithSummary[]>([])
-  // Chat and modal states
-  const [activeView, setActiveView] = useState<'documents' | 'chat'>('documents')
-  const [selectedDocument, setSelectedDocument] = useState<any>(null)
-  const [summaryModalOpen, setSummaryModalOpen] = useState(false)
-  const [selectedDocumentForSummary, setSelectedDocumentForSummary] = useState<{id: string, name: string} | null>(null)
-  
-  // Document preview states
-  const [previewDocument, setPreviewDocument] = useState<DocumentWithSummary | null>(null)
-  const [showPreview, setShowPreview] = useState(false)
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
-  const [loadingPreview, setLoadingPreview] = useState(false)
+//   // Mock token for demo - in real app this would come from auth context
+//   const getToken = () => {
+//     const token = localStorage.getItem("token")
+//     if (!token) {
+//       setError("No authentication token found. Please log in again.")
+//       return null
+//     }
+//     return token
+//   }
 
-  // Summary options configuration
-  const summaryOptions: SummaryOption[] = [
-    {
-      id: 'brief',
-      name: 'Brief Summary',
-      description: 'Quick overview with key points (50-150 words)',
-      model: 'BART',
-      icon: 'fas fa-file-text'
-    },
-    {
-      id: 'detailed',
-      name: 'Detailed Summary',
-      description: 'Comprehensive analysis with full context (80-250 words)',
-      model: 'PEGASUS',
-      icon: 'fas fa-file-alt'
-    },
-    {
-      id: 'domain_specific',
-      name: 'Domain-Specific',
-      description: 'Specialized summary based on document type (70-200 words)',
-      model: 'Auto-Selected',
-      icon: 'fas fa-bullseye'
-    }
-  ]
+//   // Fetch user documents
+//   useEffect(() => {
+//     const fetchDocuments = async () => {
+//       try {
+//         const token = getToken()
+//         if (!token) return
 
-  // JWT token handling
-  const getToken = () => {
-    const token = localStorage.getItem("token")
-    return token
-  }
+//         const response = await fetch("http://localhost:8000/api/documents/", {
+//           headers: {
+//             "Authorization": `Bearer ${token}`,
+//             "Content-Type": "application/json",
+//           },
+//         })
 
-  // Document preview handler
-  const previewDocumentHandler = async (doc: DocumentWithSummary) => {
-    setLoadingPreview(true)
-    setPreviewDocument(doc)
-    setShowPreview(true)
+//         if (response.status === 401) {
+//           localStorage.removeItem("token")
+//           localStorage.removeItem("user")
+//           setError("Session expired. Please log in again.")
+//           return
+//         }
+
+//         if (!response.ok) {
+//           throw new Error("Failed to fetch documents")
+//         }
+
+//         const data = await response.json()
+//         setDocuments(data.documents || [])
+//       } catch (err) {
+//         console.error("Error fetching documents:", err)
+//         setError(err instanceof Error ? err.message : "Failed to load documents")
+//       } finally {
+//         setLoading(false)
+//       }
+//     }
+
+//     fetchDocuments()
+//   }, [])
+
+//   // Format date to relative time
+//   const formatRelativeTime = (isoString: string): string => {
+//     const past = new Date(isoString)
+//     const now = new Date()
+//     const diffInMs = now.getTime() - past.getTime()
+//     const diffInHours = diffInMs / (1000 * 60 * 60)
+//     const diffInDays = diffInHours / 24
+
+//     if (diffInHours < 1) return "Less than an hour ago"
+//     if (diffInHours < 24) return `${Math.floor(diffInHours)} hours ago`
+//     if (diffInDays < 7) return `${Math.floor(diffInDays)} days ago`
+//     return past.toLocaleDateString()
+//   }
+
+//   // Compute stats from real documents
+//   const stats = useMemo(() => {
+//     const total = documents.length
+//     const today = new Date().setHours(0, 0, 0, 0)
+//     const processedToday = documents.filter(
+//       (doc) =>
+//         doc.processing_status === "completed" &&
+//         new Date(doc.upload_date).getTime() >= today
+//     ).length
+//     const inQueue = documents.filter(doc => doc.processing_status === "processing").length
+//     const successRate = total > 0 ? ((documents.filter(doc => doc.processing_status === "completed").length / total) * 100).toFixed(1) : "0"
+
+//     return [
+//       {
+//         title: "Total Documents",
+//         value: total.toLocaleString(),
+//         change: "+12%",
+//         icon: "📄",
+//         positive: true
+//       },
+//       {
+//         title: "Processed Today",
+//         value: processedToday.toString(),
+//         change: "+23%",
+//         icon: "✅",
+//         positive: true
+//       },
+//       {
+//         title: "Processing Queue",
+//         value: inQueue.toString(),
+//         change: inQueue > 0 ? "-5%" : "0%",
+//         icon: "⏰",
+//         positive: inQueue === 0
+//       },
+//       {
+//         title: "Success Rate",
+//         value: `${successRate}%`,
+//         change: "+0.5%",
+//         icon: "📈",
+//         positive: true
+//       },
+//     ]
+//   }, [documents])
+
+//   // Format recent documents with summary state
+//   const recentDocuments = useMemo((): DocumentWithSummary[] => {
+//     const formatted = documents
+//       .sort((a, b) => new Date(b.upload_date).getTime() - new Date(a.upload_date).getTime())
+//       .slice(0, 5) // Show more documents
+//       .map((doc): DocumentWithSummary => ({
+//         id: doc.id,
+//         name: doc.original_filename,
+//         type: doc.content_type?.split("/")[1]?.toUpperCase() || "FILE",
+//         status: doc.processing_status === "completed" ? "Completed" : 
+//                 doc.processing_status === "processing" ? "Processing" : "Failed",
+//         uploadedAt: formatRelativeTime(doc.upload_date),
+//         confidence: doc.processing_status === "completed" ? 95 : null,
+//         showSummaryOptions: false,
+//         selectedModel: null,
+//         currentSummary: null,
+//         loadingSummary: false,
+//         generatingNew: false,
+//         summaryError: null
+//       }))
     
-    try {
-      const token = getToken()
-      if (!token) return
+//     setDocumentsWithSummary(formatted)
+//     return formatted
+//   }, [documents])
 
-      const response = await fetch(`http://localhost:8000/api/documents/${doc.id}/download`, {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      })
+//   // Toggle summary options for a document
+//   const toggleSummaryOptions = (docId: string) => {
+//     setDocumentsWithSummary(prev => prev.map(doc => {
+//       if (doc.id === docId) {
+//         const newShowState = !doc.showSummaryOptions
+//         return { 
+//           ...doc, 
+//           showSummaryOptions: newShowState,
+//           selectedModel: newShowState ? doc.selectedModel : null,
+//           currentSummary: newShowState ? doc.currentSummary : null,
+//           summaryError: null
+//         }
+//       }
+//       return { ...doc, showSummaryOptions: false }
+//     }))
+//   }
 
-      if (response.ok) {
-        const data = await response.json()
-        setPreviewUrl(data.download_url)
-      } else {
-        console.error("Failed to get preview URL")
-        alert("Failed to load document preview")
-      }
-    } catch (err) {
-      console.error("Error getting preview URL:", err)
-      alert("Error loading document preview")
-    } finally {
-      setLoadingPreview(false)
-    }
-  }
+//   // Select a model and fetch summary for that model
+//   const selectModel = async (docId: string, modelId: string) => {
+//     setDocumentsWithSummary(prev => prev.map(doc => 
+//       doc.id === docId 
+//         ? { 
+//             ...doc, 
+//             selectedModel: modelId, 
+//             loadingSummary: true, 
+//             summaryError: null,
+//             currentSummary: null 
+//           } 
+//         : doc
+//     ))
 
-  // Close preview
-  const closePreview = () => {
-    setShowPreview(false)
-    setPreviewDocument(null)
-    setPreviewUrl(null)
-  }
+//     try {
+//       const token = getToken()
+//       if (!token) return
 
-  // Fetch user documents with JWT authentication and fallback
-  useEffect(() => {
-    const fetchDocuments = async () => {
-      const tryFallback = async () => {
-        try {
-          const userStr = localStorage.getItem("user")
-          if (!userStr) {
-            throw new Error("No user info found for fallback fetch")
-          }
-          const user = JSON.parse(userStr)
-          const userId = user?.id || user?.user?.id || user?.user_id
-          if (!userId) {
-            throw new Error("No user_id in local storage user")
-          }
-          const res = await fetch(`http://localhost:8000/api/documents/by-user?user_id=${encodeURIComponent(userId)}`)
-          if (!res.ok) {
-            throw new Error("Fallback fetch failed")
-          }
-          const data = await res.json()
-          setDocuments(data.documents || [])
-          setError(null)
-        } catch (e) {
-          console.error("Fallback documents fetch error:", e)
-          setError("Failed to load documents")
-        } finally {
-          setLoading(false)
-        }
-      }
+//       // First check if we have a cached summary for this model
+//       const response = await fetch(`http://localhost:8000/api/summarize/document/${docId}`, {
+//         headers: {
+//           "Authorization": `Bearer ${token}`,
+//           "Content-Type": "application/json",
+//         },
+//       })
 
-      try {
-        const token = getToken()
-        if (!token) {
-          await tryFallback()
-          return
-        }
+//       if (response.status === 401) {
+//         localStorage.removeItem("token")
+//         localStorage.removeItem("user")
+//         setError("Session expired. Please log in again.")
+//         return
+//       }
 
-        const response = await fetch("http://localhost:8000/api/documents/", {
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        })
+//       if (response.ok) {
+//         const data = await response.json()
+//         if (data.success && data.summaries) {
+//           // Try to find a matching summary for the selected model
+//           const matchingSummaries = data.summaries.filter((summary: Summary) => {
+//             // Check various ways the summary type might match
+//             const summaryType = summary.summary_type?.toLowerCase() || ''
+//             const modelIdLower = modelId.toLowerCase()
+            
+//             return summaryType === modelIdLower ||
+//                    summaryType.includes(modelIdLower) ||
+//                    modelIdLower.includes(summaryType) ||
+//                    summary.model_used?.toLowerCase() === modelIdLower
+//           })
 
-        if (response.status === 401) {
-          localStorage.removeItem("token")
-          await tryFallback()
-          return
-        }
+//           if (matchingSummaries.length > 0) {
+//             // Get the most recent matching summary
+//             const latestSummary = matchingSummaries.sort((a: Summary, b: Summary) => 
+//               new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+//             )[0]
 
-        if (!response.ok) {
-          await tryFallback()
-          return
-        }
+//             setDocumentsWithSummary(prev => prev.map(doc => 
+//               doc.id === docId 
+//                 ? { 
+//                     ...doc, 
+//                     currentSummary: latestSummary,
+//                     loadingSummary: false
+//                   }
+//                 : doc
+//             ))
+//           } else {
+//             // No cached summary found, show generate option
+//             setDocumentsWithSummary(prev => prev.map(doc => 
+//               doc.id === docId 
+//                 ? { 
+//                     ...doc, 
+//                     currentSummary: null,
+//                     loadingSummary: false
+//                   }
+//                 : doc
+//             ))
+//           }
+//         } else {
+//           setDocumentsWithSummary(prev => prev.map(doc => 
+//             doc.id === docId 
+//               ? { 
+//                   ...doc, 
+//                   currentSummary: null,
+//                   loadingSummary: false
+//                 }
+//               : doc
+//           ))
+//         }
+//       } else {
+//         console.error("Failed to fetch summaries")
+//         setDocumentsWithSummary(prev => prev.map(doc => 
+//           doc.id === docId 
+//             ? { 
+//                 ...doc, 
+//                 loadingSummary: false,
+//                 summaryError: "Failed to load summary"
+//               }
+//             : doc
+//         ))
+//       }
+//     } catch (err) {
+//       console.error("Error fetching summaries:", err)
+//       setDocumentsWithSummary(prev => prev.map(doc => 
+//         doc.id === docId 
+//           ? { 
+//               ...doc, 
+//               loadingSummary: false, 
+//               summaryError: "Failed to load summary" 
+//             }
+//           : doc
+//       ))
+//     }
+//   }
 
-        const data = await response.json()
-        setDocuments(data.documents || [])
-        setLoading(false)
-      } catch (err) {
-        console.error("Error fetching documents:", err)
-        await tryFallback()
-      }
-    }
+//   // Generate new summary
+//   const generateSummary = async (docId: string, summaryType: string) => {
+//     setDocumentsWithSummary(prev => prev.map(doc => 
+//       doc.id === docId ? { ...doc, generatingNew: true, summaryError: null } : doc
+//     ))
 
-    fetchDocuments()
-  }, [])
+//     try {
+//       const token = getToken()
+//       if (!token) return
 
-  // Format date to relative time
-  const formatRelativeTime = (isoString: string): string => {
-    const past = new Date(isoString)
-    const now = new Date()
-    const diffInMs = now.getTime() - past.getTime()
-    const diffInHours = diffInMs / (1000 * 60 * 60)
-    const diffInDays = diffInHours / 24
+//       const response = await fetch("http://localhost:8000/api/summarize/", {
+//         method: "POST",
+//         headers: {
+//           "Authorization": `Bearer ${token}`,
+//           "Content-Type": "application/json",
+//         },
+//         body: JSON.stringify({
+//           document_id: docId,
+//           summary_type: summaryType
+//         })
+//       })
 
-    if (diffInHours < 1) return "Less than an hour ago"
-    if (diffInHours < 24) return `${Math.floor(diffInHours)} hours ago`
-    if (diffInDays < 7) return `${Math.floor(diffInDays)} days ago`
-    return past.toLocaleDateString()
-  }
+//       if (response.status === 401) {
+//         localStorage.removeItem("token")
+//         localStorage.removeItem("user")
+//         setError("Session expired. Please log in again.")
+//         return
+//       }
 
-  // Compute stats from real documents
-  const stats = useMemo(() => {
-    const total = documents.length
-    const today = new Date().setHours(0, 0, 0, 0)
-    const processedToday = documents.filter(
-      (doc) =>
-        doc.processing_status === "completed" &&
-        new Date(doc.upload_date).getTime() >= today
-    ).length
-    const inQueue = documents.filter(doc => doc.processing_status === "processing").length
-    const successRate = total > 0 ? ((documents.filter(doc => doc.processing_status === "completed").length / total) * 100).toFixed(1) : "0"
+//       if (!response.ok) {
+//         const errorData = await response.json()
+//         throw new Error(errorData.detail || "Failed to generate summary")
+//       }
 
-    return [
-      {
-        title: "Total Documents",
-        value: total.toLocaleString(),
-        change: "+12%",
-        icon: "fas fa-file-alt",
-        positive: true
-      },
-      {
-        title: "Processed Today",
-        value: processedToday.toString(),
-        change: "+23%",
-        icon: "fas fa-check-circle",
-        positive: true
-      },
-      {
-        title: "Processing Queue",
-        value: inQueue.toString(),
-        change: inQueue > 0 ? "-5%" : "0%",
-        icon: "fas fa-clock",
-        positive: inQueue === 0
-      },
-      {
-        title: "Success Rate",
-        value: `${successRate}%`,
-        change: "+0.5%",
-        icon: "fas fa-chart-line",
-        positive: true
-      },
-    ]
-  }, [documents])
+//       const data = await response.json()
+      
+//       if (data.success) {
+//         const newSummary: Summary = {
+//           id: data.id || Date.now(),
+//           summary_type: data.summary_type,
+//           summary_text: data.summary_text,
+//           word_count: data.word_count,
+//           model_used: data.model_used,
+//           created_at: data.created_at,
+//           from_cache: data.from_cache,
+//           document_type: data.document_type,
+//           key_points: data.key_points
+//         }
 
-  // Format recent documents with summary state
-  const recentDocuments = useMemo((): DocumentWithSummary[] => {
-    const formatted = documents
-      .sort((a, b) => new Date(b.upload_date).getTime() - new Date(a.upload_date).getTime())
-      .map((doc): DocumentWithSummary => ({
-        id: doc.id,
-        name: doc.original_filename,
-        type: doc.content_type?.split("/")[1]?.toUpperCase() || "FILE",
-        status: doc.processing_status === "completed" ? "Completed" : 
-                doc.processing_status === "processing" ? "Processing" : "Failed",
-        uploadedAt: formatRelativeTime(doc.upload_date),
-        confidence: doc.processing_status === "completed" ? 95 : null,
-        showSummaryOptions: false,
-        selectedModel: null,
-        currentSummary: null,
-        loadingSummary: false,
-        generatingNew: false,
-        summaryError: null
-      }))
-    
-    setDocumentsWithSummary(formatted)
-    return formatted
-  }, [documents])
+//         setDocumentsWithSummary(prev => prev.map(doc => 
+//           doc.id === docId 
+//             ? { 
+//                 ...doc, 
+//                 currentSummary: newSummary,
+//                 generatingNew: false
+//               }
+//             : doc
+//         ))
+//       } else {
+//         throw new Error("Summary generation failed")
+//       }
+//     } catch (err: any) {
+//       console.error("Error generating summary:", err)
+//       setDocumentsWithSummary(prev => prev.map(doc => 
+//         doc.id === docId 
+//           ? { 
+//               ...doc, 
+//               generatingNew: false, 
+//               summaryError: `Failed to generate summary: ${err.message}` 
+//             }
+//           : doc
+//       ))
+//     }
+//   }
 
-  // Other handler functions
-  const handleChatWithDoc = (doc: DocumentWithSummary) => {
-    setSelectedDocument(doc)
-    setActiveView('chat')
-  }
+//   const formatDate = (dateString: string) => {
+//     return new Date(dateString).toLocaleString()
+//   }
 
-  const handleSummarizeDoc = (doc: DocumentWithSummary) => {
-    setSelectedDocumentForSummary({
-      id: doc.id,
-      name: doc.name
-    })
-    setSummaryModalOpen(true)
-  }
+//   const getSummaryTypeColor = (type: string) => {
+//     const colors: { [key: string]: string } = {
+//       "Brief Summary": "status-badge status-completed",
+//       "brief": "status-badge status-completed",
+//       "Detailed Summary": "status-badge status-processing", 
+//       "detailed": "status-badge status-processing",
+//       "Domain Specific Summary": "status-badge",
+//       "Domain-Specific": "status-badge",
+//       "domain_specific": "status-badge"
+//     }
+//     return colors[type] || "status-badge"
+//   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="loading-spinner mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading your dashboard...</p>
-        </div>
-      </div>
-    )
-  }
+//   const copyToClipboard = async (text: string) => {
+//     try {
+//       await navigator.clipboard.writeText(text)
+//       alert("Summary copied to clipboard!")
+//     } catch (err) {
+//       console.error("Failed to copy:", err)
+//       alert("Failed to copy summary")
+//     }
+//   }
 
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <div className="error-message max-w-md w-full">
-          <div className="flex items-center gap-3">
-            <i className="fas fa-exclamation-triangle text-2xl text-yellow-500"></i>
-            <p>{error}</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
+//   if (loading) {
+//     return (
+//       <div className="min-h-screen flex items-center justify-center">
+//         <div className="text-center">
+//           <div className="loading-spinner mx-auto"></div>
+//           <p className="mt-4 text-gray-600">Loading your dashboard...</p>
+//         </div>
+//       </div>
+//     )
+//   }
 
-  return (
-    <div className="main-container">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-4 gap-4">
-          {stats.map((stat) => (
-            <div key={stat.title} className="stats-card fade-in">
-              <div className="stats-header">
-                <i className={`stats-icon ${stat.icon}`}></i>
-                <span className={`stats-change ${stat.positive ? 'positive' : 'negative'}`}>
-                  {stat.change}
-                </span>
-              </div>
-              <div className="stats-content">
-                <div className="stats-value">{stat.value}</div>
-                <div className="stats-title">{stat.title}</div>
-              </div>
-            </div>
-          ))}
-        </div>
+//   if (error) {
+//     return (
+//       <div className="min-h-screen flex items-center justify-center p-6">
+//         <div className="error-message max-w-md w-full">
+//           <div className="flex items-center gap-3">
+//             <span className="text-2xl">⚠️</span>
+//             <p>{error}</p>
+//           </div>
+//         </div>
+//       </div>
+//     )
+//   }
 
-        {/* Search and Chat Feature */}
-        <div className="feature-container">
-          <div className="tabs-container d-flex">
-            <button 
-              className={`tab-btn ${activeView === 'documents' ? 'active' : ''}`}
-              onClick={() => setActiveView('documents')}
-            >
-              <i className="fas fa-search me-2"></i>Search Documents
-            </button>
-            <button 
-              className={`tab-btn ${activeView === 'chat' ? 'active' : ''}`}
-              onClick={() => setActiveView('chat')}
-            >
-              <i className="fas fa-robot me-2"></i>Ask DocuMind AI
-            </button>
-          </div>
+//   return (
+//     <div className="main-container">
+//       <div className="max-w-7xl mx-auto space-y-6">
+//         {/* Header */}
+//         <div className="dashboard-header">
+//           <div className="flex items-center justify-between">
+//             <div>
+//               <h1>Dashboard</h1>
+//               <p className="opacity-90 mt-1">Welcome back! Here's what's happening with your documents.</p>
+//             </div>
+//             <button className="btn btn-upload">
+//               <span className="text-lg">📤</span>
+//               Upload Document
+//             </button>
+//           </div>
+//         </div>
 
-          <div className="tab-content-container">
-            {activeView === 'documents' && (
-              <div id="search-tab" className="tab-content active">
-                <div className="search-input-group">
-                  <span className="search-icon"><i className="fas fa-search"></i></span>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    placeholder="Search across all your documents..."
-                  />
-                </div>
+//         {/* Stats Grid - Single Compact Row */}
+//         <div className="grid grid-cols-4 gap-4">
+//           {stats.map((stat) => (
+//             <div key={stat.title} className="stats-card fade-in">
+//               <div className="stats-header">
+//                 <span className="stats-icon">{stat.icon}</span>
+//                 <span className={`stats-change ${stat.positive ? 'positive' : 'negative'}`}>
+//                   {stat.change}
+//                 </span>
+//               </div>
+//               <div className="stats-content">
+//                 <div className="stats-value">{stat.value}</div>
+//                 <div className="stats-title">{stat.title}</div>
+//               </div>
+//             </div>
+//           ))}
+//         </div>
 
-                <div id="searchResults">
-                  <h5 className="mb-4"><i className="fas fa-history me-2"></i>Recent Documents</h5>
-                  
-                  {documentsWithSummary.length === 0 ? (
-                    <div className="text-center py-5">
-                      <i className="fas fa-file-alt" style={{fontSize: '4rem', color: '#dee2e6'}}></i>
-                      <p className="mt-3 text-muted">No documents uploaded yet.</p>
-                    </div>
-                  ) : (
-                    documentsWithSummary.map((doc) => (
-                      <div key={doc.id} className="result-item">
-                        <div className="d-flex">
-                          <div className="result-icon">
-                            <i className="fas fa-file-invoice"></i>
-                          </div>
-                          <div className="flex-grow-1">
-                            <div className="result-title">
-                              {doc.name}
-                              <span className="doc-type-tag tag-invoice">{doc.type}</span>
-                            </div>
-                            <div className="result-snippet">
-                              Financial summary for Q4 2023 showing a 12% increase in revenue compared to previous year...
-                            </div>
-                            <div className="result-meta">
-                              PDF • 2.4 MB • Last accessed: {doc.uploadedAt}
-                            </div>
-                            <div className="result-actions">
-                              <button 
-                                className="btn summarize-btn"
-                                onClick={() => handleSummarizeDoc(doc)}
-                              >
-                                <i className="fas fa-file-contract me-1"></i>Summarize
-                              </button>
-                              <button 
-                                className="btn chat-doc-btn"
-                                onClick={() => handleChatWithDoc(doc)}
-                              >
-                                <i className="fas fa-comments me-1"></i>Chat with Doc
-                              </button>
-                              <button 
-                                onClick={() => previewDocumentHandler(doc)}
-                                className="btn btn-secondary"
-                              >
-                                <i className="fas fa-eye me-1"></i>Preview
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-                <div className="chat-input-group">
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    placeholder={selectedDocument 
-                      ? `Ask about ${selectedDocument.name}...` 
-                      : "Ask DocuMind AI anything about your documents..."
-                    } 
-                  />
-                  <button className="btn btn-primary">
-                    <i className="fas fa-paper-plane"></i>
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+//         {/* Recent Documents */}
+//         <div className="document-card">
+//           <div className="section-header">
+//             <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+//               📄 Recent Documents
+//             </h2>
+//             <p className="text-gray-600 text-sm mt-1">Your latest document processing activities</p>
+//           </div>
+//           <div className="p-6">
+//             {documentsWithSummary.length === 0 ? (
+//               <div className="empty-state">
+//                 <div className="empty-state-icon">📄</div>
+//                 <p>No documents uploaded yet.</p>
+//               </div>
+//             ) : (
+//               <div className="space-y-4">
+//                 {documentsWithSummary.map((doc) => (
+//                   <div key={doc.id} className="document-card">
+//                     {/* Document Card */}
+//                     <div className="document-card-header">
+//                       <div className="flex items-center justify-between mb-3">
+//                         <div className="flex-1">
+//                           <h4 className="font-medium text-gray-900">{doc.name}</h4>
+//                           <div className="flex items-center gap-4 mt-1">
+//                             <span className="status-badge">{doc.type}</span>
+//                             <span className="text-xs text-gray-500">{doc.uploadedAt}</span>
+//                           </div>
+//                         </div>
+//                         <div className="flex items-center gap-3">
+//                           {doc.confidence !== null && (
+//                             <div className="text-right">
+//                               <div className="text-sm font-medium">{doc.confidence}%</div>
+//                               <div className="progress-bar w-16">
+//                                 <div 
+//                                   className="progress-fill" 
+//                                   style={{ width: `${doc.confidence}%` }}
+//                                 ></div>
+//                               </div>
+//                             </div>
+//                           )}
+//                           <span className={`${
+//                             doc.status === "Completed" ? "status-completed" : 
+//                             doc.status === "Processing" ? "status-processing" : "status-failed"
+//                           }`}>
+//                             {doc.status}
+//                           </span>
+//                         </div>
+//                       </div>
+//                       <div className="flex gap-3">
+//                         <button 
+//                           onClick={() => toggleSummaryOptions(doc.id)}
+//                           className="btn btn-primary flex-1"
+//                         >
+//                           <span className="text-lg">📊</span>
+//                           {doc.showSummaryOptions ? 'Hide Summary' : 'Summarize'}
+//                         </button>
+//                         <button className="btn btn-success flex-1">
+//                           <span className="text-lg">💬</span>
+//                           Chat with Doc
+//                         </button>
+//                       </div>
+//                     </div>
 
-        {/* Document Preview Modal */}
-        {showPreview && (
-          <div style={modalStyles.overlay}>
-            <div style={modalStyles.container}>
-              <div style={modalStyles.header}>
-                <div style={modalStyles.title}>
-                  <h3 style={modalStyles.titleH3}>{previewDocument?.name}</h3>
-                  <p style={modalStyles.titleP}>{previewDocument?.type} • {previewDocument?.uploadedAt}</p>
-                </div>
-                <button 
-                  onClick={closePreview}
-                  style={modalStyles.closeButton}
-                >
-                  ✕
-                </button>
-              </div>
-              
-              <div style={modalStyles.body}>
-                {loadingPreview ? (
-                  <div style={modalStyles.loading}>
-                    <div style={modalStyles.loadingSpinner}></div>
-                    <p>Loading document preview...</p>
-                  </div>
-                ) : previewUrl ? (
-                  <div style={modalStyles.viewer}>
-                    {previewDocument?.type === 'PDF' ? (
-                      <iframe
-                        src={previewUrl}
-                        style={modalStyles.iframe}
-                        title="Document Preview"
-                      />
-                    ) : previewDocument?.type?.startsWith('image/') || 
-                         ['JPG', 'JPEG', 'PNG', 'GIF'].includes(previewDocument?.type || '') ? (
-                      <div style={modalStyles.imageViewer}>
-                        <img 
-                          src={previewUrl} 
-                          alt="Document Preview"
-                          style={modalStyles.image}
-                        />
-                      </div>
-                    ) : (
-                      <div style={modalStyles.unsupported}>
-                        <div style={modalStyles.fileIcon}><i className="fas fa-file"></i></div>
-                        <h4 style={modalStyles.titleH3}>Preview not available</h4>
-                        <p style={modalStyles.titleP}>Preview not available for this file type</p>
-                        <a 
-                          href={previewUrl} 
-                          download={previewDocument?.name}
-                          style={modalStyles.downloadBtn}
-                        >
-                          <i className="fas fa-download"></i>
-                          Download Document
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div style={modalStyles.error}>
-                    <div style={modalStyles.errorIcon}><i className="fas fa-exclamation-triangle"></i></div>
-                    <h4 style={modalStyles.errorH4}>Failed to load document preview</h4>
-                    <p style={modalStyles.errorP}>Unable to load the document preview</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+//                     {/* Summary Section */}
+//                     {doc.showSummaryOptions && (
+//                       <div className="summary-section">
+//                         <h5 className="font-medium text-gray-900 mb-4">Document Summary</h5>
+                        
+//                         {doc.summaryError && (
+//                           <div className="error-message mb-4">
+//                             <p>{doc.summaryError}</p>
+//                           </div>
+//                         )}
 
-      <style jsx>{`
-        @keyframes fadeInModal {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
+//                         {/* Model Selection */}
+//                         <div className="mb-4">
+//                           <h6 className="text-sm font-medium text-gray-700 mb-3">Select Summary Type</h6>
+//                           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+//                             {summaryOptions.map((option) => (
+//                               <button
+//                                 key={option.id}
+//                                 onClick={() => selectModel(doc.id, option.id)}
+//                                 className={`summary-option ${
+//                                   doc.selectedModel === option.id ? 'selected' : ''
+//                                 }`}
+//                               >
+//                                 <div className="flex items-center gap-3">
+//                                   <span className="text-xl">{option.icon}</span>
+//                                   <div className="text-left">
+//                                     <div className="font-medium text-sm">{option.name}</div>
+//                                     <div className="text-xs text-gray-600">{option.description}</div>
+//                                     <div className="text-xs text-gray-500 mt-1">Model: {option.model}</div>
+//                                   </div>
+//                                 </div>
+//                               </button>
+//                             ))}
+//                           </div>
+//                         </div>
 
-        @keyframes slideInModal {
-          from {
-            opacity: 0;
-            transform: scale(0.95) translateY(-20px);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1) translateY(0);
-          }
-        }
+//                         {/* Summary Content or Generate Option */}
+//                         {doc.selectedModel && (
+//                           <div className="border-t pt-4">
+//                             {doc.loadingSummary ? (
+//                               <div className="text-center py-8">
+//                                 <div className="loading-spinner mx-auto"></div>
+//                                 <p className="mt-2 text-sm text-gray-600">Loading summary...</p>
+//                               </div>
+//                             ) : doc.currentSummary ? (
+//                               /* Show Existing Summary */
+//                               <div className="fade-in">
+//                                 <div className="flex items-center justify-between mb-4">
+//                                   <h6 className="text-sm font-medium text-gray-700">Summary Content</h6>
+//                                   <div className="flex items-center gap-2">
+//                                     {doc.currentSummary.from_cache && (
+//                                       <span className="status-badge status-completed">
+//                                         📋 From Cache
+//                                       </span>
+//                                     )}
+//                                     <span className={getSummaryTypeColor(doc.currentSummary.summary_type)}>
+//                                       {doc.currentSummary.summary_type}
+//                                     </span>
+//                                   </div>
+//                                 </div>
 
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
+//                                 {/* Summary Details */}
+//                                 <div className="mb-4 p-3 bg-gray-50 rounded-lg border">
+//                                   <div className="grid grid-cols-3 gap-4 text-xs">
+//                                     <div>
+//                                       <span className="text-gray-500">Words:</span> {doc.currentSummary.word_count}
+//                                     </div>
+//                                     <div>
+//                                       <span className="text-gray-500">Model:</span> {doc.currentSummary.model_used}
+//                                     </div>
+//                                     <div>
+//                                       <span className="text-gray-500">Generated:</span> {formatDate(doc.currentSummary.created_at)}
+//                                     </div>
+//                                   </div>
+//                                 </div>
 
-        @media (max-width: 768px) {
-          .modal-overlay { padding: 10px; }
-          .modal-container { width: 95vw; height: 95vh; }
-          .modal-header { padding: 16px 20px; }
-          .modal-header h3 { font-size: 1.125rem; }
-          .image-viewer { padding: 16px; }
-        }
+//                                 {/* Summary Text */}
+//                                 <div className="summary-content mb-4">
+//                                   <p className="text-gray-800 text-sm leading-relaxed whitespace-pre-wrap">
+//                                     {doc.currentSummary.summary_text}
+//                                   </p>
+//                                 </div>
 
-        ${showPreview ? 'body { overflow: hidden; }' : ''}
-      `}</style>
-    </div>
-  )
-}
+//                                 {/* Key Points */}
+//                                 {doc.currentSummary.key_points && doc.currentSummary.key_points.length > 0 && (
+//                                   <div className="key-points mb-4">
+//                                     <h6 className="text-xs font-medium text-gray-700 mb-2">Key Points</h6>
+//                                     <ul className="space-y-1">
+//                                       {doc.currentSummary.key_points.map((point, index) => (
+//                                         <li key={index} className="key-point flex items-start gap-2 text-sm">
+//                                           <span className="text-blue-500 mt-1">•</span>
+//                                           <span className="text-gray-700">{point}</span>
+//                                         </li>
+//                                       ))}
+//                                     </ul>
+//                                   </div>
+//                                 )}
 
-export default Dashboard
+//                                 {/* Action Buttons */}
+//                                 <div className="action-buttons">
+//                                   <button 
+//                                     onClick={() => copyToClipboard(doc.currentSummary!.summary_text)}
+//                                     className="btn btn-copy"
+//                                   >
+//                                     <span>📋</span>
+//                                     Copy
+//                                   </button>
+//                                   <button className="btn btn-export">
+//                                     <span>📄</span>
+//                                     Export
+//                                   </button>
+//                                   <button className="btn btn-email">
+//                                     <span>📧</span>
+//                                     Email
+//                                   </button>
+//                                   <button 
+//                                     onClick={() => generateSummary(doc.id, doc.selectedModel!)}
+//                                     disabled={doc.generatingNew}
+//                                     className="btn btn-regenerate"
+//                                   >
+//                                     {doc.generatingNew ? "Generating..." : (
+//                                       <>
+//                                         <span>🔄</span>
+//                                         Regenerate
+//                                       </>
+//                                     )}
+//                                   </button>
+//                                 </div>
+//                               </div>
+//                             ) : (
+//                               /* Show Generate Option */
+//                               <div className="text-center py-8">
+//                                 <div className="text-3xl mb-3">🤖</div>
+//                                 <p className="text-gray-600 mb-2">No summary available for this model</p>
+//                                 <p className="text-gray-500 text-sm mb-4">Generate a new summary with the selected model</p>
+                                
+//                                 <button
+//                                   onClick={() => generateSummary(doc.id, doc.selectedModel!)}
+//                                   disabled={doc.generatingNew}
+//                                   className="btn btn-generate"
+//                                 >
+//                                   {doc.generatingNew ? (
+//                                     <>
+//                                       <div className="loading-spinner w-4 h-4 inline-block mr-2"></div>
+//                                       Generating...
+//                                     </>
+//                                   ) : (
+//                                     <>
+//                                       <span className="text-lg">✨</span>
+//                                       Generate Summary
+//                                     </>
+//                                   )}
+//                                 </button>
+
+//                                 {doc.generatingNew && (
+//                                   <div className="mt-4 text-sm text-blue-600">
+//                                     This may take a few moments...
+//                                   </div>
+//                                 )}
+//                               </div>
+//                             )}
+//                           </div>
+//                         )}
+//                       </div>
+//                     )}
+//                   </div>
+//                 ))}
+//               </div>
+//             )}
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   )
+// }
+
+// export default Dashboard
