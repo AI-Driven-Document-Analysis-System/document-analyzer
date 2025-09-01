@@ -290,6 +290,73 @@ async def update_current_user(
             detail="Internal server error"
         )
 
+@router.post("/google-oauth", response_model=Token)
+async def google_oauth(oauth_data: dict):
+    """Handle Google OAuth authentication"""
+    try:
+        email = oauth_data.get('email')
+        first_name = oauth_data.get('firstName', '')
+        last_name = oauth_data.get('lastName', '')
+        google_id = oauth_data.get('googleId')
+        
+        if not email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email is required from Google OAuth"
+            )
+        
+        # Get user CRUD instance
+        user_crud = get_user_crud()
+        if not user_crud:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Database connection error"
+            )
+        
+        # Check if user exists
+        existing_user = user_crud.get_user_by_email(email.strip().lower())
+        
+        if existing_user:
+            # User exists, update Google ID if not set
+            if not hasattr(existing_user, 'google_id') or not existing_user.google_id:
+                user_crud.update_user(existing_user.id, google_id=google_id)
+            user = existing_user
+        else:
+            # Create new user with Google OAuth data
+            user = user_crud.create_user(
+                email=email.strip().lower(),
+                password=None,  # No password for OAuth users
+                first_name=first_name.strip() if first_name else None,
+                last_name=last_name.strip() if last_name else None,
+                google_id=google_id,
+                is_oauth_user=True
+            )
+        
+        # Create access token
+        access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = create_access_token(
+            data={"sub": str(user.id), "email": user.email},
+            expires_delta=access_token_expires
+        )
+        
+        logger.info(f"Google OAuth successful for user: {user.email}")
+        
+        return Token(
+            access_token=access_token,
+            token_type="bearer",
+            user=UserResponse(**user.__dict__)
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Google OAuth error: {e}")
+        logger.error(f"Full traceback: {traceback.format_exc()}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Google OAuth authentication failed"
+        )
+
 @router.post("/logout")
 async def logout(current_user: UserResponse = Depends(get_current_user)):
     """Logout user (client should remove token)"""

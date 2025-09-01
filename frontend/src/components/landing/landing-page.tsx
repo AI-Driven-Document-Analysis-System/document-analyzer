@@ -15,7 +15,7 @@ export function LandingPage({ onShowAuth }: LandingPageProps) {
             <span className="nav-logo-text">DocAnalyzer</span>
           </div>
           <div className="nav-actions">
-            <button className="btn btn-outline" onClick={onShowAuth}>
+            <button className="btn btn-primary" onClick={onShowAuth}>
               Sign In
             </button>
             <button className="btn btn-primary" onClick={onShowAuth}>
