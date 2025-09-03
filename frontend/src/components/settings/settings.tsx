@@ -1,14 +1,12 @@
-
-
-
 import React, { useState, useEffect } from 'react';
 import './settings.css';
+import { useTheme } from '../../contexts/ThemeContext';
 
 const Settings: React.FC = () => {
   const [activeSection, setActiveSection] = useState('security');
-  const [darkMode, setDarkMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const { isDarkMode, toggleTheme } = useTheme();
 
   // Form states
   const [changeEmailForm, setChangeEmailForm] = useState({ email: '', password: '' });
@@ -18,29 +16,14 @@ const Settings: React.FC = () => {
     confirmPassword: '',
   });
 
-  useEffect(() => {
-    const savedDarkMode = localStorage.getItem('darkMode') === 'true';
-    setDarkMode(savedDarkMode);
-    if (savedDarkMode) {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    }
-  }, []);
-
   const showMessage = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text });
     setTimeout(() => setMessage(null), 5000);
   };
 
-  const toggleDarkMode = () => {
-    const newDarkMode = !darkMode;
-    setDarkMode(newDarkMode);
-    localStorage.setItem('darkMode', newDarkMode.toString());
-    if (newDarkMode) {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    } else {
-      document.documentElement.removeAttribute('data-theme');
-    }
-    showMessage('success', `Dark mode ${newDarkMode ? 'enabled' : 'disabled'}`);
+  const handleToggleDarkMode = () => {
+    toggleTheme();
+    showMessage('success', `Dark mode ${!isDarkMode ? 'enabled' : 'disabled'}`);
   };
 
   const handleChangeEmail = async (e: React.FormEvent) => {
@@ -269,8 +252,8 @@ const Settings: React.FC = () => {
                     <div className="toggle-group">
                       <span>Dark Mode</span>
                       <button
-                        className={`toggle-switch ${darkMode ? 'active' : ''}`}
-                        onClick={toggleDarkMode}
+                        className={`toggle-switch ${isDarkMode ? 'active' : ''}`}
+                        onClick={handleToggleDarkMode}
                       >
                         <span></span>
                       </button>

@@ -1,31 +1,7 @@
 /* Import Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 
-:root {
-  --bg-primary: #ffffff;
-  --bg-secondary: #f7f9fc;
-  --text-primary: #1e293b;
-  --text-secondary: #64748b;
-  --border-color: #e2e8f0;
-  --accent-color: #3b82f6;
-  --accent-hover: #2563eb;
-  --danger-color: #ef4444;
-  --success-color: #10b981;
-  --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-  --radius: 12px;
-  --transition: all 0.2s ease;
-}
-
-[data-theme='dark'] {
-  --bg-primary: #111827;
-  --bg-secondary: #1f2937;
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --border-color: #334155;
-  --accent-color: #60a5fa;
-  --accent-hover: #3b82f6;
-  --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-}
+/* Use global CSS variables from globals.css */
 
 .settings-container {
   font-family: 'Inter', sans-serif;
@@ -59,19 +35,19 @@
 .settings-message {
   padding: 12px 16px;
   margin-bottom: 24px;
-  border-radius: var(--radius);
+  border-radius: 12px;
   font-weight: 500;
 }
 
 .settings-message.success {
   background-color: #ecfdf5;
-  color: var(--success-color);
+  color: var(--success);
   border: 1px solid #a7f3d0;
 }
 
 .settings-message.error {
   background-color: #fef2f2;
-  color: var(--danger-color);
+  color: var(--error);
   border: 1px solid #fecaca;
 }
 
@@ -102,7 +78,7 @@
   cursor: pointer;
   gap: 12px;
   font-size: 15px;
-  transition: var(--transition);
+  transition: all 0.2s ease;
 }
 
 .settings-sidebar li button:hover {
@@ -113,7 +89,7 @@
 
 .settings-sidebar li button.active {
   background-color: #e0f2fe;
-  color: var(--accent-color);
+  color: var(--accent-blue);
   font-weight: 500;
 }
 
@@ -130,8 +106,8 @@
 .settings-card {
   background: var(--bg-primary);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius);
-  box-shadow: var(--card-shadow);
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
   overflow: hidden;
 }
 
@@ -147,7 +123,7 @@
 }
 
 .settings-card h2 i {
-  color: var(--accent-color);
+  color: var(--accent-blue);
 }
 
 .settings-section {
@@ -190,7 +166,7 @@
 .form-group input:focus,
 .settings-section select:focus {
   outline: none;
-  border-color: var(--accent-color);
+  border-color: var(--accent-blue);
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 
@@ -202,16 +178,16 @@
   border-radius: 6px;
   font-size: 14px;
   cursor: pointer;
-  transition: var(--transition);
+  transition: all 0.2s ease;
 }
 
 .settings-section button[type='submit'] {
-  background-color: var(--accent-color);
+  background-color: var(--accent-blue);
   color: white;
 }
 
 .settings-section button[type='submit']:hover:not(:disabled) {
-  background-color: var(--accent-hover);
+  background-color: var(--accent-blue-hover);
 }
 
 .settings-section button[type='submit']:disabled {
@@ -220,13 +196,13 @@
 }
 
 .btn-primary {
-  background-color: var(--accent-color);
+  background-color: var(--accent-blue);
   color: white;
   width: 100%;
 }
 
 .btn-primary:hover:not(.disabled) {
-  background-color: var(--accent-hover);
+  background-color: var(--accent-blue-hover);
 }
 
 .btn-secondary {
@@ -258,11 +234,11 @@
   background-color: #d1d5db;
   border-radius: 30px;
   cursor: pointer;
-  transition: var(--transition);
+  transition: all 0.2s ease;
 }
 
 .toggle-switch.active {
-  background-color: var(--accent-color);
+  background-color: var(--accent-blue);
 }
 
 .toggle-switch span {
@@ -273,7 +249,7 @@
   height: 20px;
   background-color: white;
   border-radius: 50%;
-  transition: var(--transition);
+  transition: all 0.2s ease;
 }
 
 .toggle-switch.active span {
