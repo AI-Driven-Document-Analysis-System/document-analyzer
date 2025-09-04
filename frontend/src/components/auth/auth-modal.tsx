@@ -8,7 +8,7 @@ import { useState } from "react" // Import useState hook to manage component's i
 
 import { authService } from "../../services/authService" // Import authentication service
 // (This handles the actual API calls to login/register users on the backend)
-import { googleAuthService } from "../../services/googleAuthService" // Import Google OAuth service
+import { supabaseAuthService } from "../../services/supabaseAuthService" // Import Supabase Google OAuth service
 
 /**
  * Interface defining the props (inputs) that this component expects from its parent
@@ -125,7 +125,11 @@ export function AuthModal({ onClose, onAuthSuccess }: AuthModalProps) {
     setError("")
     
     try {
-      await googleAuthService.signInWithGoogle()
+      if (isLogin) {
+        await supabaseAuthService.signInWithGoogle()
+      } else {
+        await supabaseAuthService.signUpWithGoogle()
+      }
       // The redirect will handle the rest
     } catch (err: any) {
       setError(err.message || "Google sign-in failed")

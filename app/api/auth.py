@@ -292,12 +292,16 @@ async def update_current_user(
 
 @router.post("/google-oauth", response_model=Token)
 async def google_oauth(oauth_data: dict):
-    """Handle Google OAuth authentication"""
+    """Handle Google OAuth authentication (supports both Appwrite and Supabase)"""
     try:
         email = oauth_data.get('email')
         first_name = oauth_data.get('firstName', '')
         last_name = oauth_data.get('lastName', '')
         google_id = oauth_data.get('googleId')
+        
+        # Support for Supabase tokens (optional)
+        supabase_access_token = oauth_data.get('supabaseAccessToken')
+        supabase_refresh_token = oauth_data.get('supabaseRefreshToken')
         
         if not email:
             raise HTTPException(
