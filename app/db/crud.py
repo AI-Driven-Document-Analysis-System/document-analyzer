@@ -23,7 +23,8 @@ class UserCRUD:
             query = """
                 INSERT INTO users (id, email, password_hash, first_name, last_name, created_at, updated_at)
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
-                RETURNING *
+                RETURNING id, email, password_hash, first_name, last_name, 
+                          is_email_verified, email_verification_token, created_at, updated_at
             """
             
             now = datetime.utcnow()
@@ -42,7 +43,11 @@ class UserCRUD:
     def get_user_by_email(self, email: str) -> Optional[User]:
         """Get user by email"""
         try:
-            query = "SELECT * FROM users WHERE email = %s"
+            query = """
+                SELECT id, email, password_hash, first_name, last_name, 
+                       is_email_verified, email_verification_token, created_at, updated_at
+                FROM users WHERE email = %s
+            """
             result = self.db.execute_one(query, (email,))
             
             if result:
@@ -56,7 +61,11 @@ class UserCRUD:
     def get_user_by_id(self, user_id: UUID) -> Optional[User]:
         """Get user by ID"""
         try:
-            query = "SELECT * FROM users WHERE id = %s"
+            query = """
+                SELECT id, email, password_hash, first_name, last_name, 
+                       is_email_verified, email_verification_token, created_at, updated_at
+                FROM users WHERE id = %s
+            """
             result = self.db.execute_one(query, (user_id,))
             
             if result:
@@ -102,7 +111,8 @@ class UserCRUD:
                 UPDATE users 
                 SET {', '.join(set_clauses)}
                 WHERE id = %s
-                RETURNING *
+                RETURNING id, email, password_hash, first_name, last_name, 
+                          is_email_verified, email_verification_token, created_at, updated_at
             """
             
             result = self.db.execute_one(query, params)
@@ -136,7 +146,8 @@ class UserCRUD:
                 UPDATE users 
                 SET email = %s, updated_at = %s
                 WHERE id = %s
-                RETURNING *
+                RETURNING id, email, password_hash, first_name, last_name, 
+                          is_email_verified, email_verification_token, created_at, updated_at
             """
             
             now = datetime.utcnow()
@@ -171,7 +182,8 @@ class UserCRUD:
                 UPDATE users 
                 SET password_hash = %s, updated_at = %s
                 WHERE id = %s
-                RETURNING *
+                RETURNING id, email, password_hash, first_name, last_name, 
+                          is_email_verified, email_verification_token, created_at, updated_at
             """
             
             now = datetime.utcnow()
