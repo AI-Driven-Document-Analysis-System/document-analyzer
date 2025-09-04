@@ -141,6 +141,48 @@ class AuthService {
   getToken(): string | null {
     return localStorage.getItem('token');
   }
+
+  async googleOAuth(userData: any): Promise<any> {
+    try {
+      const response = await fetch(`${this.baseURL}/google-oauth`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: userData.email,
+          first_name: userData.firstName,
+          last_name: userData.lastName,
+          google_id: userData.googleId,
+          provider: userData.provider,
+          supabase_access_token: userData.supabaseAccessToken,
+          supabase_refresh_token: userData.supabaseRefreshToken
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Google OAuth failed');
+      }
+
+      const data = await response.json();
+      
+      // Store the token in localStorage
+      localStorage.setItem('token', data.access_token);
+      
+      // Store user data
+      if (data.user) {
+        localStorage.setItem('user', JSON.stringify(data.user));
+      }
+
+      console.log('Google OAuth token stored successfully:', data.access_token);
+      
+      return data;
+    } catch (error) {
+      console.error('Google OAuth error:', error);
+      throw error;
+    }
+  }
 }
 
 export const authService = new AuthService();

@@ -14,21 +14,22 @@ class UserCRUD:
     def __init__(self, db_manager):
         self.db = db_manager
     
-    def create_user(self, email: str, password: str, first_name: str = None, last_name: str = None) -> Optional[User]:
+    def create_user(self, email: str, password: str = None, first_name: str = None, last_name: str = None, 
+                   google_id: str = None, is_oauth_user: bool = False) -> Optional[User]:
         """Create a new user"""
         try:
             user_id = uuid4()
-            password_hash = get_password_hash(password)
+            password_hash = get_password_hash(password) if password else None
             
             query = """
-                INSERT INTO users (id, email, password_hash, first_name, last_name, created_at, updated_at)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO users (id, email, password_hash, first_name, last_name, google_id, is_oauth_user, created_at, updated_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 RETURNING id, email, password_hash, first_name, last_name, 
-                          is_email_verified, email_verification_token, created_at, updated_at
+                          is_email_verified, email_verification_token, google_id, is_oauth_user, created_at, updated_at
             """
             
             now = datetime.utcnow()
-            params = (user_id, email, password_hash, first_name, last_name, now, now)
+            params = (user_id, email, password_hash, first_name, last_name, google_id, is_oauth_user, now, now)
             
             result = self.db.execute_one(query, params)
             
@@ -45,7 +46,7 @@ class UserCRUD:
         try:
             query = """
                 SELECT id, email, password_hash, first_name, last_name, 
-                       is_email_verified, email_verification_token, created_at, updated_at
+                       is_email_verified, email_verification_token, google_id, is_oauth_user, created_at, updated_at
                 FROM users WHERE email = %s
             """
             result = self.db.execute_one(query, (email,))
@@ -63,7 +64,7 @@ class UserCRUD:
         try:
             query = """
                 SELECT id, email, password_hash, first_name, last_name, 
-                       is_email_verified, email_verification_token, created_at, updated_at
+                       is_email_verified, email_verification_token, google_id, is_oauth_user, created_at, updated_at
                 FROM users WHERE id = %s
             """
             result = self.db.execute_one(query, (user_id,))
@@ -96,7 +97,7 @@ class UserCRUD:
             params = []
             
             for key, value in kwargs.items():
-                if key in ['first_name', 'last_name', 'is_email_verified', 'email_verification_token']:
+                if key in ['first_name', 'last_name', 'is_email_verified', 'email_verification_token', 'google_id', 'is_oauth_user']:
                     set_clauses.append(f"{key} = %s")
                     params.append(value)
             
@@ -112,7 +113,7 @@ class UserCRUD:
                 SET {', '.join(set_clauses)}
                 WHERE id = %s
                 RETURNING id, email, password_hash, first_name, last_name, 
-                          is_email_verified, email_verification_token, created_at, updated_at
+                          is_email_verified, email_verification_token, google_id, is_oauth_user, created_at, updated_at
             """
             
             result = self.db.execute_one(query, params)
@@ -147,7 +148,7 @@ class UserCRUD:
                 SET email = %s, updated_at = %s
                 WHERE id = %s
                 RETURNING id, email, password_hash, first_name, last_name, 
-                          is_email_verified, email_verification_token, created_at, updated_at
+                          is_email_verified, email_verification_token, google_id, is_oauth_user, created_at, updated_at
             """
             
             now = datetime.utcnow()
@@ -183,7 +184,7 @@ class UserCRUD:
                 SET password_hash = %s, updated_at = %s
                 WHERE id = %s
                 RETURNING id, email, password_hash, first_name, last_name, 
-                          is_email_verified, email_verification_token, created_at, updated_at
+                          is_email_verified, email_verification_token, google_id, is_oauth_user, created_at, updated_at
             """
             
             now = datetime.utcnow()
