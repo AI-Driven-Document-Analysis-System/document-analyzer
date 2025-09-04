@@ -14,21 +14,20 @@ class UserCRUD:
     def __init__(self, db_manager):
         self.db = db_manager
     
-    def create_user(self, email: str, password: str = None, first_name: str = None, last_name: str = None, 
-                   google_id: str = None, is_oauth_user: bool = False) -> Optional[User]:
+    def create_user(self, email: str, password: str, first_name: str = None, last_name: str = None) -> Optional[User]:
         """Create a new user"""
         try:
             user_id = uuid4()
-            password_hash = get_password_hash(password) if password else None
+            password_hash = get_password_hash(password)
             
             query = """
-                INSERT INTO users (id, email, password_hash, first_name, last_name, google_id, is_oauth_user, created_at, updated_at)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                INSERT INTO users (id, email, password_hash, first_name, last_name, created_at, updated_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
                 RETURNING *
             """
             
             now = datetime.utcnow()
-            params = (user_id, email, password_hash, first_name, last_name, google_id, is_oauth_user, now, now)
+            params = (user_id, email, password_hash, first_name, last_name, now, now)
             
             result = self.db.execute_one(query, params)
             
@@ -72,26 +71,12 @@ class UserCRUD:
         """Authenticate user with email and password"""
         try:
             user = self.get_user_by_email(email)
-            if user and user.password_hash and verify_password(password, user.password_hash):
+            if user and verify_password(password, user.password_hash):
                 return user
             return None
             
         except Exception as e:
             logger.error(f"Error authenticating user: {e}")
-            raise
-    
-    def get_user_by_google_id(self, google_id: str) -> Optional[User]:
-        """Get user by Google ID"""
-        try:
-            query = "SELECT * FROM users WHERE google_id = %s"
-            result = self.db.execute_one(query, (google_id,))
-            
-            if result:
-                return User(**dict(result))
-            return None
-            
-        except Exception as e:
-            logger.error(f"Error getting user by Google ID: {e}")
             raise
     
     def update_user(self, user_id: UUID, **kwargs) -> Optional[User]:
@@ -102,7 +87,7 @@ class UserCRUD:
             params = []
             
             for key, value in kwargs.items():
-                if key in ['first_name', 'last_name', 'is_email_verified', 'email_verification_token', 'google_id', 'is_oauth_user']:
+                if key in ['first_name', 'last_name', 'is_email_verified', 'email_verification_token']:
                     set_clauses.append(f"{key} = %s")
                     params.append(value)
             

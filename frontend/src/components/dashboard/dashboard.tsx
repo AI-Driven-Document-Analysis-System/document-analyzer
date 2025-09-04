@@ -1729,7 +1729,7 @@ function Dashboard() {
                               </button>
                               <button
                                 onClick={() => previewDocumentHandler(doc)}
-                                className="btn summarize-btn"
+                                className="btn btn-secondary"
                               >
                                 <i className="fas fa-eye me-1"></i>Preview
                               </button>

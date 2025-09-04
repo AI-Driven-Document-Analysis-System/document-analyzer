@@ -1,18 +1,15 @@
 /* File: public/css/summarization.css or styles/summarization.css */
 
-/* Use global CSS variables from globals.css */
-
 /* Main container */
 .summarization-container {
   max-width: 1400px;
   margin: 0 auto;
   padding: 32px;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-  background-color: var(--bg-secondary);
-  color: var(--text-primary);
+  background-color: #f9fafb;
+  color: #1f2937;
   line-height: 1.6;
   min-height: 100vh;
-  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .summarization-header {
@@ -23,15 +20,13 @@
 .summarization-header h1 {
   font-size: 2.5rem;
   font-weight: bold;
-  color: var(--text-primary);
+  color: #111827;
   margin-bottom: 12px;
-  transition: color 0.3s ease;
 }
 
 .summarization-header p {
   font-size: 1.125rem;
-  color: var(--text-secondary);
-  transition: color 0.3s ease;
+  color: #6b7280;
 }
 
 /* Success and error messages */
@@ -48,13 +43,13 @@
 .message-success {
   background-color: #eff6ff;
   border: 1px solid #bfdbfe;
-  color: var(--success);
+  color: #1e40af;
 }
 
 .message-error {
   background-color: #fef2f2;
   border: 1px solid #fecaca;
-  color: var(--error);
+  color: #991b1b;
 }
 
 /* Main layout: Left (controls) and Right (results) */
@@ -73,24 +68,21 @@
 
 /* Card styling for sections */
 .card {
-  background-color: var(--bg-primary);
+  background-color: white;
   border-radius: 0.75rem;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-color);
-  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
 }
 
 .card-header {
   padding: 24px;
-  border-bottom: 1px solid var(--border-color);
-  transition: border-color 0.3s ease;
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .card-header h2 {
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--text-primary);
-  transition: color 0.3s ease;
+  color: #1f2937;
 }
 
 .card-body {
@@ -101,12 +93,12 @@
 .document-select select {
   width: 100%;
   padding: 16px;
-  border: 2px solid var(--border-color);
+  border: 2px solid #d1d5db;
   border-radius: 0.5rem;
   font-size: 1rem;
   font-weight: 500;
-  color: var(--text-primary);
-  background-color: var(--bg-primary);
+  color: #1f2937;
+  background-color: white;
   transition: all 0.2s ease;
   appearance: none;
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
@@ -117,18 +109,17 @@
 
 .document-select select:focus {
   outline: none;
-  border-color: var(--accent-blue);
+  border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
 }
 
 .document-info {
   margin-top: 16px;
   padding: 16px;
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-color);
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
   border-radius: 0.5rem;
   font-size: 0.875rem;
-  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .document-info div {
@@ -143,14 +134,12 @@
 
 .document-info .label {
   font-weight: 600;
-  color: var(--text-secondary);
-  transition: color 0.3s ease;
+  color: #4b5563;
 }
 
 .document-info .value {
   font-weight: 500;
-  color: var(--text-primary);
-  transition: color 0.3s ease;
+  color: #111827;
 }
 
 /* Model Selection Cards */
@@ -161,22 +150,21 @@
 }
 
 .model-option {
-  border: 2px solid var(--border-color);
+  border: 2px solid #e5e7eb;
   border-radius: 0.5rem;
   padding: 16px;
   cursor: pointer;
   transition: all 0.3s ease;
-  background-color: var(--bg-primary);
 }
 
 .model-option:hover {
-  border-color: var(--accent-blue);
-  background-color: var(--bg-secondary);
+  border-color: #3b82f6;
+  background-color: #f0f9ff;
 }
 
 .model-option.selected {
-  border-color: var(--accent-blue);
-  background-color: var(--bg-secondary);
+  border-color: #3b82f6;
+  background-color: #eff6ff;
 }
 
 .model-option-content {
@@ -214,34 +202,30 @@
 }
 
 .model-option.selected .model-option-radio {
-  background-color: var(--accent-blue);
-  border-color: var(--accent-blue);
+  background-color: #3b82f6;
+  border-color: #3b82f6;
 }
 
 .model-option-title {
   font-size: 1rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: #1f2937;
   margin-bottom: 4px;
-  transition: color 0.3s ease;
 }
 
 .model-option-desc {
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  color: #6b7280;
   margin-bottom: 8px;
-  transition: color 0.3s ease;
 }
 
 .model-option-model {
   font-size: 0.75rem;
   font-weight: 600;
-  color: var(--accent-blue);
-  transition: color 0.3s ease;
+  color: #1d4ed8;
 }
 
 /* Generate Button */
-/* Generate Button - Now with stronger specificity and fallbacks */
 /* Generate Button - Now with stronger specificity and fallbacks */
 .generate-button {
   width: 100%;
@@ -282,7 +266,7 @@
 .generate-button .spinner {
   width: 20px;
   height: 20px;
-  border: 3px solid rgb(245, 247, 249);
+  border: 3px solid white;
   border-top-color: transparent;
   border-radius: 50%;
   animation: spin 1s linear infinite;
@@ -295,35 +279,31 @@
 }
 
 .results-card {
-  background-color: var(--bg-primary);
+  background-color: white;
   border-radius: 0.75rem;
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e5e7eb;
   overflow: hidden;
-  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .results-header {
   padding: 24px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #e5e7eb;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  transition: border-color 0.3s ease;
 }
 
 .results-header h2 {
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--text-primary);
-  transition: color 0.3s ease;
+  color: #1f2937;
 }
 
 .results-header p {
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  color: #6b7280;
   margin-top: 8px;
-  transition: color 0.3s ease;
 }
 
 .action-buttons {
@@ -332,7 +312,7 @@
 }
 
 .action-button {
-  background: linear-gradient(to-br, var(--accent-blue), var(--accent-blue-hover));
+  background: linear-gradient(to-br, #3b82f6, #2563eb);
   color: white;
   border: none;
   border-radius: 0.5rem;
@@ -348,8 +328,8 @@
 
 .action-button:hover {
   transform: translateY(-1px);
-  box-shadow: var(--shadow-md);
-  background: linear-gradient(to-br, var(--accent-blue-hover), var(--accent-blue));
+  box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+  background: linear-gradient(to-br, #2563eb, #1d4ed8);
 }
 
 /* Summary Content */
@@ -359,13 +339,11 @@
 
 .summary-box {
   padding: 24px;
-  border: 2px solid var(--border-color);
+  border: 2px solid #e5e7eb;
   border-radius: 0.5rem;
   line-height: 1.8;
   font-size: 1.125rem;
-  color: var(--text-primary);
-  background-color: var(--bg-primary);
-  transition: border-color 0.3s ease, color 0.3s ease, background-color 0.3s ease;
+  color: #1f2937;
 }
 
 .summary-box p {
@@ -383,8 +361,7 @@
   margin-top: 24px;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--text-secondary);
-  transition: color 0.3s ease;
+  color: #6b7280;
 }
 
 .summary-meta div {
@@ -407,18 +384,16 @@
 .loading-state h3 {
   font-size: 1.75rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: #1f2937;
   margin: 0;
-  transition: color 0.3s ease;
 }
 
 .loading-state p {
   font-size: 1.125rem;
-  color: var(--text-secondary);
+  color: #4b5563;
   max-width: 36rem;
   line-height: 1.7;
   margin: 0;
-  transition: color 0.3s ease;
 }
 
 /* Ripple Spinner */
@@ -434,7 +409,7 @@
   position: absolute;
   border-radius: 50%;
   animation: ripple 1.4s infinite ease-out;
-  border: 4px solid var(--accent-blue);
+  border: 4px solid #3b82f6;
   opacity: 0.3;
   width: 100%;
   height: 100%;
@@ -459,7 +434,7 @@
 
 /* Inner core dot */
 .ripple-spinner::before {
-  background-color: var(--accent-blue);
+  background-color: #3b82f6;
   border: none;
   width: 40px;
   height: 40px;
@@ -492,7 +467,7 @@
 .dot {
   width: 14px;
   height: 14px;
-  background-color: var(--accent-blue);
+  background-color: #3b82f6;
   border-radius: 50%;
   animation: bounce-loading 1.4s infinite ease-in-out both;
 }
@@ -512,11 +487,10 @@
 
 /* Glowing text effect */
 .loading-state .processing-text {
-  color: var(--text-primary);
+  color: #1f2937;
   font-weight: 500;
   letter-spacing: 0.5px;
   animation: glow-pulse 2s infinite alternate;
-  transition: color 0.3s ease;
 }
 
 @keyframes glow-pulse {
@@ -542,14 +516,12 @@
 .empty-state h3 {
   font-size: 1.5rem;
   font-weight: 600;
-  color: var(--text-primary);
-  transition: color 0.3s ease;
+  color: #374151;
 }
 
 .empty-state p {
   font-size: 1.125rem;
-  color: var(--text-secondary);
+  color: #6b7280;
   max-width: 36rem;
   line-height: 1.7;
-  transition: color 0.3s ease;
 }
