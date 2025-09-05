@@ -100,10 +100,10 @@ async def send_message(request: ChatMessageRequest):
         
         # Check if summarization is needed
         messages = message_repo.list(UUID(conversation_id))
-        message_pairs = min(
-            len([m for m in messages if m.role == "user"]),
-            len([m for m in messages if m.role == "assistant"])
-        )
+        user_count = len([m for m in messages if m.role == "user"])
+        assistant_count = len([m for m in messages if m.role == "assistant"])
+        message_pairs = min(user_count, assistant_count)
+        
         
         # Trigger summarization if needed (16+ message pairs or high token usage)
         estimated_tokens = sum(len(m.content) // 4 for m in messages)
@@ -230,6 +230,9 @@ async def send_message(request: ChatMessageRequest):
                 "context_window_usage": context_window_usage
             }
         )
+        
+        # Title generation is now handled by database trigger
+        # No application-level title generation needed
         
         # Prepare response
         return ChatMessageResponse(

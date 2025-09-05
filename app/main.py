@@ -112,6 +112,14 @@ async def startup_event():
         except Exception as e:
             logger.warning(f"Failed to start database monitoring: {e}")
 
+        # Start title generation listener
+        try:
+            from app.services.chatbot.title_generation.title_listener import start_title_listener
+            asyncio.create_task(start_title_listener())
+            logger.info("Title generation listener started")
+        except Exception as e:
+            logger.warning(f"Failed to start title listener: {e}")
+
     except Exception as e:
         logger.warning(f"Startup DB init warning: {e}")
         # Don't crash the server if DB init fails
