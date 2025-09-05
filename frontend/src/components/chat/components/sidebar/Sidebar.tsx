@@ -37,7 +37,8 @@ export function Sidebar({
       style={{ 
         width: '320px',
         minWidth: '320px',
-        flexShrink: 0, 
+        maxWidth: '320px',
+        flex: '0 0 320px',
         backgroundColor: '#1f2937', 
         color: 'white', 
         height: '100vh',

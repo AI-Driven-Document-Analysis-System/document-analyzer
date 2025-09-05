@@ -349,7 +349,7 @@ export function RAGChatbot() {
     <div className="bg-gray-50" style={{ height: '100vh', overflow: 'hidden' }}>
       <div className="flex" style={{ height: '100vh', overflow: 'hidden', flexDirection: 'row' }}>
         {/* Main Chat Area */}
-        <div className="flex-1 flex flex-col" style={{ backgroundColor: '#f8fafc' }}>
+        <div style={{ flex: '1 1 0%', minWidth: '0', display: 'flex', flexDirection: 'column', backgroundColor: '#f8fafc' }}>
           <div className="flex-1 flex flex-col bg-white" style={{ position: 'relative', height: 'calc(100vh - 60px)' }}>
             <div 
               ref={chatContainerRef}

@@ -6,10 +6,10 @@
 CREATE OR REPLACE FUNCTION cleanup_empty_conversations(exclude_conversation_id UUID DEFAULT NULL)
 RETURNS void AS $$
 BEGIN
-    DELETE FROM conversations
+    DELETE FROM conversations 
     WHERE id NOT IN (
-        SELECT DISTINCT conversation_id
-        FROM chat_messages
+        SELECT DISTINCT conversation_id 
+        FROM chat_messages 
         WHERE conversation_id IS NOT NULL
     )
     AND created_at < NOW() - INTERVAL '1 minute'
@@ -28,7 +28,7 @@ RETURNS TRIGGER AS $$
 BEGIN
     -- Only run cleanup occasionally to avoid performance impact
     -- Options: 0.1 (10%), 0.2 (20%), 0.5 (50%), or remove IF statement for 100%
-    IF random() < 0.3 THEN  -- 30% chance on each new conversation
+    IF random() < 3.0 THEN  -- 30% chance on each new conversation
         -- Pass the newly created conversation ID to exclude it from cleanup
         PERFORM cleanup_empty_conversations(NEW.id);
     END IF;
