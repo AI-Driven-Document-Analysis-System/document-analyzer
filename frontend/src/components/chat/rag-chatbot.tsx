@@ -3,8 +3,8 @@
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { chatService, type ChatMessage as ServiceChatMessage } from "../../services/chatService"
-import type { Message, ExpandedSections } from './types'
-import { initialMessages, sampleDocuments, sampleChatHistory } from './data/sampleData'
+import type { Message, ExpandedSections, ChatHistory } from './types'
+import { initialMessages, sampleDocuments } from './data/sampleData'
 import { useDocumentManagement } from './hooks/useDocumentManagement'
 import { ChatMessage } from './components/ChatMessage'
 import { TypingIndicator } from './components/TypingIndicator'
@@ -74,6 +74,10 @@ export function RAGChatbot() {
     return latestAssistantMessage?.sources || [];
   })
 
+  // Chat history state
+  const [chatHistory, setChatHistory] = useState<ChatHistory[]>([])
+  const [isLoadingHistory, setIsLoadingHistory] = useState(true)
+
   // Save messages to localStorage whenever messages change
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -91,6 +95,34 @@ export function RAGChatbot() {
       }
     }
   }, [conversationId])
+
+  // Fetch chat history from database on component mount
+  useEffect(() => {
+    const fetchChatHistory = async () => {
+      try {
+        setIsLoadingHistory(true)
+        const response = await chatService.listConversations()
+        
+        if (response.conversations && Array.isArray(response.conversations)) {
+          // Transform API response to match ChatHistory interface
+          const transformedHistory: ChatHistory[] = response.conversations.map((conv: any) => ({
+            id: conv.conversation_id || conv.id,
+            title: conv.title || conv.name || 'Untitled Chat',
+            timestamp: conv.created_at || conv.timestamp || new Date().toISOString()
+          }))
+          
+          setChatHistory(transformedHistory)
+        }
+      } catch (error) {
+        console.error('Error fetching chat history:', error)
+        setChatHistory([]) // Set empty array on error
+      } finally {
+        setIsLoadingHistory(false)
+      }
+    }
+
+    fetchChatHistory()
+  }, [])
 
   // Document management using custom hook
   const {
@@ -313,7 +345,7 @@ export function RAGChatbot() {
           expandedSections={expandedSections}
           toggleSection={toggleSection}
           selectedMessageSources={selectedMessageSources}
-          chatHistory={sampleChatHistory}
+          chatHistory={chatHistory}
           selectedDocuments={selectedDocuments}
           documents={sampleDocuments}
           onShowDocumentModal={() => setShowDocumentModal(true)}
