@@ -14,6 +14,7 @@ interface SidebarProps {
   onShowDocumentModal: () => void
   onRemoveDocument: (docId: number) => void
   onNewChat: () => void
+  onChatHistoryClick: (chatId: string) => void
 }
 
 export function Sidebar({
@@ -25,7 +26,8 @@ export function Sidebar({
   documents,
   onShowDocumentModal,
   onRemoveDocument,
-  onNewChat
+  onNewChat,
+  onChatHistoryClick
 }: SidebarProps) {
   return (
     <div 
@@ -55,6 +57,7 @@ export function Sidebar({
           expandedSections={expandedSections}
           toggleSection={toggleSection}
           chatHistory={chatHistory}
+          onChatHistoryClick={onChatHistoryClick}
         />
         
         <KnowledgeBaseSection 

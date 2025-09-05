@@ -4,9 +4,10 @@ interface ChatHistorySectionProps {
   expandedSections: ExpandedSections
   toggleSection: (section: keyof ExpandedSections) => void
   chatHistory: ChatHistory[]
+  onChatHistoryClick: (chatId: string) => void
 }
 
-export function ChatHistorySection({ expandedSections, toggleSection, chatHistory }: ChatHistorySectionProps) {
+export function ChatHistorySection({ expandedSections, toggleSection, chatHistory, onChatHistoryClick }: ChatHistorySectionProps) {
   return (
     <div style={{ borderBottom: '1px solid #4b5563', flexShrink: 0 }}>
       <div 
@@ -25,11 +26,19 @@ export function ChatHistorySection({ expandedSections, toggleSection, chatHistor
         <i className={`fas ${expandedSections.history ? 'fa-chevron-up' : 'fa-chevron-down'}`} style={{ color: '#d1d5db' }}></i>
       </div>
       {expandedSections.history && (
-        <div style={{ padding: '0 16px 16px 16px' }}>
-          {chatHistory.map((chat) => (
+        <div style={{ 
+          padding: '0 16px 16px 16px',
+          maxHeight: '250px',
+          overflowY: 'auto',
+          overflowX: 'hidden'
+        }}>
+          {chatHistory
+            .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+            .map((chat) => (
             <div key={chat.id} style={{ padding: '8px 12px', backgroundColor: '#374151', borderRadius: '8px', border: '1px solid #4b5563', marginBottom: '6px', cursor: 'pointer', transition: 'background-color 0.2s' }}
                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4b5563'}
-                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#374151'}>
+                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#374151'}
+                 onClick={() => onChatHistoryClick(chat.id)}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <i className="fas fa-comment" style={{ color: '#d1d5db', fontSize: '14px' }}></i>
                 <div style={{ flex: 1, minWidth: 0 }}>

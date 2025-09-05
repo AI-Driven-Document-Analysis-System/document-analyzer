@@ -608,8 +608,31 @@ async def list_conversations_api(user_id: Optional[str] = None, limit: int = 50,
         if not user_id:
             raise HTTPException(status_code=400, detail="user_id is required")
         conversation_repo = get_conversations()
+        message_repo = get_messages()
         rows = conversation_repo.list(UUID(user_id), limit, offset)
-        return {"conversations": [{"id": str(r.id), "user_id": str(r.user_id) if r.user_id else None, "title": r.title, "created_at": r.created_at, "updated_at": r.updated_at} for r in rows]}
+        
+        # Filter conversations that have messages
+        filtered_conversations = []
+        for r in rows:
+            try:
+                msgs = message_repo.list(UUID(str(r.id)))
+                # Only include conversations with actual user/assistant messages (not just system messages)
+                user_or_assistant_msgs = [m for m in msgs if m.role in ['user', 'assistant']]
+                if len(user_or_assistant_msgs) > 0:
+                    filtered_conversations.append({
+                        "id": str(r.id), 
+                        "user_id": str(r.user_id) if r.user_id else None, 
+                        "title": r.title, 
+                        "created_at": r.created_at, 
+                        "updated_at": r.updated_at,
+                        "message_count": len(user_or_assistant_msgs)
+                    })
+            except Exception as msg_error:
+                logger.warning(f"Error checking messages for conversation {r.id}: {msg_error}")
+                # Skip this conversation if we can't check its messages
+                continue
+        
+        return {"conversations": filtered_conversations}
     except Exception as e:
         logger.error(f"Error listing conversations: {e}")
         raise HTTPException(status_code=500, detail=str(e))

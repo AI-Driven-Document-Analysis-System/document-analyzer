@@ -106,9 +106,10 @@ export function RAGChatbot() {
         if (response.conversations && Array.isArray(response.conversations)) {
           // Transform API response to match ChatHistory interface
           const transformedHistory: ChatHistory[] = response.conversations.map((conv: any) => ({
-            id: conv.conversation_id || conv.id,
-            title: conv.title || conv.name || 'Untitled Chat',
-            timestamp: conv.created_at || conv.timestamp || new Date().toISOString()
+            id: conv.id,
+            title: conv.title || 'Untitled Chat',
+            timestamp: conv.created_at || new Date().toISOString(),
+            messageCount: conv.message_count || 0
           }))
           
           setChatHistory(transformedHistory)
@@ -287,9 +288,46 @@ export function RAGChatbot() {
     }
   }
 
+  const loadConversation = async (chatId: string) => {
+    try {
+      const conversationHistory = await chatService.getConversationHistory(chatId)
+      
+      if (conversationHistory?.messages && conversationHistory.messages.length > 0) {
+        const transformedMessages: Message[] = conversationHistory.messages.map((msg: any) => ({
+          id: msg.id || msg.message_id || Date.now().toString(),
+          type: msg.role === 'user' ? 'user' : 'assistant',
+          content: msg.content || msg.message,
+          timestamp: new Date(msg.timestamp || msg.created_at || Date.now()),
+          sources: msg.sources || []
+        }))
+        
+        setMessages(transformedMessages)
+        setConversationId(chatId)
+        
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('rag-chatbot-messages', JSON.stringify(transformedMessages))
+          localStorage.setItem('rag-chatbot-conversation-id', chatId)
+        }
+        
+        const latestAssistantMessage = [...transformedMessages].reverse().find(msg => msg.type === 'assistant' && msg.sources);
+        if (latestAssistantMessage?.sources) {
+          setSelectedMessageSources(latestAssistantMessage.sources)
+        } else {
+          setSelectedMessageSources([])
+        }
+      } else {
+        // If conversation has no messages, show a warning and don't change UI
+        console.warn(`Conversation ${chatId} has no messages, skipping load`)
+        return
+      }
+    } catch (error) {
+      console.error('Error loading conversation:', error)
+    }
+  }
+
   return (
     <div className="bg-gray-50" style={{ height: '100vh', overflow: 'hidden' }}>
-      <div className="flex" style={{ height: '100vh', overflow: 'hidden' }}>
+      <div className="flex" style={{ height: '100vh', overflow: 'hidden', flexDirection: 'row' }}>
         {/* Main Chat Area */}
         <div className="flex-1 flex flex-col" style={{ backgroundColor: '#f8fafc' }}>
           <div className="flex-1 flex flex-col bg-white" style={{ position: 'relative', height: 'calc(100vh - 60px)' }}>
@@ -351,6 +389,7 @@ export function RAGChatbot() {
           onShowDocumentModal={() => setShowDocumentModal(true)}
           onRemoveDocument={removeDocument}
           onNewChat={handleNewChat}
+          onChatHistoryClick={loadConversation}
         />
       </div>
       

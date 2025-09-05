@@ -22,6 +22,7 @@ export interface ChatHistory {
   id: string
   title: string
   timestamp: string
+  messageCount?: number
 }
 
 export interface ExpandedSections {
