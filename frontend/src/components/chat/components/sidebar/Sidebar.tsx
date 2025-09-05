@@ -13,6 +13,7 @@ interface SidebarProps {
   documents: Document[]
   onShowDocumentModal: () => void
   onRemoveDocument: (docId: number) => void
+  onNewChat: () => void
 }
 
 export function Sidebar({
@@ -23,14 +24,15 @@ export function Sidebar({
   selectedDocuments,
   documents,
   onShowDocumentModal,
-  onRemoveDocument
+  onRemoveDocument,
+  onNewChat
 }: SidebarProps) {
   return (
     <div 
       data-sidebar="true"
       style={{ 
-        width: '350px', 
-        minWidth: '350px', 
+        width: '320px',
+        minWidth: '320px',
         flexShrink: 0, 
         backgroundColor: '#1f2937', 
         color: 'white', 
@@ -40,7 +42,7 @@ export function Sidebar({
       }} 
       className="flex flex-col"
     >
-      <SidebarHeader />
+      <SidebarHeader onNewChat={onNewChat} />
       
       <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', display: 'flex', flexDirection: 'column' }}>
         <SourcesSection 

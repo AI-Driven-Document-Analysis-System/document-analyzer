@@ -217,6 +217,44 @@ export function RAGChatbot() {
     setExpandedSections(prev => ({ ...prev, sources: true }))
   }
 
+  const handleNewChat = async () => {
+    try {
+      // Create a new conversation on the backend
+      const newConversation = await chatService.createConversation("New Chat")
+      
+      // Clear current conversation
+      setMessages(initialMessages)
+      setConversationId(newConversation?.conversation_id || null)
+      setInputValue("")
+      setSelectedMessageSources([])
+      
+      // Clear localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('rag-chatbot-messages')
+        localStorage.removeItem('rag-chatbot-conversation-id')
+      }
+      
+      // Reset sidebar sources to initial state
+      const latestAssistantMessage = [...initialMessages].reverse().find(msg => msg.type === 'assistant' && msg.sources);
+      if (latestAssistantMessage?.sources) {
+        setSelectedMessageSources(latestAssistantMessage.sources)
+        setExpandedSections(prev => ({ ...prev, sources: true }))
+      }
+    } catch (error) {
+      console.error('Error creating new chat:', error)
+      // Fallback to local reset if backend fails
+      setMessages(initialMessages)
+      setConversationId(null)
+      setInputValue("")
+      setSelectedMessageSources([])
+      
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('rag-chatbot-messages')
+        localStorage.removeItem('rag-chatbot-conversation-id')
+      }
+    }
+  }
+
   return (
     <div className="bg-gray-50" style={{ height: '100vh', overflow: 'hidden' }}>
       <div className="flex" style={{ height: '100vh', overflow: 'hidden' }}>
@@ -280,6 +318,7 @@ export function RAGChatbot() {
           documents={sampleDocuments}
           onShowDocumentModal={() => setShowDocumentModal(true)}
           onRemoveDocument={removeDocument}
+          onNewChat={handleNewChat}
         />
       </div>
       
