@@ -17,10 +17,36 @@ const TEST_USER_ID = "79d0bed5-c1c1-4faf-82d4-fed1a28472d5"
 const API_BASE_URL = "http://localhost:8000"
 
 export function RAGChatbot() {
-  const [messages, setMessages] = useState<Message[]>(initialMessages)
+  // Load messages from localStorage or use initial messages
+  const [messages, setMessages] = useState<Message[]>(() => {
+    if (typeof window !== 'undefined') {
+      const savedMessages = localStorage.getItem('rag-chatbot-messages')
+      if (savedMessages) {
+        try {
+          const parsed = JSON.parse(savedMessages)
+          // Convert timestamp strings back to Date objects
+          return parsed.map((msg: any) => ({
+            ...msg,
+            timestamp: new Date(msg.timestamp)
+          }))
+        } catch (error) {
+          console.error('Error parsing saved messages:', error)
+        }
+      }
+    }
+    return initialMessages
+  })
+  
   const [inputValue, setInputValue] = useState("")
   const [isTyping, setIsTyping] = useState(false)
-  const [conversationId, setConversationId] = useState<string | null>(null)
+  
+  // Load conversation ID from localStorage
+  const [conversationId, setConversationId] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('rag-chatbot-conversation-id')
+    }
+    return null
+  })
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const [expandedSections, setExpandedSections] = useState<ExpandedSections>({
@@ -29,10 +55,42 @@ export function RAGChatbot() {
     knowledge: false
   })
   const [selectedMessageSources, setSelectedMessageSources] = useState<any[]>(() => {
-    // Find the latest assistant message with sources
-    const latestAssistantMessage = [...initialMessages].reverse().find(msg => msg.type === 'assistant' && msg.sources);
+    // Find the latest assistant message with sources from current messages
+    const currentMessages = (() => {
+      if (typeof window !== 'undefined') {
+        const savedMessages = localStorage.getItem('rag-chatbot-messages')
+        if (savedMessages) {
+          try {
+            return JSON.parse(savedMessages)
+          } catch (error) {
+            return initialMessages
+          }
+        }
+      }
+      return initialMessages
+    })()
+    
+    const latestAssistantMessage = [...currentMessages].reverse().find(msg => msg.type === 'assistant' && msg.sources);
     return latestAssistantMessage?.sources || [];
   })
+
+  // Save messages to localStorage whenever messages change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('rag-chatbot-messages', JSON.stringify(messages))
+    }
+  }, [messages])
+
+  // Save conversation ID to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (conversationId) {
+        localStorage.setItem('rag-chatbot-conversation-id', conversationId)
+      } else {
+        localStorage.removeItem('rag-chatbot-conversation-id')
+      }
+    }
+  }, [conversationId])
 
   // Document management using custom hook
   const {
