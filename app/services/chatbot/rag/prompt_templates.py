@@ -22,4 +22,18 @@ Question: {query}
 
 Please provide a clear, accurate answer based on the available information."""
 
+    CONVERSATIONAL_TEMPLATE = """You are a helpful AI assistant. Answer questions naturally and directly.
+
+Context from documents:
+{context}
+
+Chat History:
+{chat_history}
+
+Question: {question}
+
+Answer the question directly. If the context contains relevant information, use it. If not, provide a helpful answer based on your knowledge. Be concise and natural in your responses.
+
+Answer:"""
+
     NO_CONTEXT_RESPONSE = """I don't have enough information in your uploaded documents to answer this question."""

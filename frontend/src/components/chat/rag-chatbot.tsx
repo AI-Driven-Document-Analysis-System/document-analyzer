@@ -2,6 +2,11 @@
 
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
+import { chatService, type ChatMessage as ServiceChatMessage } from "../../services/chatService"
+
+// Test user ID from database
+const TEST_USER_ID = "79d0bed5-c1c1-4faf-82d4-fed1a28472d5"
+const API_BASE_URL = "http://localhost:8000"
 
 interface Message {
   id: string
@@ -29,73 +34,6 @@ const initialMessages: Message[] = [
     type: "assistant",
     content: "Hello! I'm your AI document assistant. I can help you find information, answer questions, and analyze content from your uploaded documents. What would you like to know?",
     timestamp: new Date()
-  },
-  {
-    id: "2", 
-    type: "user",
-    content: "Can you summarize the key points from the Q4 financial report?",
-    timestamp: new Date()
-  },
-  {
-    id: "3",
-    type: "assistant", 
-    content: "Based on your documents, I found relevant information about financial performance. The Q4 report shows a 15% increase in revenue year-over-year, with strong growth in the technology sector. The market analysis indicates positive trends in consumer behavior and emerging technologies.",
-    timestamp: new Date(),
-    sources: [
-      { title: "Financial Report Q4.pdf", type: "Quarterly financial summary with revenue analysis", confidence: 95 },
-      { title: "Market Analysis.pdf", type: "Consumer trends and market predictions", confidence: 88 }
-    ]
-  },
-  {
-    id: "4",
-    type: "user",
-    content: "What are the upcoming product features mentioned in our roadmap?",
-    timestamp: new Date()
-  },
-  {
-    id: "5",
-    type: "assistant",
-    content: "According to the product roadmap and strategic planning documents, the upcoming features include AI-powered analytics, mobile app enhancements, and cloud integration capabilities. The development timeline spans Q1-Q3 2024 with phased rollouts.",
-    timestamp: new Date(),
-    sources: [
-      { title: "Product Roadmap.docx", type: "Upcoming product features and timelines", confidence: 92 },
-      { title: "Strategic Plan 2024.pdf", type: "Annual strategic planning document", confidence: 85 },
-      { title: "Development Timeline.xlsx", type: "Project schedules and milestones", confidence: 78 }
-    ]
-  },
-  {
-    id: "6",
-    type: "user",
-    content: "Can you analyze our budget projections for next year?",
-    timestamp: new Date()
-  },
-  {
-    id: "7",
-    type: "assistant",
-    content: "The budget analysis shows projected revenue growth of 18% with controlled operational expenses. Key investments are planned for R&D and marketing initiatives. The financial forecast indicates strong profitability margins.",
-    timestamp: new Date(),
-    sources: [
-      { title: "Budget Forecast 2024.xlsx", type: "Annual budget planning and projections", confidence: 94 },
-      { title: "Financial Projections.pdf", type: "Revenue and expense forecasting", confidence: 89 }
-    ]
-  },
-  {
-    id: "8",
-    type: "user",
-    content: "What does our competitive analysis reveal?",
-    timestamp: new Date()
-  },
-  {
-    id: "9",
-    type: "assistant",
-    content: "The competitive analysis reveals strong market positioning with key advantages in technology innovation and customer satisfaction. Main competitors are focusing on pricing strategies while we maintain quality leadership.",
-    timestamp: new Date(),
-    sources: [
-      { title: "Competitor Analysis.pdf", type: "Market competition and positioning study", confidence: 91 },
-      { title: "Industry Report 2024.docx", type: "Comprehensive industry analysis", confidence: 86 },
-      { title: "Customer Survey Results.xlsx", type: "Customer satisfaction and feedback data", confidence: 83 },
-      { title: "Market Research.pdf", type: "Consumer behavior and trends analysis", confidence: 79 }
-    ]
   }
 ]
 
@@ -103,6 +41,7 @@ export function RAGChatbot() {
   const [messages, setMessages] = useState<Message[]>(initialMessages)
   const [inputValue, setInputValue] = useState("")
   const [isTyping, setIsTyping] = useState(false)
+  const [conversationId, setConversationId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const [expandedSections, setExpandedSections] = useState({
@@ -115,7 +54,7 @@ export function RAGChatbot() {
     const latestAssistantMessage = [...initialMessages].reverse().find(msg => msg.type === 'assistant' && msg.sources);
     return latestAssistantMessage?.sources || [];
   })
-  
+
   // Document management state
   const [showDocumentModal, setShowDocumentModal] = useState(false)
   const [selectedDocuments, setSelectedDocuments] = useState<number[]>([])
@@ -123,7 +62,7 @@ export function RAGChatbot() {
   const [documentSearch, setDocumentSearch] = useState('')
   const [sortDate, setSortDate] = useState('none')
   const [sortSize, setSortSize] = useState('none')
-  
+
   // Sample documents data
   const documents: Document[] = [
     { id: 1, name: "Financial Report Q4.pdf", type: "pdf", size: "2.4 MB", date: "2023-10-15" },
@@ -146,13 +85,13 @@ export function RAGChatbot() {
       [section]: !prev[section]
     }))
   }
-  
+
   // Document management functions
   const formatDate = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' }
     return new Date(dateString).toLocaleDateString(undefined, options)
   }
-  
+
   const sizeToBytes = (sizeStr: string) => {
     const units: { [key: string]: number } = { 'B': 1, 'KB': 1024, 'MB': 1024 * 1024, 'GB': 1024 * 1024 * 1024 }
     const match = sizeStr.match(/(\d+(?:\.\d+)?)\s*(B|KB|MB|GB)/i)
@@ -161,22 +100,22 @@ export function RAGChatbot() {
     const unit = match[2].toUpperCase()
     return value * (units[unit] || 1)
   }
-  
+
   const getFilteredAndSortedDocuments = () => {
     let filtered = documents.filter(doc => {
       // Type filter
       if (documentFilter !== 'all' && doc.type !== documentFilter) {
         return false
       }
-      
+
       // Search filter
       if (documentSearch && !doc.name.toLowerCase().includes(documentSearch.toLowerCase())) {
         return false
       }
-      
+
       return true
     })
-    
+
     // Sort documents
     filtered.sort((a, b) => {
       if (sortDate === 'none') {
@@ -189,25 +128,25 @@ export function RAGChatbot() {
           return sizeToBytes(a.size) - sizeToBytes(b.size)
         }
       }
-      
+
       if (sortDate === 'date-desc') {
         return new Date(b.date).getTime() - new Date(a.date).getTime()
       } else if (sortDate === 'date-asc') {
         return new Date(a.date).getTime() - new Date(b.date).getTime()
       }
-      
+
       if (sortSize === 'size-desc') {
         return sizeToBytes(b.size) - sizeToBytes(a.size)
       } else if (sortSize === 'size-asc') {
         return sizeToBytes(a.size) - sizeToBytes(b.size)
       }
-      
+
       return 0
     })
-    
+
     return filtered
   }
-  
+
   const getDocumentIcon = (type: string) => {
     switch(type) {
       case 'pdf':
@@ -225,7 +164,7 @@ export function RAGChatbot() {
         return { icon: 'fa-file', color: '#6b7280', bg: '#f3f4f6' }
     }
   }
-  
+
   const toggleDocumentSelection = (docId: number) => {
     setSelectedDocuments(prev => 
       prev.includes(docId) 
@@ -233,7 +172,7 @@ export function RAGChatbot() {
         : [...prev, docId]
     )
   }
-  
+
   const removeDocument = (docId: number) => {
     setSelectedDocuments(prev => prev.filter(id => id !== docId))
   }
@@ -248,20 +187,19 @@ export function RAGChatbot() {
     scrollChatToBottom()
   }, [messages])
 
-
   // Reset page to top and disable body scroll when component mounts
   useEffect(() => {
     // Reset page to top
     window.scrollTo(0, 0)
-    
+
     // Save original overflow values
     const originalBodyOverflow = document.body.style.overflow
     const originalHtmlOverflow = document.documentElement.style.overflow
-    
+
     // Disable scrolling
     document.body.style.overflow = 'hidden'
     document.documentElement.style.overflow = 'hidden'
-    
+
     // Cleanup function to restore original values
     return () => {
       document.body.style.overflow = originalBodyOverflow
@@ -280,25 +218,51 @@ export function RAGChatbot() {
     }
 
     setMessages((prev) => [...prev, userMessage])
+    const currentMessage = inputValue
     setInputValue("")
     setIsTyping(true)
 
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      // Send message to backend
+      const response = await chatService.sendMessage(currentMessage, conversationId || undefined)
+
+      // Update conversation ID if this is a new conversation
+      if (!conversationId && response.conversation_id) {
+        setConversationId(response.conversation_id)
+      }
+
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         type: "assistant",
-        content:
-          "Based on your documents, I found relevant information about financial performance. The Q4 report shows a 15% increase in revenue year-over-year, with strong growth in the technology sector. The market analysis indicates positive trends in consumer behavior and emerging technologies.",
+        content: response.response,
         timestamp: new Date(),
-        sources: [
-          { title: "Financial Report Q4.pdf", type: "Financial Document", confidence: 95 },
-          { title: "Market Analysis.pdf", type: "Research Paper", confidence: 88 },
-        ],
+        sources: response.sources || [],
       }
+
       setMessages((prev) => [...prev, assistantMessage])
+
+      // Update selected message sources for sidebar
+      if (response.sources && response.sources.length > 0) {
+        setSelectedMessageSources(response.sources)
+        setExpandedSections(prev => ({ ...prev, sources: true }))
+      }
+
+    } catch (error) {
+      console.error('Error sending message:', error)
+
+      // Show error message to user
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "assistant",
+        content: "I apologize, but I'm currently unable to process your request due to a technical issue. Please try again later.",
+        timestamp: new Date(),
+        sources: [],
+      }
+
+      setMessages((prev) => [...prev, errorMessage])
+    } finally {
       setIsTyping(false)
-    }, 2000)
+    }
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

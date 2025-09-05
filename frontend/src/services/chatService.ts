@@ -36,7 +36,7 @@ export interface Document {
 
 class ChatService {
   private baseUrl = 'http://localhost:8000/api';
-  private currentUserId = '550e8400-e29b-41d4-a716-446655440000'; // Valid UUID format
+  private currentUserId = '79d0bed5-c1c1-4faf-82d4-fed1a28472d5'; // TEST_USER_ID
 
   async sendMessage(message: string, conversationId?: string): Promise<ChatResponse> {
     try {
@@ -48,7 +48,7 @@ class ChatService {
         body: JSON.stringify({
           message,
           conversation_id: conversationId,
-          user_id: "user-1",
+          user_id: this.currentUserId,
           memory_type: 'window',
           llm_config: {
             provider: 'groq',
@@ -83,7 +83,7 @@ class ChatService {
       // Fallback to mock response if API fails
       return {
         response: `I apologize, but I'm currently unable to process your request due to a technical issue. Please try again later. Your message was: ${message}`,
-        conversation_id: conversationId || 'fallback-conv',
+        conversation_id: conversationId || `fallback-${Date.now()}`,
         sources: []
       };
     }
@@ -91,8 +91,14 @@ class ChatService {
 
   async getDocuments(): Promise<Document[]> {
     try {
-      // Skip documents API call for now to avoid UUID errors
-      return [];
+      const response = await fetch(`${this.baseUrl}/documents?user_id=${this.currentUserId}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.documents || [];
     } catch (error) {
       console.error('Error fetching documents:', error);
       return [];
