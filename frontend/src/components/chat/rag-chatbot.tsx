@@ -104,7 +104,7 @@ export function RAGChatbot() {
         const response = await chatService.listConversations()
         
         if (response.conversations && Array.isArray(response.conversations)) {
-          // Transform API response to match ChatHistory interface
+          // Backend now filters empty conversations efficiently
           const transformedHistory: ChatHistory[] = response.conversations.map((conv: any) => ({
             id: conv.id,
             title: conv.title || 'Untitled Chat',

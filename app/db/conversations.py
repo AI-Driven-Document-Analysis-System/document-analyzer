@@ -46,6 +46,25 @@ class Conversations:
             logger.error(f"Error listing conversations: {e}")
             raise
 
+    def list_with_message_counts(self, user_id: UUID, limit: int = 50, offset: int = 0) -> List[Dict]:
+        try:
+            query = """
+                SELECT c.*, COUNT(m.id) as message_count
+                FROM conversations c
+                LEFT JOIN chat_messages m ON c.id = m.conversation_id 
+                    AND m.role IN ('user', 'assistant')
+                WHERE c.user_id = %s
+                GROUP BY c.id, c.user_id, c.title, c.created_at, c.updated_at
+                HAVING COUNT(m.id) > 0
+                ORDER BY c.updated_at DESC
+                LIMIT %s OFFSET %s
+            """
+            results = self.db.execute_query(query, (user_id, limit, offset), fetch=True)
+            return [dict(row) for row in results]
+        except Exception as e:
+            logger.error(f"Error listing conversations with message counts: {e}")
+            raise
+
     def get(self, conversation_id: UUID, user_id: Optional[UUID] = None) -> Optional[ConversationModel]:
         try:
             if user_id:
