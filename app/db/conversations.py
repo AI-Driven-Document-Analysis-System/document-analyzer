@@ -1,6 +1,6 @@
 from typing import Optional, List, Dict, Any
 from uuid import UUID, uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import logging
 
@@ -17,7 +17,8 @@ class Conversations:
     def create(self, user_id: Optional[UUID] = None, title: Optional[str] = None) -> Optional[ConversationModel]:
         try:
             conversation_id = uuid4()
-            now = datetime.utcnow()
+            # Use timezone-aware UTC datetime for global compatibility
+            now = datetime.now(timezone.utc)
             query = """
                 INSERT INTO conversations (id, user_id, title, created_at, updated_at)
                 VALUES (%s, %s, %s, %s, %s)
@@ -89,7 +90,7 @@ class Conversations:
                 WHERE id = %s
                 RETURNING *
             """
-            params = (title, datetime.utcnow(), conversation_id)
+            params = (title, datetime.now(timezone.utc), conversation_id)
             result = self.db.execute_one(query, params)
             if result:
                 return ConversationModel(**dict(result))
@@ -114,7 +115,8 @@ class Messages:
     def add(self, conversation_id: UUID, role: str, content: str, metadata: Optional[Dict[str, Any]] = None) -> Optional[ChatMessageModel]:
         try:
             message_id = uuid4()
-            now = datetime.utcnow()
+            # Use timezone-aware UTC datetime for global compatibility
+            now = datetime.now(timezone.utc)
             query = """
                 INSERT INTO chat_messages (id, conversation_id, role, content, metadata, timestamp)
                 VALUES (%s, %s, %s, %s, %s, %s)

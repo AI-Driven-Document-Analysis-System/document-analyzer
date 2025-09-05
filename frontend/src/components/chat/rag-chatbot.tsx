@@ -108,7 +108,19 @@ export function RAGChatbot() {
           const transformedHistory: ChatHistory[] = response.conversations.map((conv: any) => ({
             id: conv.id,
             title: conv.title || 'Untitled Chat',
-            timestamp: conv.created_at || new Date().toISOString(),
+            timestamp: conv.created_at ? new Date(conv.created_at + 'Z').toLocaleString([], {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            }) : new Date().toLocaleString([], {
+              year: 'numeric',
+              month: 'short',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            }),
             messageCount: conv.message_count || 0
           }))
           
@@ -300,7 +312,7 @@ export function RAGChatbot() {
           id: msg.id || msg.message_id || Date.now().toString(),
           type: msg.role === 'user' ? 'user' : 'assistant',
           content: msg.content || msg.message,
-          timestamp: new Date(msg.timestamp || msg.created_at || Date.now()),
+          timestamp: new Date((msg.timestamp || msg.created_at || Date.now()) + (typeof (msg.timestamp || msg.created_at) === 'string' ? 'Z' : '')),
           sources: msg.sources || []
         }))
         
