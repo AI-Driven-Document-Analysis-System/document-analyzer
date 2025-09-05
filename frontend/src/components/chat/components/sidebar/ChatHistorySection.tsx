@@ -5,9 +5,10 @@ interface ChatHistorySectionProps {
   toggleSection: (section: keyof ExpandedSections) => void
   chatHistory: ChatHistory[]
   onChatHistoryClick: (chatId: string) => void
+  selectedChatId?: string
 }
 
-export function ChatHistorySection({ expandedSections, toggleSection, chatHistory, onChatHistoryClick }: ChatHistorySectionProps) {
+export function ChatHistorySection({ expandedSections, toggleSection, chatHistory, onChatHistoryClick, selectedChatId }: ChatHistorySectionProps) {
   return (
     <div style={{ borderBottom: '1px solid #4b5563', flexShrink: 0 }}>
       <div 
@@ -35,9 +36,26 @@ export function ChatHistorySection({ expandedSections, toggleSection, chatHistor
           {chatHistory
             .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
             .map((chat) => (
-            <div key={chat.id} style={{ padding: '8px 12px', backgroundColor: '#374151', borderRadius: '8px', border: '1px solid #4b5563', marginBottom: '6px', cursor: 'pointer', transition: 'background-color 0.2s' }}
-                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#4b5563'}
-                 onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#374151'}
+            <div key={chat.id} style={{ 
+                   padding: '8px 12px', 
+                   backgroundColor: selectedChatId === chat.id ? '#1e40af' : '#374151', 
+                   borderRadius: '8px', 
+                   border: selectedChatId === chat.id ? '1px solid #3b82f6' : '1px solid #4b5563', 
+                   marginBottom: '6px', 
+                   cursor: 'pointer', 
+                   transition: 'all 0.2s',
+                   boxShadow: selectedChatId === chat.id ? '0 0 0 1px rgba(59, 130, 246, 0.3)' : 'none'
+                 }}
+                 onMouseEnter={(e) => {
+                   if (selectedChatId !== chat.id) {
+                     e.currentTarget.style.backgroundColor = '#4b5563'
+                   }
+                 }}
+                 onMouseLeave={(e) => {
+                   if (selectedChatId !== chat.id) {
+                     e.currentTarget.style.backgroundColor = '#374151'
+                   }
+                 }}
                  onClick={() => onChatHistoryClick(chat.id)}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <i className="fas fa-comment" style={{ color: '#d1d5db', fontSize: '14px' }}></i>

@@ -1,4 +1,5 @@
 import type React from "react"
+import { useState } from "react"
 import type { Message } from '../types'
 
 interface ChatMessageProps {
@@ -7,6 +8,8 @@ interface ChatMessageProps {
 }
 
 export function ChatMessage({ message, onSourcesClick }: ChatMessageProps) {
+  const [isCopied, setIsCopied] = useState(false)
+  
   if (message.type === "assistant") {
     return (
       <div 
@@ -79,16 +82,34 @@ export function ChatMessage({ message, onSourcesClick }: ChatMessageProps) {
             }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
               <i className="far fa-thumbs-down"></i>
             </button>
-            <button style={{ 
-              padding: '6px 8px', 
-              border: '1px solid #e5e7eb', 
-              borderRadius: '6px', 
-              backgroundColor: 'transparent',
-              color: '#6b7280',
-              cursor: 'pointer',
-              fontSize: '12px'
-            }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
-              <i className="far fa-copy"></i>
+            <button 
+              onClick={() => {
+                navigator.clipboard.writeText(message.content).then(() => {
+                  setIsCopied(true);
+                  setTimeout(() => setIsCopied(false), 1000);
+                }).catch(err => {
+                  console.error('Failed to copy text: ', err);
+                });
+              }}
+              style={{ 
+                padding: '6px 8px', 
+                border: `1px solid ${isCopied ? '#3b82f6' : '#e5e7eb'}`, 
+                borderRadius: '6px', 
+                backgroundColor: isCopied ? '#3b82f6' : 'transparent',
+                color: isCopied ? 'white' : '#6b7280',
+                cursor: 'pointer',
+                fontSize: '12px',
+                transition: 'all 0.3s ease'
+              }} 
+              onMouseEnter={(e) => {
+                if (!isCopied) e.currentTarget.style.backgroundColor = '#f9fafb'
+              }} 
+              onMouseLeave={(e) => {
+                if (!isCopied) e.currentTarget.style.backgroundColor = 'transparent'
+              }}
+              title="Copy message"
+            >
+              <i className={isCopied ? "fas fa-check" : "far fa-copy"}></i>
             </button>
           </div>
         </div>

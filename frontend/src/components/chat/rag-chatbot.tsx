@@ -288,7 +288,10 @@ export function RAGChatbot() {
     }
   }
 
-  const loadConversation = async (chatId: string) => {
+  const handleChatHistoryClick = async (chatId: string) => {
+    // Immediately set the selected conversation ID for instant visual feedback
+    setConversationId(chatId)
+    
     try {
       const conversationHistory = await chatService.getConversationHistory(chatId)
       
@@ -302,7 +305,7 @@ export function RAGChatbot() {
         }))
         
         setMessages(transformedMessages)
-        setConversationId(chatId)
+        setInputValue("")
         
         if (typeof window !== 'undefined') {
           localStorage.setItem('rag-chatbot-messages', JSON.stringify(transformedMessages))
@@ -312,16 +315,21 @@ export function RAGChatbot() {
         const latestAssistantMessage = [...transformedMessages].reverse().find(msg => msg.type === 'assistant' && msg.sources);
         if (latestAssistantMessage?.sources) {
           setSelectedMessageSources(latestAssistantMessage.sources)
+          setExpandedSections(prev => ({ ...prev, sources: true }))
         } else {
           setSelectedMessageSources([])
         }
-      } else {
-        // If conversation has no messages, show a warning and don't change UI
-        console.warn(`Conversation ${chatId} has no messages, skipping load`)
-        return
       }
     } catch (error) {
-      console.error('Error loading conversation:', error)
+      console.error('Error loading conversation history:', error)
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        type: "assistant",
+        content: "Sorry, I couldn't load this conversation. Please try again.",
+        timestamp: new Date(),
+        sources: [],
+      }
+      setMessages([errorMessage])
     }
   }
 
@@ -389,7 +397,8 @@ export function RAGChatbot() {
           onShowDocumentModal={() => setShowDocumentModal(true)}
           onRemoveDocument={removeDocument}
           onNewChat={handleNewChat}
-          onChatHistoryClick={loadConversation}
+          onChatHistoryClick={handleChatHistoryClick}
+          selectedChatId={conversationId || undefined}
         />
       </div>
       
