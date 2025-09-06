@@ -1,6 +1,7 @@
 from langchain.schema import HumanMessage, AIMessage
 from ..chains.conversational_chain import CustomConversationalChain
 from ..callbacks.streaming_callback import AsyncStreamingCallbackHandler
+from ..search.enhanced_search import EnhancedSearchEngine
 from typing import Dict, Any, Optional, AsyncGenerator
 import uuid
 import json
@@ -31,9 +32,14 @@ class LangChainChatEngine:
         self.chain = conversational_chain
         # Store active conversations for potential future use
         self.conversations = {}
+        # Initialize enhanced search engine
+        self.enhanced_search = EnhancedSearchEngine(
+            retriever=conversational_chain.retriever,
+            llm=conversational_chain.llm
+        )
 
     async def process_query(self, query: str, conversation_id: Optional[str] = None,
-                            user_id: Optional[str] = None) -> Dict[str, Any]:
+                            user_id: Optional[str] = None, search_mode: str = "standard") -> Dict[str, Any]:
         """
         Process a query and return a complete response with sources.
         
@@ -46,6 +52,7 @@ class LangChainChatEngine:
             conversation_id (Optional[str]): Unique identifier for the conversation.
                                            If not provided, a new UUID will be generated
             user_id (Optional[str]): User identifier for tracking (currently unused)
+            search_mode (str): Search mode ('standard', 'rephrase', 'multiple_queries')
             
         Returns:
             Dict[str, Any]: Dictionary containing:
@@ -62,9 +69,23 @@ class LangChainChatEngine:
             conversation_id = str(uuid.uuid4())
 
         try:
-            print(f"DEBUG CHAT ENGINE: Processing query: {query}")
-            # Process the query through the conversational chain
-            result = await self.chain.arun(query)
+            print(f"DEBUG CHAT ENGINE: Processing query: {query} with search mode: {search_mode}")
+            
+            # Use enhanced search based on search mode
+            if search_mode != "standard":
+                # Get enhanced search results
+                enhanced_docs = await self.enhanced_search.search(query, search_mode, k=5)
+                
+                # Create a custom chain result with enhanced documents
+                # Instead of overriding retriever, we'll modify the chain's behavior
+                result = await self.chain.arun(query)
+                
+                # Replace the source documents with enhanced search results
+                result["source_documents"] = enhanced_docs
+            else:
+                # Standard processing
+                result = await self.chain.arun(query)
+            
             print(f"DEBUG CHAT ENGINE: Got result with keys: {result.keys()}")
             print(f"DEBUG CHAT ENGINE: Source documents count: {len(result.get('source_documents', []))}")
 
@@ -82,7 +103,8 @@ class LangChainChatEngine:
                 'conversation_id': conversation_id,
                 'response': result["answer"],
                 'sources': sources,
-                'chat_history': [msg.dict() for msg in result["chat_history"]]
+                'chat_history': [msg.dict() for msg in result["chat_history"]],
+                'search_mode': search_mode
             }
 
         except Exception as e:

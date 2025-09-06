@@ -49,7 +49,7 @@ export function ChatInput({ inputValue, setInputValue, onSendMessage, isTyping, 
         color: '#6b7280',
         position: 'relative'
       }}>
-        <span>Search mode:</span>
+        <span style={{ fontWeight: '500', color: '#374151' }}>Search mode:</span>
         <div ref={dropdownRef} style={{ position: 'relative' }}>
           <button
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}

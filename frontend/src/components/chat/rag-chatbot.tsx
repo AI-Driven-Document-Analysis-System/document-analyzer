@@ -254,7 +254,7 @@ export function RAGChatbot() {
 
     try {
       // Send message to backend
-      const response = await chatService.sendMessage(currentMessage, conversationId || undefined)
+      const response = await chatService.sendMessage(currentMessage, conversationId || undefined, searchMode)
 
       // Update conversation ID if this is a new conversation
       if (!conversationId && response.conversation_id) {

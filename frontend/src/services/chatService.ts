@@ -38,7 +38,7 @@ class ChatService {
   private baseUrl = 'http://localhost:8000/api';
   private currentUserId: string | null = null;
 
-  async sendMessage(message: string, conversationId?: string): Promise<ChatResponse> {
+  async sendMessage(message: string, conversationId?: string, searchMode: string = 'standard'): Promise<ChatResponse> {
     try {
       const userId = await this.getCurrentUserId();
       if (!userId) {
@@ -55,6 +55,7 @@ class ChatService {
           conversation_id: conversationId,
           user_id: userId,
           memory_type: 'window',
+          search_mode: searchMode,
           llm_config: {
             provider: 'groq',
             model: 'llama-3.1-8b-instant',
