@@ -41,6 +41,7 @@ export function RAGChatbot() {
   // Chat history state
   const [chatHistory, setChatHistory] = useState<ChatHistory[]>([])
   const [isLoadingHistory, setIsLoadingHistory] = useState(true)
+  const [isLoadingConversation, setIsLoadingConversation] = useState(false)
 
   // Initialize user ID and load user-specific data
   useEffect(() => {
@@ -337,6 +338,7 @@ export function RAGChatbot() {
   const handleChatHistoryClick = async (chatId: string) => {
     // Immediately set the selected conversation ID for instant visual feedback
     setConversationId(chatId)
+    setIsLoadingConversation(true)
     
     try {
       const conversationHistory = await chatService.getConversationHistory(chatId)
@@ -376,6 +378,8 @@ export function RAGChatbot() {
         sources: [],
       }
       setMessages([errorMessage])
+    } finally {
+      setIsLoadingConversation(false)
     }
   }
 
@@ -410,17 +414,47 @@ export function RAGChatbot() {
                 }
               }}
             >
-              {messages.map((message) => (
-                <div key={message.id} style={{ marginBottom: '24px' }}>
-                  <ChatMessage 
-                    message={message} 
-                    onSourcesClick={handleSourcesClick}
-                  />
+              {isLoadingConversation ? (
+                <div style={{ 
+                  display: 'flex', 
+                  flexDirection: 'column', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  height: '200px',
+                  color: '#6b7280'
+                }}>
+                  <div style={{
+                    width: '40px',
+                    height: '40px',
+                    border: '3px solid #e5e7eb',
+                    borderTop: '3px solid #3b82f6',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                    marginBottom: '16px'
+                  }}></div>
+                  <p style={{ margin: 0, fontSize: '14px' }}>Loading conversation...</p>
+                  <style jsx>{`
+                    @keyframes spin {
+                      0% { transform: rotate(0deg); }
+                      100% { transform: rotate(360deg); }
+                    }
+                  `}</style>
                 </div>
-              ))}
+              ) : (
+                <>
+                  {messages.map((message) => (
+                    <div key={message.id} style={{ marginBottom: '24px' }}>
+                      <ChatMessage 
+                        message={message} 
+                        onSourcesClick={handleSourcesClick}
+                      />
+                    </div>
+                  ))}
 
-              {isTyping && <TypingIndicator />}
-              <div ref={messagesEndRef} />
+                  {isTyping && <TypingIndicator />}
+                  <div ref={messagesEndRef} />
+                </>
+              )}
             </div>
 
             <ChatInput 
