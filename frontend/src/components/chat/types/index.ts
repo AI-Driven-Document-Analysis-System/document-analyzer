@@ -8,6 +8,7 @@ export interface Message {
     type: string
     confidence: number
   }>
+  rephrasedQueries?: string[]
 }
 
 export interface Document {

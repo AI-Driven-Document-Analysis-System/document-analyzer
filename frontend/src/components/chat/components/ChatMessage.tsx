@@ -1,14 +1,33 @@
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import type { Message } from '../types'
 
 interface ChatMessageProps {
   message: Message
-  onSourcesClick?: (sources: any[]) => void
+  onSourcesClick: (sources: any[]) => void
+  onFeedback: (messageId: string, feedback: 'thumbs_up' | 'thumbs_down', reason?: string) => void
+  onRephrasedQueryClick?: (query: string) => void
 }
 
-export function ChatMessage({ message, onSourcesClick }: ChatMessageProps) {
+export function ChatMessage({ message, onSourcesClick, onFeedback, onRephrasedQueryClick }: ChatMessageProps) {
   const [isCopied, setIsCopied] = useState(false)
+  const [showFeedbackDropdown, setShowFeedbackDropdown] = useState(false)
+  const feedbackDropdownRef = useRef<HTMLDivElement>(null)
+
+  // Close feedback dropdown when clicking outside
+  useEffect(() => {
+    const handleGlobalClick = (event: MouseEvent) => {
+      if (showFeedbackDropdown && feedbackDropdownRef.current && !feedbackDropdownRef.current.contains(event.target as Node)) {
+        setShowFeedbackDropdown(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleGlobalClick)
+    
+    return () => {
+      document.removeEventListener('mousedown', handleGlobalClick)
+    }
+  }, [showFeedbackDropdown])
   
   if (message.type === "assistant") {
     return (
@@ -59,29 +78,206 @@ export function ChatMessage({ message, onSourcesClick }: ChatMessageProps) {
               </div>
             </div>
           )}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', marginTop: '12px' }}>
-            <button style={{ 
-              padding: '6px 8px', 
-              border: '1px solid #e5e7eb', 
-              borderRadius: '6px', 
-              backgroundColor: 'transparent',
-              color: '#6b7280',
-              cursor: 'pointer',
-              fontSize: '12px'
-            }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', marginTop: '12px', position: 'relative' }}>
+            <button 
+              onClick={() => onFeedback?.(message.id || '', 'thumbs_up')}
+              style={{ 
+                padding: '6px 8px', 
+                border: '1px solid #e5e7eb', 
+                borderRadius: '6px', 
+                backgroundColor: 'transparent',
+                color: '#6b7280',
+                cursor: 'pointer',
+                fontSize: '12px'
+              }} 
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'} 
+              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            >
               <i className="far fa-thumbs-up"></i>
             </button>
-            <button style={{ 
-              padding: '6px 8px', 
-              border: '1px solid #e5e7eb', 
-              borderRadius: '6px', 
-              backgroundColor: 'transparent',
-              color: '#6b7280',
-              cursor: 'pointer',
-              fontSize: '12px'
-            }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
-              <i className="far fa-thumbs-down"></i>
-            </button>
+            <div ref={feedbackDropdownRef} style={{ position: 'relative' }}>
+              <button 
+                onClick={() => setShowFeedbackDropdown(!showFeedbackDropdown)}
+                style={{ 
+                  padding: '6px 8px', 
+                  border: '1px solid #e5e7eb', 
+                  borderRadius: '6px', 
+                  backgroundColor: showFeedbackDropdown ? '#f3f4f6' : 'transparent',
+                  color: '#6b7280',
+                  cursor: 'pointer',
+                  fontSize: '12px'
+                }} 
+                onMouseEnter={(e) => {
+                  if (!showFeedbackDropdown) e.currentTarget.style.backgroundColor = '#f9fafb'
+                }} 
+                onMouseLeave={(e) => {
+                  if (!showFeedbackDropdown) e.currentTarget.style.backgroundColor = 'transparent'
+                }}
+              >
+                <i className="far fa-thumbs-down"></i>
+              </button>
+              {showFeedbackDropdown && (
+                <div style={{
+                  position: 'absolute',
+                  bottom: '100%',
+                  right: '0',
+                  marginBottom: '4px',
+                  backgroundColor: 'white',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                  zIndex: 1000,
+                  minWidth: '280px'
+                }}>
+                  <div
+                    onClick={() => {
+                      onFeedback?.(message.id || '', 'thumbs_down', 'not_relevant')
+                      setShowFeedbackDropdown(false)
+                    }}
+                    style={{
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      color: '#374151',
+                      backgroundColor: 'transparent'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <div style={{ fontWeight: '500', marginBottom: '2px' }}>Answer wasn't relevant</div>
+                    <div style={{ fontSize: '10px', color: '#6b7280', lineHeight: '1.2' }}>
+                      Try Rephrase for better relevance
+                    </div>
+                  </div>
+                  <div
+                    onClick={() => {
+                      onFeedback?.(message.id || '', 'thumbs_down', 'not_factually_correct')
+                      setShowFeedbackDropdown(false)
+                    }}
+                    style={{
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      color: '#374151',
+                      backgroundColor: 'transparent',
+                      borderTop: '1px solid #e5e7eb'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <div style={{ fontWeight: '500', marginBottom: '2px' }}>Not factually correct</div>
+                    <div style={{ fontSize: '10px', color: '#6b7280', lineHeight: '1.2' }}>
+                      Try Multiple queries for verified facts
+                    </div>
+                  </div>
+                  <div
+                    onClick={() => {
+                      onFeedback?.(message.id || '', 'thumbs_down', 'incomplete_response')
+                      setShowFeedbackDropdown(false)
+                    }}
+                    style={{
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      color: '#374151',
+                      backgroundColor: 'transparent',
+                      borderTop: '1px solid #e5e7eb'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <div style={{ fontWeight: '500', marginBottom: '2px' }}>Incomplete response</div>
+                    <div style={{ fontSize: '10px', color: '#6b7280', lineHeight: '1.2' }}>
+                      Try Multiple queries for comprehensive coverage
+                    </div>
+                  </div>
+                  <div
+                    onClick={() => {
+                      onFeedback?.(message.id || '', 'thumbs_down', 'missing_info')
+                      setShowFeedbackDropdown(false)
+                    }}
+                    style={{
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      color: '#374151',
+                      backgroundColor: 'transparent',
+                      borderTop: '1px solid #e5e7eb'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <div style={{ fontWeight: '500', marginBottom: '2px' }}>Missing important information</div>
+                    <div style={{ fontSize: '10px', color: '#6b7280', lineHeight: '1.2' }}>
+                      Try Multiple queries for complete details
+                    </div>
+                  </div>
+                  <div
+                    onClick={() => {
+                      onFeedback?.(message.id || '', 'thumbs_down', 'too_general')
+                      setShowFeedbackDropdown(false)
+                    }}
+                    style={{
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      color: '#374151',
+                      backgroundColor: 'transparent',
+                      borderTop: '1px solid #e5e7eb'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <div style={{ fontWeight: '500', marginBottom: '2px' }}>Answer was too general</div>
+                    <div style={{ fontSize: '10px', color: '#6b7280', lineHeight: '1.2' }}>
+                      Try Multiple queries for specific details
+                    </div>
+                  </div>
+                  <div
+                    onClick={() => {
+                      onFeedback?.(message.id || '', 'thumbs_down', 'complex_topic')
+                      setShowFeedbackDropdown(false)
+                    }}
+                    style={{
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      color: '#374151',
+                      backgroundColor: 'transparent',
+                      borderTop: '1px solid #e5e7eb'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <div style={{ fontWeight: '500', marginBottom: '2px' }}>Topic needs deeper analysis</div>
+                    <div style={{ fontSize: '10px', color: '#6b7280', lineHeight: '1.2' }}>
+                      Try Multiple queries for comprehensive analysis
+                    </div>
+                  </div>
+                  <div
+                    onClick={() => {
+                      onFeedback?.(message.id || '', 'thumbs_down', 'technical_issue')
+                      setShowFeedbackDropdown(false)
+                    }}
+                    style={{
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      fontSize: '12px',
+                      color: '#374151',
+                      backgroundColor: 'transparent',
+                      borderTop: '1px solid #e5e7eb'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                  >
+                    <div style={{ fontWeight: '500', marginBottom: '2px' }}>Technical issue</div>
+                    <div style={{ fontSize: '10px', color: '#6b7280', lineHeight: '1.2' }}>
+                      System or performance problem
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
             <button 
               onClick={() => {
                 navigator.clipboard.writeText(message.content).then(() => {

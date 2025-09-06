@@ -26,6 +26,7 @@ export function RAGChatbot() {
   
   const [inputValue, setInputValue] = useState("")
   const [isTyping, setIsTyping] = useState(false)
+  const [searchMode, setSearchMode] = useState<'standard' | 'rephrase' | 'multiple_queries'>('standard')
   
   // Load conversation ID from localStorage (user-specific)
   const [conversationId, setConversationId] = useState<string | null>(null)
@@ -42,6 +43,15 @@ export function RAGChatbot() {
   const [chatHistory, setChatHistory] = useState<ChatHistory[]>([])
   const [isLoadingHistory, setIsLoadingHistory] = useState(true)
   const [isLoadingConversation, setIsLoadingConversation] = useState(false)
+
+  // Handle feedback from messages
+  const handleFeedback = async (messageId: string, feedback: 'thumbs_up' | 'thumbs_down', reason?: string) => {
+    console.log('Feedback received:', { messageId, feedback, reason })
+    
+    // TODO: Send feedback to backend for analytics
+  }
+
+
 
   // Initialize user ID and load user-specific data
   useEffect(() => {
@@ -447,6 +457,8 @@ export function RAGChatbot() {
                       <ChatMessage 
                         message={message} 
                         onSourcesClick={handleSourcesClick}
+                        onFeedback={handleFeedback}
+                        onRephrasedQueryClick={() => {}}
                       />
                     </div>
                   ))}
@@ -463,6 +475,8 @@ export function RAGChatbot() {
               onSendMessage={handleSendMessage}
               isTyping={isTyping}
               onKeyPress={handleKeyPress}
+              searchMode={searchMode}
+              setSearchMode={setSearchMode}
             />
           </div>
         </div>
