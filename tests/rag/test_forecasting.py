@@ -44,7 +44,7 @@ BLUE = '\033[94m'
 GREEN = '\033[92m'
 RESET = '\033[0m'
 
-vectorstore = LangChainChromaStore("./test_chroma_db", "forecasting_docs")
+vectorstore = LangChainChromaStore("./chroma_db", "forecasting_docs")
 llm = LLMFactory.create_gemini_llm(api_key, "gemini-1.5-flash")
 retriever = vectorstore.as_retriever()
 chain = CustomConversationalChain(llm, retriever)

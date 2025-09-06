@@ -82,14 +82,14 @@ class DocumentService:
         ext = filename.split('.')[-1] if '.' in filename else ''
         return f"{user_id}/{timestamp}/{file_id}.{ext}" if ext else f"{user_id}/{timestamp}/{file_id}"
 
-    def _check_document_exists_by_hash(self, file_hash: str) -> Optional[str]:
-        """Check if document already exists by hash"""
+    def _check_document_exists_by_hash(self, file_hash: str, user_id: str) -> Optional[str]:
+        """Check if a user's document already exists by hash (per-user deduplication)"""
         try:
             with db_manager.get_connection() as conn:
                 with conn.cursor() as cursor:
                     cursor.execute(
-                        "SELECT id FROM documents WHERE document_hash = %s",
-                        (file_hash,)
+                        "SELECT id FROM documents WHERE document_hash = %s AND user_id = %s",
+                        (file_hash, user_id)
                     )
                     result = cursor.fetchone()
                     return str(result[0]) if result else None
@@ -118,7 +118,7 @@ class DocumentService:
             file_hash = self._calculate_file_hash(file_content)
 
             # Check if document already exists
-            existing_doc_id = self._check_document_exists_by_hash(file_hash)
+            existing_doc_id = self._check_document_exists_by_hash(file_hash, user_id)
             if existing_doc_id:
                 return {
                     "document_id": existing_doc_id,
@@ -167,14 +167,14 @@ class DocumentService:
                     # Insert document
                     cursor.execute("""
                         INSERT INTO documents (
-                            id, original_filename, file_path_minio, file_size, 
-                            mime_type, document_hash, uploaded_by_user_id, upload_timestamp, 
+                            id, original_filename, file_path_minio, file_size,
+                            mime_type, document_hash, user_id,uploaded_by_user_id, upload_timestamp,
                             created_at, updated_at
                         )
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """, (
                         document_id, file.filename or "unknown", minio_path,
-                        file_size, mime_type, file_hash, user_id, now, now, now
+                        file_size, mime_type, file_hash, user_id, user_id, now, now, now
                     ))
 
                     # Create processing record

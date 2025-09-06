@@ -9,6 +9,7 @@ from datetime import datetime
 from .api import auth, summarization, documents, chat  # Add chat import
 from .core.database import db_manager
 from .db.init_db import create_tables
+from .api import profile
 
 # Load environment variables early
 load_dotenv()
@@ -55,6 +56,7 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(summarization.router, prefix="/api")
 app.include_router(documents.router, prefix="/api")  # Add this line
 app.include_router(chat.router, prefix="/api")  # Add chat router
+app.include_router(profile.router, prefix="/api")
 
 @app.get("/")
 async def root():
@@ -109,6 +111,14 @@ async def startup_event():
             logger.info("Database monitoring task started")
         except Exception as e:
             logger.warning(f"Failed to start database monitoring: {e}")
+
+        # Start title generation listener
+        try:
+            from app.services.chatbot.title_generation.title_listener import start_title_listener
+            asyncio.create_task(start_title_listener())
+            logger.info("Title generation listener started")
+        except Exception as e:
+            logger.warning(f"Failed to start title listener: {e}")
 
     except Exception as e:
         logger.warning(f"Startup DB init warning: {e}")

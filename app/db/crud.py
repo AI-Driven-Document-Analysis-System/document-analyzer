@@ -14,20 +14,22 @@ class UserCRUD:
     def __init__(self, db_manager):
         self.db = db_manager
     
-    def create_user(self, email: str, password: str, first_name: str = None, last_name: str = None) -> Optional[User]:
+    def create_user(self, email: str, password: str = None, first_name: str = None, last_name: str = None, 
+                   google_id: str = None, is_oauth_user: bool = False) -> Optional[User]:
         """Create a new user"""
         try:
             user_id = uuid4()
-            password_hash = get_password_hash(password)
+            password_hash = get_password_hash(password) if password else None
             
             query = """
-                INSERT INTO users (id, email, password_hash, first_name, last_name, created_at, updated_at)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-                RETURNING *
+                INSERT INTO users (id, email, password_hash, first_name, last_name, google_id, is_oauth_user, created_at, updated_at)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id, email, password_hash, first_name, last_name, 
+                          is_email_verified, email_verification_token, google_id, is_oauth_user, created_at, updated_at
             """
             
             now = datetime.utcnow()
-            params = (user_id, email, password_hash, first_name, last_name, now, now)
+            params = (user_id, email, password_hash, first_name, last_name, google_id, is_oauth_user, now, now)
             
             result = self.db.execute_one(query, params)
             
@@ -42,7 +44,11 @@ class UserCRUD:
     def get_user_by_email(self, email: str) -> Optional[User]:
         """Get user by email"""
         try:
-            query = "SELECT * FROM users WHERE email = %s"
+            query = """
+                SELECT id, email, password_hash, first_name, last_name, 
+                       is_email_verified, email_verification_token, google_id, is_oauth_user, created_at, updated_at
+                FROM users WHERE email = %s
+            """
             result = self.db.execute_one(query, (email,))
             
             if result:
@@ -56,7 +62,11 @@ class UserCRUD:
     def get_user_by_id(self, user_id: UUID) -> Optional[User]:
         """Get user by ID"""
         try:
-            query = "SELECT * FROM users WHERE id = %s"
+            query = """
+                SELECT id, email, password_hash, first_name, last_name, 
+                       is_email_verified, email_verification_token, google_id, is_oauth_user, created_at, updated_at
+                FROM users WHERE id = %s
+            """
             result = self.db.execute_one(query, (user_id,))
             
             if result:
@@ -87,7 +97,7 @@ class UserCRUD:
             params = []
             
             for key, value in kwargs.items():
-                if key in ['first_name', 'last_name', 'is_email_verified', 'email_verification_token']:
+                if key in ['first_name', 'last_name', 'is_email_verified', 'email_verification_token', 'google_id', 'is_oauth_user']:
                     set_clauses.append(f"{key} = %s")
                     params.append(value)
             
@@ -102,7 +112,8 @@ class UserCRUD:
                 UPDATE users 
                 SET {', '.join(set_clauses)}
                 WHERE id = %s
-                RETURNING *
+                RETURNING id, email, password_hash, first_name, last_name, 
+                          is_email_verified, email_verification_token, google_id, is_oauth_user, created_at, updated_at
             """
             
             result = self.db.execute_one(query, params)
@@ -113,6 +124,80 @@ class UserCRUD:
             
         except Exception as e:
             logger.error(f"Error updating user: {e}")
+            raise
+
+    def change_user_email(self, user_id: UUID, new_email: str, password: str) -> Optional[User]:
+        """Change user email after verifying current password"""
+        try:
+            # First verify the current password
+            user = self.get_user_by_id(user_id)
+            if not user:
+                return None
+            
+            if not verify_password(password, user.password_hash):
+                return None
+            
+            # Check if new email already exists
+            existing_user = self.get_user_by_email(new_email)
+            if existing_user and existing_user.id != user_id:
+                return None
+            
+            # Update email
+            query = """
+                UPDATE users 
+                SET email = %s, updated_at = %s
+                WHERE id = %s
+                RETURNING id, email, password_hash, first_name, last_name, 
+                          is_email_verified, email_verification_token, google_id, is_oauth_user, created_at, updated_at
+            """
+            
+            now = datetime.utcnow()
+            params = (new_email, now, user_id)
+            
+            result = self.db.execute_one(query, params)
+            
+            if result:
+                return User(**dict(result))
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error changing user email: {e}")
+            raise
+
+    def change_user_password(self, user_id: UUID, current_password: str, new_password: str) -> Optional[User]:
+        """Change user password after verifying current password"""
+        try:
+            # First verify the current password
+            user = self.get_user_by_id(user_id)
+            if not user:
+                return None
+            
+            if not verify_password(current_password, user.password_hash):
+                return None
+            
+            # Hash new password
+            new_password_hash = get_password_hash(new_password)
+            
+            # Update password
+            query = """
+                UPDATE users 
+                SET password_hash = %s, updated_at = %s
+                WHERE id = %s
+                RETURNING id, email, password_hash, first_name, last_name, 
+                          is_email_verified, email_verification_token, google_id, is_oauth_user, created_at, updated_at
+            """
+            
+            now = datetime.utcnow()
+            params = (new_password_hash, now, user_id)
+            
+            result = self.db.execute_one(query, params)
+            
+            if result:
+                return User(**dict(result))
+            return None
+            
+        except Exception as e:
+            logger.error(f"Error changing user password: {e}")
             raise
 
 class DocumentCRUD:

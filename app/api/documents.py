@@ -4,7 +4,7 @@
 
 ##Minio 
 
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Request
 from typing import List, Optional
 from ..api.auth import get_current_user
 from ..core.database import db_manager
@@ -21,36 +21,33 @@ router = APIRouter(prefix="/documents", tags=["documents"])
 
 @router.post("/upload", response_model=dict)
 async def upload_document(
+    request: Request,
     file: UploadFile = File(...),
+    override_user_id: str | None = Form(default=None),
     current_user: UserResponse = Depends(get_current_user)
 ):
     """Upload a document for the current user."""
     try:
-        print("=" * 50)
-        print("DEBUG: upload_document endpoint called")
-        print(f"File: {file.filename}, Size: {file.size}, Content-Type: {file.content_type}")
-        print(f"Current user: {current_user}")
         
         # Validate file
         if not file.filename:
             raise HTTPException(status_code=400, detail="No file provided")
         
-        # Get user ID
+        # Resolve user ID: prefer explicit override (form or header) then JWT
         user_id = None
-        if hasattr(current_user, 'id'):
+        header_user_id = request.headers.get('x-user-id') or request.headers.get('X-User-Id')
+        if override_user_id and override_user_id.strip():
+            user_id = override_user_id.strip()
+        elif header_user_id and header_user_id.strip():
+            user_id = header_user_id.strip()
+        elif hasattr(current_user, 'id') and current_user.id is not None:
             user_id = str(current_user.id)
-        elif hasattr(current_user, 'email'):
-            user_id = current_user.email
         else:
-            raise HTTPException(status_code=400, detail="Invalid user token")
-        
-        print(f"Using user_id: {user_id}")
+            raise HTTPException(status_code=400, detail="No user identifier provided")
         
         # Upload document
         result = await document_service.upload_document(file, user_id)
         
-        print(f"Upload result: {result}")
-        print("=" * 50)
         
         return {
             "success": True,
@@ -67,10 +64,7 @@ async def upload_document(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Upload error: {e}")
-        import traceback
-        print("Full traceback:")
-        print(traceback.format_exc())
+        logger.error(f"Upload error: {e}")
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 @router.get("/", response_model=dict)
@@ -81,29 +75,15 @@ async def get_documents(
 ):
     """Get all documents for the current user."""
     try:
-        print("=" * 50)
-        print("DEBUG: get_documents endpoint called")
-        print(f"Current user received: {current_user}")
-        print(f"Limit: {limit}, Offset: {offset}")
         
         # Check if current_user is valid
         if not current_user:
-            print("ERROR: current_user is None or empty")
             raise HTTPException(status_code=400, detail="No user information provided")
         
-        # Extract user ID from UserResponse attributes
-        user_id = None
-        if hasattr(current_user, 'id'):
-            user_id = current_user.id
-            print(f"Found user identifier in field 'id': {user_id}")
-        elif hasattr(current_user, 'email'):
-            user_id = current_user.email
-            print(f"Found user identifier in field 'email': {user_id}")
-        else:
-            print(f"ERROR: No user ID found in UserResponse attributes")
+        # Extract user ID from UserResponse (UUID only)
+        if not hasattr(current_user, 'id') or current_user.id is None:
             raise HTTPException(status_code=400, detail="Invalid user token - no user ID found")
-        
-        print(f"Using user_id: {user_id}")
+        user_id = str(current_user.id)
         
         # Test database connection and get documents
         with db_manager.get_connection() as conn:
@@ -120,11 +100,9 @@ async def get_documents(
                     ORDER BY d.upload_timestamp DESC
                     LIMIT %s OFFSET %s
                 """
-                print(f"Executing query: {query}")
-                cursor.execute(query, (str(user_id), limit, offset))
+                cursor.execute(query, (user_id, limit, offset))
                 documents = cursor.fetchall()
                 
-                print(f"Query returned {len(documents)} documents")
                 
                 # Get total count
                 cursor.execute("SELECT COUNT(*) FROM documents WHERE user_id = %s", (str(user_id),))
@@ -133,7 +111,6 @@ async def get_documents(
                 # Convert to list of dictionaries
                 result = []
                 for i, doc in enumerate(documents):
-                    print(f"Processing document {i+1}: {doc}")
                     doc_dict = {
                         "id": doc[0],
                         "original_filename": doc[1],
@@ -147,8 +124,6 @@ async def get_documents(
                     }
                     result.append(doc_dict)
                 
-                print(f"Final result: {result}")
-                print("=" * 50)
                 
                 return {
                     "documents": result,
@@ -163,11 +138,100 @@ async def get_documents(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"UNEXPECTED ERROR: {e}")
-        import traceback
-        print("Full traceback:")
-        print(traceback.format_exc())
+        logger.error(f"Unexpected error in get_documents: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+
+@router.get("/by-user", response_model=dict)
+async def get_documents_by_user(
+    user_id: str,
+    limit: int = 50,
+    offset: int = 0
+):
+    """Public endpoint: Get documents for a given user_id without JWT (use carefully)."""
+    try:
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id is required")
+
+        with db_manager.get_connection() as conn:
+            with conn.cursor() as cursor:
+                query = """
+                    SELECT 
+                        d.id, d.original_filename, d.file_size, d.upload_timestamp, 
+                        d.mime_type, d.user_id, d.file_path_minio,
+                        COALESCE(dp.processing_status, 'unknown') AS processing_status, dp.processing_errors
+                    FROM documents d
+                    LEFT JOIN document_processing dp ON d.id = dp.document_id
+                    WHERE d.user_id = %s
+                    ORDER BY d.upload_timestamp DESC
+                    LIMIT %s OFFSET %s
+                """
+                cursor.execute(query, (user_id, limit, offset))
+                documents = cursor.fetchall()
+
+                cursor.execute("SELECT COUNT(*) FROM documents WHERE user_id = %s", (user_id,))
+                total_count = cursor.fetchone()[0]
+
+                result = []
+                for doc in documents:
+                    result.append({
+                        "id": doc[0],
+                        "original_filename": doc[1],
+                        "file_size": doc[2],
+                        "upload_date": doc[3].isoformat() if doc[3] else None,
+                        "content_type": doc[4],
+                        "user_id": doc[5],
+                        "file_path": doc[6],
+                        "processing_status": doc[7],
+                        "processing_errors": doc[8]
+                    })
+
+                return {
+                    "documents": result,
+                    "pagination": {
+                        "total": total_count,
+                        "limit": limit,
+                        "offset": offset,
+                        "has_more": offset + limit < total_count
+                    }
+                }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error retrieving documents: {str(e)}")
+
+@router.get("/types", response_model=dict)
+async def get_document_types(
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Get all available document types from classifications."""
+    try:
+        if not hasattr(current_user, 'id') or current_user.id is None:
+            raise HTTPException(status_code=400, detail="Invalid user token")
+        user_id = str(current_user.id)
+        
+        with db_manager.get_connection() as conn:
+            with conn.cursor() as cursor:
+                query = """
+                    SELECT DISTINCT dc.document_type
+                    FROM document_classifications dc
+                    JOIN documents d ON dc.document_id = d.id
+                    WHERE d.user_id = %s
+                    ORDER BY dc.document_type
+                """
+                cursor.execute(query, (user_id,))
+                types = cursor.fetchall()
+                
+                document_types = ["All Types"] + [doc_type[0] for doc_type in types if doc_type[0]]
+                
+                return {
+                    "document_types": document_types
+                }
+                
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting document types: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting document types: {str(e)}")
 
 @router.get("/{document_id}", response_model=dict)
 async def get_document(
@@ -176,7 +240,9 @@ async def get_document(
 ):
     """Get a specific document by ID."""
     try:
-        user_id = str(current_user.id) if hasattr(current_user, 'id') else current_user.email
+        if not hasattr(current_user, 'id') or current_user.id is None:
+            raise HTTPException(status_code=400, detail="Invalid user token")
+        user_id = str(current_user.id)
         
         with db_manager.get_connection() as conn:
             with conn.cursor() as cursor:
@@ -219,7 +285,9 @@ async def download_document(
 ):
     """Get download URL for a document."""
     try:
-        user_id = str(current_user.id) if hasattr(current_user, 'id') else current_user.email
+        if not hasattr(current_user, 'id') or current_user.id is None:
+            raise HTTPException(status_code=400, detail="Invalid user token")
+        user_id = str(current_user.id)
         
         with db_manager.get_connection() as conn:
             with conn.cursor() as cursor:
@@ -274,6 +342,154 @@ async def delete_document(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error deleting document: {str(e)}")
+
+@router.post("/search", response_model=dict)
+async def search_documents(
+    request: Request,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Search documents with filters and return results with classifications."""
+    try:
+        if not hasattr(current_user, 'id') or current_user.id is None:
+            raise HTTPException(status_code=400, detail="Invalid user token")
+        user_id = str(current_user.id)
+        
+        # Parse request body
+        body = await request.json()
+        query = body.get("query", "")
+        filters = body.get("filters", {})
+        document_type = filters.get("document_type", "All Types")
+        date_range = filters.get("date_range", "all")
+        limit = filters.get("limit", 50)
+        offset = filters.get("offset", 0)
+        
+        with db_manager.get_connection() as conn:
+            with conn.cursor() as cursor:
+                # Build the base query
+                base_query = """
+                    SELECT DISTINCT
+                        d.id, d.original_filename, d.file_size, d.upload_timestamp, 
+                        d.mime_type, d.user_id, d.file_path_minio, d.page_count,
+                        dp.processing_status, dp.processing_errors,
+                        dc.document_type, dc.confidence_score,
+                        dc_content.extracted_text
+                    FROM documents d
+                    LEFT JOIN document_processing dp ON d.id = dp.document_id
+                    LEFT JOIN document_classifications dc ON d.id = dc.document_id
+                    LEFT JOIN document_content dc_content ON d.id = dc_content.document_id
+                    WHERE d.user_id = %s
+                """
+                
+                params = [user_id]
+                param_count = 1
+                
+                # Add search query filter
+                if query:
+                    base_query += f" AND (d.original_filename ILIKE %s OR dc_content.extracted_text ILIKE %s)"
+                    params.extend([f"%{query}%", f"%{query}%"])
+                    param_count += 2
+                
+                # Add document type filter
+                if document_type and document_type != "All Types":
+                    base_query += f" AND dc.document_type = %s"
+                    params.append(document_type)
+                    param_count += 1
+                
+                # Add date range filter
+                if date_range != "all":
+                    if date_range == "today":
+                        base_query += f" AND DATE(d.upload_timestamp) = CURRENT_DATE"
+                    elif date_range == "week":
+                        base_query += f" AND d.upload_timestamp >= CURRENT_DATE - INTERVAL '7 days'"
+                    elif date_range == "month":
+                        base_query += f" AND d.upload_timestamp >= CURRENT_DATE - INTERVAL '30 days'"
+                    elif date_range == "year":
+                        base_query += f" AND d.upload_timestamp >= CURRENT_DATE - INTERVAL '1 year'"
+                
+                # Add ordering and pagination
+                base_query += " ORDER BY d.upload_timestamp DESC LIMIT %s OFFSET %s"
+                params.extend([limit, offset])
+                
+                cursor.execute(base_query, params)
+                documents = cursor.fetchall()
+                
+                # Get total count for pagination
+                count_query = """
+                    SELECT COUNT(DISTINCT d.id)
+                    FROM documents d
+                    LEFT JOIN document_processing dp ON d.id = dp.document_id
+                    LEFT JOIN document_classifications dc ON d.id = dc.document_id
+                    LEFT JOIN document_content dc_content ON d.id = dc_content.document_id
+                    WHERE d.user_id = %s
+                """
+                
+                count_params = [user_id]
+                count_param_count = 1
+                
+                if query:
+                    count_query += f" AND (d.original_filename ILIKE %s OR dc_content.extracted_text ILIKE %s)"
+                    count_params.extend([f"%{query}%", f"%{query}%"])
+                    count_param_count += 2
+                
+                if document_type and document_type != "All Types":
+                    count_query += f" AND dc.document_type = %s"
+                    count_params.append(document_type)
+                    count_param_count += 1
+                
+                if date_range != "all":
+                    if date_range == "today":
+                        count_query += f" AND DATE(d.upload_timestamp) = CURRENT_DATE"
+                    elif date_range == "week":
+                        count_query += f" AND d.upload_timestamp >= CURRENT_DATE - INTERVAL '7 days'"
+                    elif date_range == "month":
+                        count_query += f" AND d.upload_timestamp >= CURRENT_DATE - INTERVAL '30 days'"
+                    elif date_range == "year":
+                        count_query += f" AND d.upload_timestamp >= CURRENT_DATE - INTERVAL '1 year'"
+                
+                cursor.execute(count_query, count_params)
+                total_count = cursor.fetchone()[0]
+                
+                # Format results
+                result = []
+                for doc in documents:
+                    # Extract excerpt from content (first 200 characters)
+                    excerpt = ""
+                    if doc[12]:  # extracted_text
+                        excerpt = doc[12][:200] + "..." if len(doc[12]) > 200 else doc[12]
+                    
+                    doc_dict = {
+                        "id": doc[0],
+                        "title": doc[1],
+                        "type": doc[10] or "Unknown",  # document_type
+                        "excerpt": excerpt,
+                        "uploadDate": doc[3].isoformat() if doc[3] else None,
+                        "confidence": float(doc[11]) * 100 if doc[11] else 0,  # confidence_score
+                        "pages": doc[7] or 0,  # page_count
+                        "file_size": doc[2],
+                        "content_type": doc[4],
+                        "processing_status": doc[8] or "unknown",
+                        "file_path": doc[6]
+                    }
+                    result.append(doc_dict)
+                
+                return {
+                    "documents": result,
+                    "total_results": total_count,
+                    "query": query,
+                    "filters": filters,
+                    "pagination": {
+                        "total": total_count,
+                        "limit": limit,
+                        "offset": offset,
+                        "has_more": offset + limit < total_count
+                    }
+                }
+                
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error searching documents: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error searching documents: {str(e)}")
 
 #overall what this code do is define a router for the document service, which includes the following endpoints:
 #GET /documents: Get a list of documents for the current user.

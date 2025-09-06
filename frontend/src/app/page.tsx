@@ -1,5 +1,6 @@
 
 
+
 "use client"
 
 import { useState, useEffect } from "react"
@@ -14,6 +15,8 @@ import { Sidebar } from "../components/layout/sidebar"
 // import "../styles/globals.css"
 import './globals.css' 
 import { authService } from "../services/authService"
+import UserProfilePage  from "../profile/profile"
+import Settings from "../components/settings/settings"
 
 const routes = {
   "/dashboard": { component: Dashboard, title: "Dashboard", breadcrumb: ["Dashboard"] },
@@ -21,6 +24,8 @@ const routes = {
   "/summarization": { component: Summarization, title: "Summarization", breadcrumb: ["Analysis", "Summarization"] },
   "/search": { component: SearchInterface, title: "Search", breadcrumb: ["Analysis", "Search"] },
   "/chat": { component: RAGChatbot, title: "AI Chat", breadcrumb: ["Analysis", "AI Chat"] },
+  "/profile": { component: UserProfilePage, title: "Profile",  breadcrumb: ["Account", "Profile"] },
+  "/settings": { component: Settings, title: "Settings", breadcrumb: ["Account", "Settings"] }, // Fixed: Use actual component
 }
 
 export default function Page() {
@@ -205,8 +210,7 @@ export default function Page() {
           {/* Show the user's intended page immediately, with subtle loading if needed */}
           <CurrentComponent />
         </div>
-      </div>
+      </div>p
     </div>
   )
 }
-

@@ -14,6 +14,7 @@ const navigationItems = [
     title: "Overview",
     items: [
       { title: "Dashboard", url: "/dashboard", icon: "fas fa-home" },
+      { title: "AI Chat", url: "/chat", icon: "fas fa-robot" },
       { title: "Upload Documents", url: "/upload", icon: "fas fa-cloud-upload-alt" },
       { title: "My Documents", url: "/documents", icon: "fas fa-file-alt" },
     ],
@@ -25,7 +26,6 @@ const navigationItems = [
       { title: "Classification", url: "/classification", icon: "fas fa-tags" },
       { title: "Summarization", url: "/summarization", icon: "fas fa-brain" },
       { title: "Search", url: "/search", icon: "fas fa-search" },
-      { title: "AI Chat", url: "/chat", icon: "fas fa-robot" },
     ],
   },
   {

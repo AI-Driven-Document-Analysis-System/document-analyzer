@@ -100,10 +100,10 @@ async def send_message(request: ChatMessageRequest):
         
         # Check if summarization is needed
         messages = message_repo.list(UUID(conversation_id))
-        message_pairs = min(
-            len([m for m in messages if m.role == "user"]),
-            len([m for m in messages if m.role == "assistant"])
-        )
+        user_count = len([m for m in messages if m.role == "user"])
+        assistant_count = len([m for m in messages if m.role == "assistant"])
+        message_pairs = min(user_count, assistant_count)
+        
         
         # Trigger summarization if needed (16+ message pairs or high token usage)
         estimated_tokens = sum(len(m.content) // 4 for m in messages)
@@ -230,6 +230,9 @@ async def send_message(request: ChatMessageRequest):
                 "context_window_usage": context_window_usage
             }
         )
+        
+        # Title generation is now handled by database trigger
+        # No application-level title generation needed
         
         # Prepare response
         return ChatMessageResponse(
@@ -608,8 +611,23 @@ async def list_conversations_api(user_id: Optional[str] = None, limit: int = 50,
         if not user_id:
             raise HTTPException(status_code=400, detail="user_id is required")
         conversation_repo = get_conversations()
-        rows = conversation_repo.list(UUID(user_id), limit, offset)
-        return {"conversations": [{"id": str(r.id), "user_id": str(r.user_id) if r.user_id else None, "title": r.title, "created_at": r.created_at, "updated_at": r.updated_at} for r in rows]}
+        
+        # Use the optimized query that filters empty conversations
+        conversations = conversation_repo.list_with_message_counts(UUID(user_id), limit, offset)
+        
+        # Convert to proper format
+        formatted_conversations = []
+        for conv in conversations:
+            formatted_conversations.append({
+                "id": str(conv["id"]),
+                "user_id": str(conv["user_id"]) if conv["user_id"] else None,
+                "title": conv["title"],
+                "created_at": conv["created_at"].isoformat() if conv["created_at"] else None,
+                "updated_at": conv["updated_at"].isoformat() if conv["updated_at"] else None,
+                "message_count": conv["message_count"]
+            })
+        
+        return {"conversations": formatted_conversations}
     except Exception as e:
         logger.error(f"Error listing conversations: {e}")
         raise HTTPException(status_code=500, detail=str(e))
