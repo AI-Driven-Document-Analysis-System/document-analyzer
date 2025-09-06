@@ -17,6 +17,7 @@ from ..services.chat_service import get_chatbot_service, initialize_chatbot_serv
 from ..services.chatbot.rag.conversation_summarizer import ConversationSummarizer
 from ..core.config import settings
 from ..db.conversations import get_conversations, get_messages
+from ..core.database import db_manager
 from uuid import UUID
 
 # Configure logging
@@ -24,6 +25,90 @@ logger = logging.getLogger(__name__)
 
 # Create router
 router = APIRouter(prefix="/chat", tags=["Chat"])
+
+def extract_document_sources_from_langchain(source_documents):
+    """Extract document names directly from source documents returned by LangChain"""
+    formatted_sources = []
+    
+    if not source_documents:
+        logger.warning("No source documents provided")
+        return formatted_sources
+    
+    logger.info(f"Processing {len(source_documents)} source documents")
+    
+    # Extract unique document IDs from source documents
+    used_doc_ids = set()
+    for source_doc in source_documents:
+        # Handle both LangChain Document objects and dict objects
+        if hasattr(source_doc, 'metadata'):
+            metadata = source_doc.metadata
+        else:
+            metadata = source_doc.get('metadata', {})
+            
+        doc_id = metadata.get('document_id')
+        filename = metadata.get('filename', '')
+        
+        if doc_id:
+            used_doc_ids.add(doc_id)
+            logger.info(f"Found source document: {doc_id} ({filename})")
+    
+    if not used_doc_ids:
+        logger.warning("No document IDs found in source documents")
+        return formatted_sources
+    
+    # Query PostgreSQL to get document names
+    formatted_sources = []
+    try:
+        # Convert used document IDs to list for SQL query
+        doc_ids_list = list(used_doc_ids)
+        placeholders = ','.join(['%s'] * len(doc_ids_list))
+        
+        # Use a more direct database query approach
+        query = f"""
+            SELECT id, original_filename 
+            FROM documents 
+            WHERE id IN ({placeholders})
+        """
+        
+        with db_manager.get_cursor() as cursor:
+            cursor.execute(query, doc_ids_list)
+            results = cursor.fetchall()
+            
+            logger.info(f"Database query returned {len(results)} results")
+            
+            # Process results immediately
+            for row in results:
+                try:
+                    # Extract values based on row type
+                    if isinstance(row, dict):
+                        filename = row['original_filename']
+                    elif hasattr(row, 'original_filename'):
+                        filename = row.original_filename
+                    else:
+                        filename = row[1]  # Fallback to index
+                    
+                    logger.info(f"Extracted filename: {filename}")
+                    formatted_sources.append({
+                        'title': filename,
+                        'type': 'document',
+                        'confidence': 0.8
+                    })
+                except Exception as row_error:
+                    logger.error(f"Error processing row {row}: {row_error}")
+            
+        logger.info(f"Successfully processed {len(formatted_sources)} document sources")
+                
+    except Exception as e:
+        logger.error(f"Error fetching document names: {e}")
+        # Fallback to showing document IDs if database query fails
+        for doc_id in used_doc_ids:
+            formatted_sources.append({
+                'title': f"Document {str(doc_id)[:8]}...",
+                'type': 'document', 
+                'confidence': 0.8
+            })
+    
+    return formatted_sources
 
 # Initialize chat service on module load
 def initialize_chat_service():
@@ -191,6 +276,7 @@ async def send_message(request: ChatMessageRequest):
                     user_id=request.user_id
                 )
                 ai_response = result['response']
+                sources_data = result.get('sources', [])
             except Exception as primary_err:
                 logger.warning(f"Primary provider failed: {primary_err}")
                 # Provider fallback: switch between groq and gemini if keys exist
@@ -211,14 +297,31 @@ async def send_message(request: ChatMessageRequest):
                     user_id=request.user_id
                 )
                 ai_response = result['response']
+                sources_data = result.get('sources', [])
 
         except HTTPException:
             raise
         except Exception as e:
             logger.exception("Failed to generate AI response, falling back to mock after retries")
             ai_response = f"I apologize, but I'm currently unable to process your request due to a technical issue. Please try again later. Your message was: {request.message}"
+            sources_data = []
         
-        # Store assistant message in database
+        # Extract and format sources from response using LangChain's built-in source tracking
+        formatted_sources = []
+        if 'sources_data' in locals() and sources_data:
+            # Try to get source documents from LangChain result first
+            source_documents = result.get('source_documents', [])
+            
+            # If no source_documents in result, fallback to original sources_data
+            if not source_documents and sources_data:
+                logger.info("No source_documents in LangChain result, using fallback sources_data")
+                formatted_sources = extract_document_sources_from_langchain(sources_data)
+            elif source_documents:
+                formatted_sources = extract_document_sources_from_langchain(source_documents)
+            else:
+                logger.warning("No sources available from either LangChain result or sources_data")
+        
+        # Store assistant message in database with sources
         assistant_message = message_repo.add(
             conversation_id=UUID(conversation_id),
             role="assistant", 
@@ -227,7 +330,8 @@ async def send_message(request: ChatMessageRequest):
                 "processing_time": 0.1,
                 "needs_summarization": needs_summarization,
                 "message_pairs": message_pairs,
-                "context_window_usage": context_window_usage
+                "context_window_usage": context_window_usage,
+                "sources": formatted_sources  # Store sources in metadata
             }
         )
         
@@ -238,7 +342,7 @@ async def send_message(request: ChatMessageRequest):
         return ChatMessageResponse(
             response=ai_response,
             conversation_id=conversation_id,
-            sources=[],  # TODO: Extract sources from response
+            sources=formatted_sources,
             metadata={
                 "processing_time": 0.1,
                 "user_id": request.user_id,

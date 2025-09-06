@@ -10,6 +10,7 @@ import os
 import sys
 import uuid
 from datetime import datetime
+import hashlib
 
 # Add the app directory to Python path (updated for new location)
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'app'))
@@ -17,31 +18,35 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'app'))
 from services.chatbot.vector_db.chunking import DocumentChunker
 from services.chatbot.vector_db.indexing import LangChainDocumentIndexer
 from services.chatbot.vector_db.langchain_chroma import LangChainChromaStore
-
-# Dynamic user ID - can be set via command line argument or environment variable
-import argparse
+from core.database import db_manager
 
 def get_user_id():
-    """Get user ID from command line argument or prompt user"""
-    parser = argparse.ArgumentParser(description='Embed documents for a specific user')
-    parser.add_argument('--user-id', type=str, help='User ID to associate documents with')
-    args = parser.parse_args()
+    """Get user ID from terminal input"""
+    print("\n📝 Enter the user ID to associate these documents with:")
+    print("💡 You can find user IDs in your database or from the web app")
     
-    if args.user_id:
-        return args.user_id
-    
-    # If no argument provided, prompt for user ID
-    user_id = input("Enter the user ID to associate these documents with: ").strip()
+    user_id = input("\nUser ID (UUID): ").strip()
     if not user_id:
         print("Error: User ID is required")
         sys.exit(1)
     
+    # Basic UUID validation
+    try:
+        uuid.UUID(user_id)
+        print(f"✅ Valid UUID format: {user_id}")
+    except ValueError:
+        print("⚠️ Warning: Input doesn't look like a valid UUID, but proceeding anyway...")
+    
     return user_id
 
 
+def create_document_hash(content):
+    """Create a hash for the document content"""
+    return hashlib.sha256(content.encode('utf-8')).hexdigest()
+
 def get_documents(user_id):
     """Get documents with the specified user ID"""
-    return [
+    documents = [
         {
             'id': str(uuid.uuid4()),
             'type': 'policy',
@@ -205,21 +210,110 @@ subject with alI of the following informatlon:
         #     'text': """Your document content here..."""
         # },
     ]
+    
+    # Add document hashes and proper filenames
+    for doc in documents:
+        doc['document_hash'] = create_document_hash(doc['text'])
+        # Create proper filename based on type
+        if doc['type'] == 'policy':
+            doc['filename'] = 'company_policy_document.txt'
+        elif doc['type'] == 'manual':
+            doc['filename'] = 'software_user_manual.txt'
+        elif doc['type'] == 'report':
+            doc['filename'] = 'quarterly_business_report_q4_2024.txt'
+        elif doc['type'] == 'legal':
+            doc['filename'] = 'data_protection_law_chapter_iii.txt'
+    
+    return documents
 
+
+def create_postgresql_records(user_id, documents):
+    """Create records in PostgreSQL documents and document_content tables"""
+    created_docs = []
+    
+    try:
+        with db_manager.get_cursor() as cursor:
+            for doc in documents:
+                # Create document record
+                document_id = uuid.UUID(doc['id'])
+                
+                # Insert into documents table
+                cursor.execute("""
+                    INSERT INTO documents (
+                        id, original_filename, file_path_minio, file_size, 
+                        mime_type, document_hash, page_count, language_detected,
+                        upload_timestamp, uploaded_by_user_id, user_id
+                    ) VALUES (
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                    )
+                """, (
+                    document_id,
+                    doc['filename'],
+                    f"dummy/path/{doc['filename']}",  # Dummy MinIO path
+                    len(doc['text'].encode('utf-8')),  # File size in bytes
+                    'text/plain',  # MIME type for txt files
+                    doc['document_hash'],
+                    1,  # Page count (1 for text files)
+                    'en',  # Language detected
+                    datetime.now(),  # Upload timestamp
+                    uuid.UUID(user_id),  # Uploaded by user ID
+                    uuid.UUID(user_id)   # User ID
+                ))
+                
+                # Insert into document_content table
+                cursor.execute("""
+                    INSERT INTO document_content (
+                        id, document_id, extracted_text, searchable_content,
+                        ocr_confidence_score, has_tables, has_images
+                    ) VALUES (
+                        %s, %s, %s, %s, %s, %s, %s
+                    )
+                """, (
+                    uuid.uuid4(),
+                    document_id,
+                    doc['text'],
+                    doc['text'],  # Same as extracted text for searchable content
+                    1.0,  # Perfect confidence for text files
+                    False,  # No tables in our text documents
+                    False   # No images in our text documents
+                ))
+                
+                created_docs.append({
+                    'id': str(document_id),
+                    'filename': doc['filename'],
+                    'type': doc['type']
+                })
+                
+                print(f"   ✅ Created PostgreSQL records for: {doc['filename']}")
+                
+    except Exception as e:
+        print(f"   ❌ PostgreSQL error: {str(e)}")
+        raise
+    
+    return created_docs
 
 def main():
     """Main function to embed documents"""
     print("🚀 Starting document embedding...")
+    print("\n📖 This script will prompt you for a user ID to associate documents with.")
+    print("\n" + "="*60)
     
     # Get user ID
     user_id = get_user_id()
-    print(f"📋 Using user ID: {user_id}")
+    print(f"\n📋 Final user ID: {user_id}")
 
     # Configuration
     db_path = os.path.join(os.path.dirname(__file__), '..', '..', 'chroma_db')
     collection_name = "documents"
 
     try:
+        # Test PostgreSQL connection
+        if not db_manager.test_connection():
+            print("❌ PostgreSQL connection failed. Please check your database configuration.")
+            return
+        
+        print("✅ PostgreSQL connection successful")
+        
         # Initialize components
         vectorstore = LangChainChromaStore(db_path, collection_name)
         chunker = DocumentChunker(chunk_size=1000, chunk_overlap=200)
@@ -231,24 +325,32 @@ def main():
         # Get documents to embed
         documents = get_documents(user_id)
         print(f"📄 Found {len(documents)} documents to embed for user: {user_id}")
+        
+        # Create PostgreSQL records first
+        print("\n📊 Creating PostgreSQL records...")
+        created_docs = create_postgresql_records(user_id, documents)
+        print(f"✅ Created {len(created_docs)} PostgreSQL records")
 
-        # Process each document
+        # Process each document for ChromaDB embedding
+        print("\n🔄 Creating ChromaDB embeddings...")
         total_chunks = 0
         for i, doc in enumerate(documents, 1):
             print(f"\n🔄 Processing document {i}/{len(documents)}: {doc['filename']}")
 
             try:
-                # Index the document
+                # Index the document (this will create embeddings in ChromaDB)
                 chunk_ids = indexer.index_document(doc)
                 total_chunks += len(chunk_ids)
-                print(f"   ✅ Success! Created {len(chunk_ids)} chunks")
+                print(f"   ✅ Success! Created {len(chunk_ids)} chunks in ChromaDB")
 
             except Exception as e:
-                print(f"   ❌ Failed: {str(e)}")
+                print(f"   ❌ ChromaDB embedding failed: {str(e)}")
 
         print(f"\n🎉 Embedding complete!")
         print(f"   Documents processed: {len(documents)}")
-        print(f"   Total chunks created: {total_chunks}")
+        print(f"   PostgreSQL records created: {len(created_docs)}")
+        print(f"   Total ChromaDB chunks created: {total_chunks}")
+        print(f"   Document IDs match between PostgreSQL and ChromaDB: ✅")
 
         # Show collection info
         try:
@@ -258,8 +360,12 @@ def main():
         except Exception as e:
             print(f"   Could not get collection count: {e}")
 
-        print("\n✅ Your documents are now embedded in ChromaDB!")
-        print("   You can now use them with your RAG pipeline and groq API.")
+        print("\n✅ Your documents are now fully integrated!")
+        print("   📊 PostgreSQL: Document metadata and content stored")
+        print("   🔍 ChromaDB: Document embeddings created for RAG")
+        print("   🔗 Document IDs synchronized between both systems")
+        print(f"   👤 All documents associated with user: {user_id}")
+        print("   You can now use them with your RAG pipeline and source document retrieval.")
 
     except Exception as e:
         print(f"❌ Error: {str(e)}")

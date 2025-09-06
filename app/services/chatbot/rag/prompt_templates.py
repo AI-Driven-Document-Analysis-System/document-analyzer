@@ -32,7 +32,7 @@ Chat History:
 
 Question: {question}
 
-Answer the question directly. If the context contains relevant information, use it. If not, provide a helpful answer based on your knowledge. Be concise and natural in your responses.
+Answer the question directly and naturally. Use the document context if it's relevant, otherwise provide a helpful answer based on your knowledge. Do not mention what is or isn't in the context - just provide the answer.
 
 Answer:"""
 

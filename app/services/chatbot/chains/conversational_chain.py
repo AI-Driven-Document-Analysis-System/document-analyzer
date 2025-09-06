@@ -1,4 +1,4 @@
-from langchain.chains import ConversationalRetrievalChain
+from langchain.chains import ConversationalRetrievalChain, RetrievalQAWithSourcesChain
 from langchain.memory import ConversationBufferWindowMemory, ConversationSummaryBufferMemory
 from langchain.prompts import PromptTemplate
 from langchain.schema import BaseRetriever
@@ -56,8 +56,27 @@ class CustomConversationalChain:
             input_variables=["context", "chat_history", "question"]
         )
 
-        # Create the conversational retrieval chain with custom configuration
-        # This combines the LLM, retriever, memory, and custom prompt into a single pipeline
+        # Create the retrieval QA chain with sources for accurate source tracking
+        # This chain explicitly tracks which sources the LLM actually uses
+        
+        # Custom document prompt that uses 'source' field (now added to metadata)
+        document_prompt = PromptTemplate(
+            input_variables=["page_content", "source"],
+            template="Content: {page_content}\nSource: {source}"
+        )
+        
+        self.sources_chain = RetrievalQAWithSourcesChain.from_chain_type(
+            llm=self.llm,
+            chain_type="stuff",
+            retriever=self.retriever,
+            return_source_documents=True,
+            verbose=True,
+            chain_type_kwargs={
+                "document_prompt": document_prompt
+            }
+        )
+        
+        # Keep the conversational chain for memory management
         self.chain = ConversationalRetrievalChain.from_llm(
             llm=self.llm,
             retriever=self.retriever,
@@ -87,19 +106,63 @@ class CustomConversationalChain:
                 - source_documents: List of source documents used for the response
                 - chat_history: Current conversation history from memory
         """
-        # Process the question through the conversational chain asynchronously
-        if callbacks:
-            result = await self.chain.ainvoke(
-                {"question": question},
-                config={"callbacks": callbacks}
-            )
+        # First check if we have relevant documents by doing a similarity search
+        relevant_docs = self.retriever.get_relevant_documents(question)
+        
+        # Check if the retrieved documents are actually relevant (basic relevance check)
+        has_relevant_docs = False
+        if relevant_docs:
+            # More strict heuristic: require meaningful keyword overlap
+            question_words = set(word.lower() for word in question.split() if len(word) > 2)  # Filter short words
+            
+            for doc in relevant_docs[:3]:  # Check top 3 documents
+                doc_words = set(word.lower() for word in doc.page_content.split() if len(word) > 2)
+                
+                # Calculate overlap ratio
+                overlap = question_words.intersection(doc_words)
+                overlap_ratio = len(overlap) / len(question_words) if question_words else 0
+                
+                # Require at least 25% keyword overlap for relevance (increased threshold)
+                if overlap_ratio >= 0.25:
+                    has_relevant_docs = True
+                    break
+        
+        if has_relevant_docs:
+            # Use LangChain's RetrievalQAWithSourcesChain for document-based questions
+            if callbacks:
+                sources_result = await self.sources_chain.ainvoke(
+                    {"question": question},
+                    config={"callbacks": callbacks}
+                )
+            else:
+                sources_result = await self.sources_chain.ainvoke({"question": question})
+            
+            output_text = sources_result.get("answer") or sources_result.get("result", "")
+            source_documents = sources_result.get("source_documents", [])
         else:
-            result = await self.chain.ainvoke({"question": question})
+            # Use conversational chain for general knowledge questions
+            if callbacks:
+                conv_result = await self.chain.ainvoke(
+                    {"question": question},
+                    config={"callbacks": callbacks}
+                )
+            else:
+                conv_result = await self.chain.ainvoke({"question": question})
+            
+            output_text = conv_result.get("answer") or conv_result.get("result", "")
+            source_documents = []  # No sources for general knowledge
+        
+        # Update memory with the conversation
+        self.memory.save_context(
+            {"input": question},
+            {"answer": output_text}
+        )
 
         # Format the response with all relevant information
         return {
-            "answer": result["answer"],
-            "source_documents": result["source_documents"],
+            "answer": output_text,
+            "source_documents": source_documents,
+            "sources": "",
             "chat_history": self.memory.chat_memory.messages
         }
 
@@ -121,19 +184,63 @@ class CustomConversationalChain:
                 - source_documents: List of source documents used for the response
                 - chat_history: Current conversation history from memory
         """
-        # Process the question through the conversational chain synchronously
-        if callbacks:
-            result = self.chain.invoke(
-                {"question": question},
-                config={"callbacks": callbacks}
-            )
+        # First check if we have relevant documents by doing a similarity search
+        relevant_docs = self.retriever.get_relevant_documents(question)
+        
+        # Check if the retrieved documents are actually relevant (basic relevance check)
+        has_relevant_docs = False
+        if relevant_docs:
+            # More strict heuristic: require meaningful keyword overlap
+            question_words = set(word.lower() for word in question.split() if len(word) > 2)  # Filter short words
+            
+            for doc in relevant_docs[:3]:  # Check top 3 documents
+                doc_words = set(word.lower() for word in doc.page_content.split() if len(word) > 2)
+                
+                # Calculate overlap ratio
+                overlap = question_words.intersection(doc_words)
+                overlap_ratio = len(overlap) / len(question_words) if question_words else 0
+                
+                # Require at least 50% keyword overlap for relevance (increased threshold)
+                if overlap_ratio >= 0.5:
+                    has_relevant_docs = True
+                    break
+        
+        if has_relevant_docs:
+            # Use LangChain's RetrievalQAWithSourcesChain for document-based questions
+            if callbacks:
+                sources_result = self.sources_chain.invoke(
+                    {"question": question},
+                    config={"callbacks": callbacks}
+                )
+            else:
+                sources_result = self.sources_chain.invoke({"question": question})
+            
+            output_text = sources_result.get("answer") or sources_result.get("result", "")
+            source_documents = sources_result.get("source_documents", [])
         else:
-            result = self.chain.invoke({"question": question})
+            # Use conversational chain for general knowledge questions
+            if callbacks:
+                conv_result = self.chain.invoke(
+                    {"question": question},
+                    config={"callbacks": callbacks}
+                )
+            else:
+                conv_result = self.chain.invoke({"question": question})
+            
+            output_text = conv_result.get("answer") or conv_result.get("result", "")
+            source_documents = []  # No sources for general knowledge
+        
+        # Update memory with the conversation
+        self.memory.save_context(
+            {"input": question},
+            {"answer": output_text}
+        )
 
         # Format the response with all relevant information
         return {
-            "answer": result["answer"],
-            "source_documents": result["source_documents"],
+            "answer": output_text,
+            "source_documents": source_documents,
+            "sources": "",
             "chat_history": self.memory.chat_memory.messages
         }
 

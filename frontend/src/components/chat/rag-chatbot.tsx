@@ -349,7 +349,7 @@ export function RAGChatbot() {
           type: msg.role === 'user' ? 'user' : 'assistant',
           content: msg.content || msg.message,
           timestamp: new Date((msg.timestamp || msg.created_at || Date.now()) + (typeof (msg.timestamp || msg.created_at) === 'string' ? 'Z' : '')),
-          sources: msg.sources || []
+          sources: msg.sources || (msg.metadata?.sources) || []
         }))
         
         setMessages(transformedMessages)
