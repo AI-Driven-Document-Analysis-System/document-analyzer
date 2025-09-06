@@ -108,24 +108,30 @@ class CustomConversationalChain:
         """
         # First check if we have relevant documents by doing a similarity search
         relevant_docs = self.retriever.get_relevant_documents(question)
+        print(f"DEBUG: Retrieved {len(relevant_docs)} documents for question: {question}")
         
-        # Check if the retrieved documents are actually relevant (basic relevance check)
+        # Debug: Add logging to see what's happening
         has_relevant_docs = False
         if relevant_docs:
-            # More strict heuristic: require meaningful keyword overlap
-            question_words = set(word.lower() for word in question.split() if len(word) > 2)  # Filter short words
-            
-            for doc in relevant_docs[:3]:  # Check top 3 documents
-                doc_words = set(word.lower() for word in doc.page_content.split() if len(word) > 2)
+            print(f"DEBUG: Found {len(relevant_docs)} relevant docs")
+            try:
+                # Use similarity search with score to get relevance scores
+                scored_docs = self.retriever.vectorstore.similarity_search_with_score(question, k=3)
+                print(f"DEBUG: Got {len(scored_docs)} scored docs")
                 
-                # Calculate overlap ratio
-                overlap = question_words.intersection(doc_words)
-                overlap_ratio = len(overlap) / len(question_words) if question_words else 0
-                
-                # Require at least 25% keyword overlap for relevance (increased threshold)
-                if overlap_ratio >= 0.25:
-                    has_relevant_docs = True
-                    break
+                # Check if any document has a good similarity score (lower score = more similar)
+                for doc, score in scored_docs:
+                    print(f"DEBUG: Doc score: {score}")
+                    if score < 1.5:  # Extremely permissive threshold for testing
+                        has_relevant_docs = True
+                        print(f"DEBUG: Document passed threshold with score {score}")
+                        break
+                        
+            except Exception as e:
+                print(f"DEBUG: Exception in similarity search: {e}")
+                # Fallback: Always show sources if documents were retrieved
+                has_relevant_docs = True
+                print("DEBUG: Using fallback - showing sources")
         
         if has_relevant_docs:
             # Use LangChain's RetrievalQAWithSourcesChain for document-based questions
@@ -139,6 +145,9 @@ class CustomConversationalChain:
             
             output_text = sources_result.get("answer") or sources_result.get("result", "")
             source_documents = sources_result.get("source_documents", [])
+            # Limit to only the most relevant source
+            if source_documents:
+                source_documents = [source_documents[0]]
         else:
             # Use conversational chain for general knowledge questions
             if callbacks:
@@ -186,24 +195,30 @@ class CustomConversationalChain:
         """
         # First check if we have relevant documents by doing a similarity search
         relevant_docs = self.retriever.get_relevant_documents(question)
+        print(f"DEBUG: Retrieved {len(relevant_docs)} documents for question: {question}")
         
-        # Check if the retrieved documents are actually relevant (basic relevance check)
+        # Debug: Add logging to see what's happening
         has_relevant_docs = False
         if relevant_docs:
-            # More strict heuristic: require meaningful keyword overlap
-            question_words = set(word.lower() for word in question.split() if len(word) > 2)  # Filter short words
-            
-            for doc in relevant_docs[:3]:  # Check top 3 documents
-                doc_words = set(word.lower() for word in doc.page_content.split() if len(word) > 2)
+            print(f"DEBUG: Found {len(relevant_docs)} relevant docs")
+            try:
+                # Use similarity search with score to get relevance scores
+                scored_docs = self.retriever.vectorstore.similarity_search_with_score(question, k=3)
+                print(f"DEBUG: Got {len(scored_docs)} scored docs")
                 
-                # Calculate overlap ratio
-                overlap = question_words.intersection(doc_words)
-                overlap_ratio = len(overlap) / len(question_words) if question_words else 0
-                
-                # Require at least 50% keyword overlap for relevance (increased threshold)
-                if overlap_ratio >= 0.5:
-                    has_relevant_docs = True
-                    break
+                # Check if any document has a good similarity score (lower score = more similar)
+                for doc, score in scored_docs:
+                    print(f"DEBUG: Doc score: {score}")
+                    if score < 1.5:  # Extremely permissive threshold for testing
+                        has_relevant_docs = True
+                        print(f"DEBUG: Document passed threshold with score {score}")
+                        break
+                        
+            except Exception as e:
+                print(f"DEBUG: Exception in similarity search: {e}")
+                # Fallback: Always show sources if documents were retrieved
+                has_relevant_docs = True
+                print("DEBUG: Using fallback - showing sources")
         
         if has_relevant_docs:
             # Use LangChain's RetrievalQAWithSourcesChain for document-based questions
@@ -217,6 +232,9 @@ class CustomConversationalChain:
             
             output_text = sources_result.get("answer") or sources_result.get("result", "")
             source_documents = sources_result.get("source_documents", [])
+            # Limit to only the most relevant source
+            if source_documents:
+                source_documents = [source_documents[0]]
         else:
             # Use conversational chain for general knowledge questions
             if callbacks:

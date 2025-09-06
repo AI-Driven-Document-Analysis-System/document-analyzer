@@ -56,58 +56,28 @@ def extract_document_sources_from_langchain(source_documents):
         logger.warning("No document IDs found in source documents")
         return formatted_sources
     
-    # Query PostgreSQL to get document names
-    formatted_sources = []
-    try:
-        # Convert used document IDs to list for SQL query
-        doc_ids_list = list(used_doc_ids)
-        placeholders = ','.join(['%s'] * len(doc_ids_list))
+    # Use filename from metadata directly instead of database lookup
+    for doc_id in used_doc_ids:
+        # Find the original source document to get filename
+        filename = None
+        for source_doc in source_documents:
+            if hasattr(source_doc, 'metadata'):
+                metadata = source_doc.metadata
+            else:
+                metadata = source_doc.get('metadata', {})
+            
+            if metadata.get('document_id') == doc_id:
+                filename = metadata.get('filename', f"Document {str(doc_id)[:8]}...")
+                break
         
-        # Use a more direct database query approach
-        query = f"""
-            SELECT id, original_filename 
-            FROM documents 
-            WHERE id IN ({placeholders})
-        """
-        
-        with db_manager.get_cursor() as cursor:
-            cursor.execute(query, doc_ids_list)
-            results = cursor.fetchall()
-            
-            logger.info(f"Database query returned {len(results)} results")
-            
-            # Process results immediately
-            for row in results:
-                try:
-                    # Extract values based on row type
-                    if isinstance(row, dict):
-                        filename = row['original_filename']
-                    elif hasattr(row, 'original_filename'):
-                        filename = row.original_filename
-                    else:
-                        filename = row[1]  # Fallback to index
-                    
-                    logger.info(f"Extracted filename: {filename}")
-                    formatted_sources.append({
-                        'title': filename,
-                        'type': 'document',
-                        'confidence': 0.8
-                    })
-                except Exception as row_error:
-                    logger.error(f"Error processing row {row}: {row_error}")
-            
-        logger.info(f"Successfully processed {len(formatted_sources)} document sources")
-                
-    except Exception as e:
-        logger.error(f"Error fetching document names: {e}")
-        # Fallback to showing document IDs if database query fails
-        for doc_id in used_doc_ids:
+        if filename:
             formatted_sources.append({
-                'title': f"Document {str(doc_id)[:8]}...",
-                'type': 'document', 
+                'title': filename,
+                'type': 'document',
                 'confidence': 0.8
             })
     
+    logger.info(f"Successfully processed {len(formatted_sources)} document sources")
     return formatted_sources
 
 # Initialize chat service on module load
@@ -308,12 +278,12 @@ async def send_message(request: ChatMessageRequest):
         
         # Extract and format sources from response using LangChain's built-in source tracking
         formatted_sources = []
-        if 'sources_data' in locals() and sources_data:
+        if 'result' in locals() and result:
             # Try to get source documents from LangChain result first
             source_documents = result.get('source_documents', [])
             
-            # If no source_documents in result, fallback to original sources_data
-            if not source_documents and sources_data:
+            # If no source_documents in result, fallback to sources_data
+            if not source_documents and 'sources_data' in locals() and sources_data:
                 logger.info("No source_documents in LangChain result, using fallback sources_data")
                 formatted_sources = extract_document_sources_from_langchain(sources_data)
             elif source_documents:
