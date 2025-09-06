@@ -3,6 +3,7 @@ from langchain.memory import ConversationBufferWindowMemory, ConversationSummary
 from langchain.prompts import PromptTemplate
 from langchain.schema import BaseRetriever
 from typing import Any, Dict, List, Optional
+from ..rag.prompt_templates import PromptTemplates
 
 
 class CustomConversationalChain:
@@ -51,16 +52,7 @@ class CustomConversationalChain:
         # Define custom prompt template for document analysis
         # This prompt is specifically designed for document Q&A with context awareness
         self.custom_prompt = PromptTemplate(
-            template="""You are an intelligent document analysis assistant. Use the following pieces of context to answer the question at the end. If you don't know the answer based on the context, just say that you don't have enough information.
-
-Context:
-{context}
-
-Chat History (including conversation summary if available):
-{chat_history}
-
-Question: {question}
-Answer:""",
+            template=PromptTemplates.CONVERSATIONAL_TEMPLATE,
             input_variables=["context", "chat_history", "question"]
         )
 

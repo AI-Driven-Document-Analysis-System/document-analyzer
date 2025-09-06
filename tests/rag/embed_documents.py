@@ -18,6 +18,9 @@ from services.chatbot.vector_db.chunking import DocumentChunker
 from services.chatbot.vector_db.indexing import LangChainDocumentIndexer
 from services.chatbot.vector_db.langchain_chroma import LangChainChromaStore
 
+# Test user ID from database
+TEST_USER_ID = "79d0bed5-c1c1-4faf-82d4-fed1a28472d5"
+
 
 def get_documents():
     """Hardcode your documents here"""
@@ -27,7 +30,7 @@ def get_documents():
             'type': 'policy',
             'filename': 'company_policy.txt',
             'upload_date': datetime.now().isoformat(),
-            'user_id': 'user-1',
+            'user_id': TEST_USER_ID,
             'text': """Company Policy Document
 
 1. Introduction
@@ -59,7 +62,7 @@ Following these policies ensures a productive and professional work environment 
             'type': 'manual',
             'filename': 'software_manual.txt',
             'upload_date': datetime.now().isoformat(),
-            'user_id': 'user-1',
+            'user_id': TEST_USER_ID,
             'text': """Software User Manual
 
 Getting Started
@@ -104,7 +107,7 @@ For additional help, visit our support portal or contact our technical team."""
             'type': 'report',
             'filename': 'quarterly_report.txt',
             'upload_date': datetime.now().isoformat(),
-            'user_id': 'user-1',
+            'user_id': TEST_USER_ID,
             'text': """Quarterly Business Report - Q4 2024
 
 Executive Summary
@@ -146,7 +149,7 @@ Recommendations
             'type': 'legal',
             'filename': 'data_protection_law_ocr.txt',
             'upload_date': datetime.now().isoformat(),
-            'user_id': 'admin',
+            'user_id': TEST_USER_ID,
             'text': """CHAPTER III — OBLIGATIONS OF DATA CONTROLLERS
 
 Sect1on 14. — Dutes Relatlng to LawfuI Processing
@@ -235,7 +238,7 @@ def main():
             print(f"   Could not get collection count: {e}")
 
         print("\n✅ Your documents are now embedded in ChromaDB!")
-        print("   You can now use them with your RAG pipeline and Gemini API.")
+        print("   You can now use them with your RAG pipeline and groq API.")
 
     except Exception as e:
         print(f"❌ Error: {str(e)}")

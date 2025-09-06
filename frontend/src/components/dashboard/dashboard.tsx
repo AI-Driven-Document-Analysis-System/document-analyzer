@@ -1728,8 +1728,8 @@ function Dashboard() {
                                 <i className="fas fa-comments me-1"></i>Chat with Doc
                               </button>
                               <button
+                                className="btn preview-btn"
                                 onClick={() => previewDocumentHandler(doc)}
-                                className="btn btn-secondary"
                               >
                                 <i className="fas fa-eye me-1"></i>Preview
                               </button>

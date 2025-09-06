@@ -907,6 +907,32 @@ html {
   color: inherit;
 }
 
+/* Preview Button - Gray background, dark text/icon */
+.preview-btn {
+  background-color: #6c757d;
+  color: #ffffff;
+  border: 2px solid #6c757d;
+  padding: 8px 16px;
+  border-radius: 25px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(108, 117, 125, 0.2);
+}
+
+.preview-btn:hover {
+  background-color: #5c636a;
+  color: #ffffff;
+  border-color: #5c636a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+
+.preview-btn i {
+  margin-right: 6px;
+  color: inherit;
+}
+
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;

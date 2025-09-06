@@ -28,10 +28,6 @@ async def upload_document(
 ):
     """Upload a document for the current user."""
     try:
-        print("=" * 50)
-        print("DEBUG: upload_document endpoint called")
-        print(f"File: {file.filename}, Size: {file.size}, Content-Type: {file.content_type}")
-        print(f"Current user: {current_user}")
         
         # Validate file
         if not file.filename:
@@ -42,23 +38,16 @@ async def upload_document(
         header_user_id = request.headers.get('x-user-id') or request.headers.get('X-User-Id')
         if override_user_id and override_user_id.strip():
             user_id = override_user_id.strip()
-            print(f"Using user_id from form override: {user_id}")
         elif header_user_id and header_user_id.strip():
             user_id = header_user_id.strip()
-            print(f"Using user_id from header override: {user_id}")
         elif hasattr(current_user, 'id') and current_user.id is not None:
             user_id = str(current_user.id)
-            print(f"Using user_id from JWT: {user_id}")
         else:
             raise HTTPException(status_code=400, detail="No user identifier provided")
-        
-        print(f"Using user_id: {user_id}")
         
         # Upload document
         result = await document_service.upload_document(file, user_id)
         
-        print(f"Upload result: {result}")
-        print("=" * 50)
         
         return {
             "success": True,
@@ -75,10 +64,7 @@ async def upload_document(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Upload error: {e}")
-        import traceback
-        print("Full traceback:")
-        print(traceback.format_exc())
+        logger.error(f"Upload error: {e}")
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 @router.get("/", response_model=dict)
@@ -89,24 +75,15 @@ async def get_documents(
 ):
     """Get all documents for the current user."""
     try:
-        print("=" * 50)
-        print("DEBUG: get_documents endpoint called")
-        print(f"Current user received: {current_user}")
-        print(f"Limit: {limit}, Offset: {offset}")
         
         # Check if current_user is valid
         if not current_user:
-            print("ERROR: current_user is None or empty")
             raise HTTPException(status_code=400, detail="No user information provided")
         
         # Extract user ID from UserResponse (UUID only)
         if not hasattr(current_user, 'id') or current_user.id is None:
-            print(f"ERROR: No user ID found in UserResponse attributes")
             raise HTTPException(status_code=400, detail="Invalid user token - no user ID found")
         user_id = str(current_user.id)
-        print(f"Using user_id (UUID): {user_id}")
-        
-        print(f"Using user_id: {user_id}")
         
         # Test database connection and get documents
         with db_manager.get_connection() as conn:
@@ -123,11 +100,9 @@ async def get_documents(
                     ORDER BY d.upload_timestamp DESC
                     LIMIT %s OFFSET %s
                 """
-                print(f"Executing query: {query}")
                 cursor.execute(query, (user_id, limit, offset))
                 documents = cursor.fetchall()
                 
-                print(f"Query returned {len(documents)} documents")
                 
                 # Get total count
                 cursor.execute("SELECT COUNT(*) FROM documents WHERE user_id = %s", (str(user_id),))
@@ -136,7 +111,6 @@ async def get_documents(
                 # Convert to list of dictionaries
                 result = []
                 for i, doc in enumerate(documents):
-                    print(f"Processing document {i+1}: {doc}")
                     doc_dict = {
                         "id": doc[0],
                         "original_filename": doc[1],
@@ -150,8 +124,6 @@ async def get_documents(
                     }
                     result.append(doc_dict)
                 
-                print(f"Final result: {result}")
-                print("=" * 50)
                 
                 return {
                     "documents": result,
@@ -166,10 +138,7 @@ async def get_documents(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"UNEXPECTED ERROR: {e}")
-        import traceback
-        print("Full traceback:")
-        print(traceback.format_exc())
+        logger.error(f"Unexpected error in get_documents: {e}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @router.get("/by-user", response_model=dict)

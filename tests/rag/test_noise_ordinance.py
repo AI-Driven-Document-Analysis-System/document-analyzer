@@ -47,7 +47,7 @@ RESET = '\033[0m'
 if not api_key:
     print(f"{GREEN}GROQ_API_KEY not set in .env; skipping Groq test.{RESET}")
 else:
-    vectorstore = LangChainChromaStore("./test_chroma_db", "groq_docs")
+    vectorstore = LangChainChromaStore("./chroma_db", "groq_docs")
     llm = LLMFactory.create_groq_llm(api_key, model="llama-3.1-8b-instant")
     retriever = vectorstore.as_retriever()
     chain = CustomConversationalChain(llm, retriever)
