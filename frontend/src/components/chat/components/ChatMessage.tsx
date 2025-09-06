@@ -37,7 +37,7 @@ export function ChatMessage({ message, onSourcesClick }: ChatMessageProps) {
           <div className="p-4 rounded-lg" style={{ backgroundColor: '#f3f4f6', color: '#111827' }}>
             <p className="text-sm leading-relaxed">{message.content}</p>
           </div>
-          {message.sources && (
+          {message.sources && message.sources.length > 0 && (
             <div style={{ marginTop: '12px' }}>
               <p style={{ fontSize: '12px', color: '#6b7280', fontWeight: '500', margin: '0 0 8px 0' }}>Sources:</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>

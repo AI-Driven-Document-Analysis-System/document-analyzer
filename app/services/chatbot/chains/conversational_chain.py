@@ -1,4 +1,4 @@
-from langchain.chains import ConversationalRetrievalChain
+from langchain.chains import ConversationalRetrievalChain, RetrievalQAWithSourcesChain
 from langchain.memory import ConversationBufferWindowMemory, ConversationSummaryBufferMemory
 from langchain.prompts import PromptTemplate
 from langchain.schema import BaseRetriever
@@ -56,8 +56,27 @@ class CustomConversationalChain:
             input_variables=["context", "chat_history", "question"]
         )
 
-        # Create the conversational retrieval chain with custom configuration
-        # This combines the LLM, retriever, memory, and custom prompt into a single pipeline
+        # Create the retrieval QA chain with sources for accurate source tracking
+        # This chain explicitly tracks which sources the LLM actually uses
+        
+        # Custom document prompt that uses 'source' field (now added to metadata)
+        document_prompt = PromptTemplate(
+            input_variables=["page_content", "source"],
+            template="Content: {page_content}\nSource: {source}"
+        )
+        
+        self.sources_chain = RetrievalQAWithSourcesChain.from_chain_type(
+            llm=self.llm,
+            chain_type="stuff",
+            retriever=self.retriever,
+            return_source_documents=True,
+            verbose=True,
+            chain_type_kwargs={
+                "document_prompt": document_prompt
+            }
+        )
+        
+        # Keep the conversational chain for memory management
         self.chain = ConversationalRetrievalChain.from_llm(
             llm=self.llm,
             retriever=self.retriever,
@@ -87,19 +106,72 @@ class CustomConversationalChain:
                 - source_documents: List of source documents used for the response
                 - chat_history: Current conversation history from memory
         """
-        # Process the question through the conversational chain asynchronously
-        if callbacks:
-            result = await self.chain.ainvoke(
-                {"question": question},
-                config={"callbacks": callbacks}
-            )
+        # First check if we have relevant documents by doing a similarity search
+        relevant_docs = self.retriever.get_relevant_documents(question)
+        print(f"DEBUG: Retrieved {len(relevant_docs)} documents for question: {question}")
+        
+        # Debug: Add logging to see what's happening
+        has_relevant_docs = False
+        if relevant_docs:
+            print(f"DEBUG: Found {len(relevant_docs)} relevant docs")
+            try:
+                # Use similarity search with score to get relevance scores
+                scored_docs = self.retriever.vectorstore.similarity_search_with_score(question, k=3)
+                print(f"DEBUG: Got {len(scored_docs)} scored docs")
+                
+                # Check if any document has a good similarity score (lower score = more similar)
+                for doc, score in scored_docs:
+                    print(f"DEBUG: Doc score: {score}")
+                    if score < 1.5:  # Extremely permissive threshold for testing
+                        has_relevant_docs = True
+                        print(f"DEBUG: Document passed threshold with score {score}")
+                        break
+                        
+            except Exception as e:
+                print(f"DEBUG: Exception in similarity search: {e}")
+                # Fallback: Always show sources if documents were retrieved
+                has_relevant_docs = True
+                print("DEBUG: Using fallback - showing sources")
+        
+        if has_relevant_docs:
+            # Use LangChain's RetrievalQAWithSourcesChain for document-based questions
+            if callbacks:
+                sources_result = await self.sources_chain.ainvoke(
+                    {"question": question},
+                    config={"callbacks": callbacks}
+                )
+            else:
+                sources_result = await self.sources_chain.ainvoke({"question": question})
+            
+            output_text = sources_result.get("answer") or sources_result.get("result", "")
+            source_documents = sources_result.get("source_documents", [])
+            # Limit to only the most relevant source
+            if source_documents:
+                source_documents = [source_documents[0]]
         else:
-            result = await self.chain.ainvoke({"question": question})
+            # Use conversational chain for general knowledge questions
+            if callbacks:
+                conv_result = await self.chain.ainvoke(
+                    {"question": question},
+                    config={"callbacks": callbacks}
+                )
+            else:
+                conv_result = await self.chain.ainvoke({"question": question})
+            
+            output_text = conv_result.get("answer") or conv_result.get("result", "")
+            source_documents = []  # No sources for general knowledge
+        
+        # Update memory with the conversation
+        self.memory.save_context(
+            {"input": question},
+            {"answer": output_text}
+        )
 
         # Format the response with all relevant information
         return {
-            "answer": result["answer"],
-            "source_documents": result["source_documents"],
+            "answer": output_text,
+            "source_documents": source_documents,
+            "sources": "",
             "chat_history": self.memory.chat_memory.messages
         }
 
@@ -121,19 +193,72 @@ class CustomConversationalChain:
                 - source_documents: List of source documents used for the response
                 - chat_history: Current conversation history from memory
         """
-        # Process the question through the conversational chain synchronously
-        if callbacks:
-            result = self.chain.invoke(
-                {"question": question},
-                config={"callbacks": callbacks}
-            )
+        # First check if we have relevant documents by doing a similarity search
+        relevant_docs = self.retriever.get_relevant_documents(question)
+        print(f"DEBUG: Retrieved {len(relevant_docs)} documents for question: {question}")
+        
+        # Debug: Add logging to see what's happening
+        has_relevant_docs = False
+        if relevant_docs:
+            print(f"DEBUG: Found {len(relevant_docs)} relevant docs")
+            try:
+                # Use similarity search with score to get relevance scores
+                scored_docs = self.retriever.vectorstore.similarity_search_with_score(question, k=3)
+                print(f"DEBUG: Got {len(scored_docs)} scored docs")
+                
+                # Check if any document has a good similarity score (lower score = more similar)
+                for doc, score in scored_docs:
+                    print(f"DEBUG: Doc score: {score}")
+                    if score < 1.5:  # Extremely permissive threshold for testing
+                        has_relevant_docs = True
+                        print(f"DEBUG: Document passed threshold with score {score}")
+                        break
+                        
+            except Exception as e:
+                print(f"DEBUG: Exception in similarity search: {e}")
+                # Fallback: Always show sources if documents were retrieved
+                has_relevant_docs = True
+                print("DEBUG: Using fallback - showing sources")
+        
+        if has_relevant_docs:
+            # Use LangChain's RetrievalQAWithSourcesChain for document-based questions
+            if callbacks:
+                sources_result = self.sources_chain.invoke(
+                    {"question": question},
+                    config={"callbacks": callbacks}
+                )
+            else:
+                sources_result = self.sources_chain.invoke({"question": question})
+            
+            output_text = sources_result.get("answer") or sources_result.get("result", "")
+            source_documents = sources_result.get("source_documents", [])
+            # Limit to only the most relevant source
+            if source_documents:
+                source_documents = [source_documents[0]]
         else:
-            result = self.chain.invoke({"question": question})
+            # Use conversational chain for general knowledge questions
+            if callbacks:
+                conv_result = self.chain.invoke(
+                    {"question": question},
+                    config={"callbacks": callbacks}
+                )
+            else:
+                conv_result = self.chain.invoke({"question": question})
+            
+            output_text = conv_result.get("answer") or conv_result.get("result", "")
+            source_documents = []  # No sources for general knowledge
+        
+        # Update memory with the conversation
+        self.memory.save_context(
+            {"input": question},
+            {"answer": output_text}
+        )
 
         # Format the response with all relevant information
         return {
-            "answer": result["answer"],
-            "source_documents": result["source_documents"],
+            "answer": output_text,
+            "source_documents": source_documents,
+            "sources": "",
             "chat_history": self.memory.chat_memory.messages
         }
 

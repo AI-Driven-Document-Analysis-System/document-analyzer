@@ -364,23 +364,17 @@ class ChatbotService:
                 streaming=llm_config.get('streaming', False),
                 callbacks=llm_config.get('callbacks')
             )
-    def _create_retriever(self, user_id: Optional[str] = None):
-        """Create retriever with conditional user filtering.
 
-        If a non-UUID user_id is provided (e.g., 'user-1' as used in tests/rag/embed_documents.py),
-        apply a metadata filter {"user_id": user_id}. If user_id is None or looks like a UUID,
-        avoid filtering to prevent accidental empty results when documents lack that metadata.
+    def _create_retriever(self, user_id: Optional[str] = None):
+        """Create retriever with user filtering.
+
+        Apply a metadata filter {"user_id": user_id} for all valid user IDs to ensure
+        proper document isolation between users.
         """
         search_kwargs: Dict[str, Any] = {"k": 4}
 
-        def is_uuid_like(val: str) -> bool:
-            try:
-                uuid.UUID(val)
-                return True
-            except Exception:
-                return False
-
-        if user_id and not is_uuid_like(user_id):
+        # Always apply user filtering if user_id is provided
+        if user_id:
             search_kwargs["filter"] = {"user_id": user_id}
 
         return self._vectorstore.as_retriever(search_kwargs=search_kwargs)

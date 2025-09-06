@@ -62,8 +62,11 @@ class LangChainChatEngine:
             conversation_id = str(uuid.uuid4())
 
         try:
+            print(f"DEBUG CHAT ENGINE: Processing query: {query}")
             # Process the query through the conversational chain
             result = await self.chain.arun(query)
+            print(f"DEBUG CHAT ENGINE: Got result with keys: {result.keys()}")
+            print(f"DEBUG CHAT ENGINE: Source documents count: {len(result.get('source_documents', []))}")
 
             # Extract and format source documents for the response
             sources = []

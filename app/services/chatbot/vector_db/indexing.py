@@ -97,6 +97,7 @@ class LangChainDocumentIndexer:
                 'document_id': document_data['id'],
                 'document_type': document_data.get('type', 'unknown'),
                 'filename': document_data.get('filename', ''),
+                'source': document_data.get('filename', ''),  # Add 'source' field for RetrievalQAWithSourcesChain
                 'upload_date': document_data.get('upload_date', ''),
                 'user_id': document_data.get('user_id', '')
             }

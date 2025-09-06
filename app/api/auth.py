@@ -220,6 +220,26 @@ async def get_current_user_info(current_user: UserResponse = Depends(get_current
         )
 
 
+@router.get("/current-user-id")
+async def get_current_user_id(current_user: UserResponse = Depends(get_current_user)):
+    """Get current user ID only - useful for embedding scripts"""
+    try:
+        if not current_user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not authenticated"
+            )
+        return {"user_id": current_user.id}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get current user ID error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get user ID"
+        )
+
+
 @router.put("/me", response_model=UserResponse)
 async def update_current_user(
         user_update: UserUpdate,
