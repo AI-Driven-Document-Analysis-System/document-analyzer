@@ -36,10 +36,15 @@ export interface Document {
 
 class ChatService {
   private baseUrl = 'http://localhost:8000/api';
-  private currentUserId = '79d0bed5-c1c1-4faf-82d4-fed1a28472d5'; // TEST_USER_ID
+  private currentUserId: string | null = null;
 
   async sendMessage(message: string, conversationId?: string): Promise<ChatResponse> {
     try {
+      const userId = await this.getCurrentUserId();
+      if (!userId) {
+        throw new Error('User not authenticated');
+      }
+
       const response = await fetch(`${this.baseUrl}/chat/send`, {
         method: 'POST',
         headers: {
@@ -48,7 +53,7 @@ class ChatService {
         body: JSON.stringify({
           message,
           conversation_id: conversationId,
-          user_id: this.currentUserId,
+          user_id: userId,
           memory_type: 'window',
           llm_config: {
             provider: 'groq',
@@ -91,7 +96,12 @@ class ChatService {
 
   async getDocuments(): Promise<Document[]> {
     try {
-      const response = await fetch(`${this.baseUrl}/documents?user_id=${this.currentUserId}`);
+      const userId = await this.getCurrentUserId();
+      if (!userId) {
+        throw new Error('User not authenticated');
+      }
+
+      const response = await fetch(`${this.baseUrl}/documents?user_id=${userId}`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -122,13 +132,18 @@ class ChatService {
 
   async createConversation(title?: string) {
     try {
+      const userId = await this.getCurrentUserId();
+      if (!userId) {
+        throw new Error('User not authenticated');
+      }
+
       const response = await fetch(`${this.baseUrl}/chat/conversations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          user_id: this.currentUserId,
+          user_id: userId,
           title: title || null
         }),
       });
@@ -146,7 +161,12 @@ class ChatService {
 
   async listConversations() {
     try {
-      const response = await fetch(`${this.baseUrl}/chat/conversations?user_id=${this.currentUserId}`);
+      const userId = await this.getCurrentUserId();
+      if (!userId) {
+        throw new Error('User not authenticated');
+      }
+
+      const response = await fetch(`${this.baseUrl}/chat/conversations?user_id=${userId}`);
       
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -189,8 +209,61 @@ class ChatService {
     this.currentUserId = userId;
   }
 
-  getCurrentUserId(): string {
-    return this.currentUserId;
+  clearUserData() {
+    this.currentUserId = null;
+  }
+
+  async getCurrentUserId(): Promise<string | null> {
+    // If we have a cached user ID, return it
+    if (this.currentUserId) {
+      return this.currentUserId;
+    }
+
+    // Try to get user ID from stored user data
+    try {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        const userData = JSON.parse(storedUser);
+        console.log('Stored user data:', userData);
+        if (userData.id) {
+          this.currentUserId = userData.id;
+          console.log('Using stored user ID:', userData.id);
+          return userData.id;
+        }
+      }
+
+      // If no stored user data, try to fetch from auth service
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.log('No token found');
+        return null;
+      }
+
+      console.log('Fetching user data from API...');
+      const response = await fetch('http://localhost:8000/api/auth/me', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        console.log('API user data:', userData);
+        if (userData.id) {
+          this.currentUserId = userData.id;
+          // Update stored user data
+          localStorage.setItem('user', JSON.stringify(userData));
+          console.log('Set user ID from API:', userData.id);
+          return userData.id;
+        }
+      } else {
+        console.log('API response not ok:', response.status);
+      }
+    } catch (error) {
+      console.error('Error getting current user ID:', error);
+    }
+
+    return null;
   }
 }
 

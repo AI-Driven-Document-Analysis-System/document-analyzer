@@ -101,7 +101,20 @@ class AuthService {
       // Clear all persistence data
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      localStorage.removeItem('lastPath'); // Add this line
+      localStorage.removeItem('lastPath');
+      
+      // Clear all chat-related data for all users
+      const keys = Object.keys(localStorage);
+      keys.forEach(key => {
+        if (key.startsWith('rag-chatbot-messages-') || key.startsWith('rag-chatbot-conversation-id-')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      // Clear chat service user data
+      import('../services/chatService').then(({ chatService }) => {
+        chatService.clearUserData();
+      });
     }
   }
 

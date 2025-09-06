@@ -18,19 +18,36 @@ from services.chatbot.vector_db.chunking import DocumentChunker
 from services.chatbot.vector_db.indexing import LangChainDocumentIndexer
 from services.chatbot.vector_db.langchain_chroma import LangChainChromaStore
 
-# Test user ID from database
-TEST_USER_ID = "79d0bed5-c1c1-4faf-82d4-fed1a28472d5"
+# Dynamic user ID - can be set via command line argument or environment variable
+import argparse
+
+def get_user_id():
+    """Get user ID from command line argument or prompt user"""
+    parser = argparse.ArgumentParser(description='Embed documents for a specific user')
+    parser.add_argument('--user-id', type=str, help='User ID to associate documents with')
+    args = parser.parse_args()
+    
+    if args.user_id:
+        return args.user_id
+    
+    # If no argument provided, prompt for user ID
+    user_id = input("Enter the user ID to associate these documents with: ").strip()
+    if not user_id:
+        print("Error: User ID is required")
+        sys.exit(1)
+    
+    return user_id
 
 
-def get_documents():
-    """Hardcode your documents here"""
+def get_documents(user_id):
+    """Get documents with the specified user ID"""
     return [
         {
             'id': str(uuid.uuid4()),
             'type': 'policy',
             'filename': 'company_policy.txt',
             'upload_date': datetime.now().isoformat(),
-            'user_id': TEST_USER_ID,
+            'user_id': user_id,
             'text': """Company Policy Document
 
 1. Introduction
@@ -62,7 +79,7 @@ Following these policies ensures a productive and professional work environment 
             'type': 'manual',
             'filename': 'software_manual.txt',
             'upload_date': datetime.now().isoformat(),
-            'user_id': TEST_USER_ID,
+            'user_id': user_id,
             'text': """Software User Manual
 
 Getting Started
@@ -107,7 +124,7 @@ For additional help, visit our support portal or contact our technical team."""
             'type': 'report',
             'filename': 'quarterly_report.txt',
             'upload_date': datetime.now().isoformat(),
-            'user_id': TEST_USER_ID,
+            'user_id': user_id,
             'text': """Quarterly Business Report - Q4 2024
 
 Executive Summary
@@ -149,7 +166,7 @@ Recommendations
             'type': 'legal',
             'filename': 'data_protection_law_ocr.txt',
             'upload_date': datetime.now().isoformat(),
-            'user_id': TEST_USER_ID,
+            'user_id': user_id,
             'text': """CHAPTER III — OBLIGATIONS OF DATA CONTROLLERS
 
 Sect1on 14. — Dutes Relatlng to LawfuI Processing
@@ -193,6 +210,10 @@ subject with alI of the following informatlon:
 def main():
     """Main function to embed documents"""
     print("🚀 Starting document embedding...")
+    
+    # Get user ID
+    user_id = get_user_id()
+    print(f"📋 Using user ID: {user_id}")
 
     # Configuration
     db_path = os.path.join(os.path.dirname(__file__), '..', '..', 'chroma_db')
@@ -208,8 +229,8 @@ def main():
         print(f"✅ Collection: {collection_name}")
 
         # Get documents to embed
-        documents = get_documents()
-        print(f"📄 Found {len(documents)} documents to embed")
+        documents = get_documents(user_id)
+        print(f"📄 Found {len(documents)} documents to embed for user: {user_id}")
 
         # Process each document
         total_chunks = 0

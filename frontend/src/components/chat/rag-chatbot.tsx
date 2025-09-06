@@ -12,41 +12,23 @@ import { ChatInput } from './components/ChatInput'
 import { Sidebar } from './components/sidebar/Sidebar'
 import { DocumentModal } from './components/DocumentModal'
 
-// Test user ID from database
-const TEST_USER_ID = "79d0bed5-c1c1-4faf-82d4-fed1a28472d5"
 const API_BASE_URL = "http://localhost:8000"
 
 export function RAGChatbot() {
-  // Load messages from localStorage or use initial messages
+  // State for current user ID
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  
+  // Load messages from localStorage or use initial messages (user-specific)
   const [messages, setMessages] = useState<Message[]>(() => {
-    if (typeof window !== 'undefined') {
-      const savedMessages = localStorage.getItem('rag-chatbot-messages')
-      if (savedMessages) {
-        try {
-          const parsed = JSON.parse(savedMessages)
-          // Convert timestamp strings back to Date objects
-          return parsed.map((msg: any) => ({
-            ...msg,
-            timestamp: new Date(msg.timestamp)
-          }))
-        } catch (error) {
-          console.error('Error parsing saved messages:', error)
-        }
-      }
-    }
+    // Don't load from localStorage on initial render - wait for user ID
     return initialMessages
   })
   
   const [inputValue, setInputValue] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   
-  // Load conversation ID from localStorage
-  const [conversationId, setConversationId] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('rag-chatbot-conversation-id')
-    }
-    return null
-  })
+  // Load conversation ID from localStorage (user-specific)
+  const [conversationId, setConversationId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const [expandedSections, setExpandedSections] = useState<ExpandedSections>({
@@ -54,47 +36,99 @@ export function RAGChatbot() {
     history: false,
     knowledge: false
   })
-  const [selectedMessageSources, setSelectedMessageSources] = useState<any[]>(() => {
-    // Find the latest assistant message with sources from current messages
-    const currentMessages = (() => {
-      if (typeof window !== 'undefined') {
-        const savedMessages = localStorage.getItem('rag-chatbot-messages')
-        if (savedMessages) {
-          try {
-            return JSON.parse(savedMessages)
-          } catch (error) {
-            return initialMessages
-          }
-        }
-      }
-      return initialMessages
-    })()
-    
-    const latestAssistantMessage = [...currentMessages].reverse().find(msg => msg.type === 'assistant' && msg.sources);
-    return latestAssistantMessage?.sources || [];
-  })
+  const [selectedMessageSources, setSelectedMessageSources] = useState<any[]>([])
 
   // Chat history state
   const [chatHistory, setChatHistory] = useState<ChatHistory[]>([])
   const [isLoadingHistory, setIsLoadingHistory] = useState(true)
 
-  // Save messages to localStorage whenever messages change
+  // Initialize user ID and load user-specific data
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('rag-chatbot-messages', JSON.stringify(messages))
-    }
-  }, [messages])
-
-  // Save conversation ID to localStorage whenever it changes
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      if (conversationId) {
-        localStorage.setItem('rag-chatbot-conversation-id', conversationId)
-      } else {
-        localStorage.removeItem('rag-chatbot-conversation-id')
+    const initializeUser = async () => {
+      try {
+        const userId = await chatService.getCurrentUserId()
+        if (userId) {
+          // If user ID changed, clear current state first
+          if (currentUserId && currentUserId !== userId) {
+            setMessages(initialMessages)
+            setConversationId(null)
+            setSelectedMessageSources([])
+          }
+          
+          setCurrentUserId(userId)
+          
+          // Load user-specific messages from localStorage
+          const userMessagesKey = `rag-chatbot-messages-${userId}`
+          const savedMessages = localStorage.getItem(userMessagesKey)
+          if (savedMessages) {
+            try {
+              const parsed = JSON.parse(savedMessages)
+              const messagesWithDates = parsed.map((msg: any) => ({
+                ...msg,
+                timestamp: new Date(msg.timestamp)
+              }))
+              setMessages(messagesWithDates)
+              
+              // Set sources from latest assistant message
+              const latestAssistantMessage = [...messagesWithDates].reverse().find(msg => msg.type === 'assistant' && msg.sources)
+              if (latestAssistantMessage?.sources) {
+                setSelectedMessageSources(latestAssistantMessage.sources)
+              }
+            } catch (error) {
+              console.error('Error parsing saved messages:', error)
+              setMessages(initialMessages)
+            }
+          } else {
+            // No saved messages for this user, use initial messages
+            setMessages(initialMessages)
+          }
+          
+          // Load user-specific conversation ID
+          const userConversationKey = `rag-chatbot-conversation-id-${userId}`
+          const savedConversationId = localStorage.getItem(userConversationKey)
+          if (savedConversationId) {
+            setConversationId(savedConversationId)
+          } else {
+            setConversationId(null)
+          }
+        } else {
+          // No user ID, reset to initial state
+          setCurrentUserId(null)
+          setMessages(initialMessages)
+          setConversationId(null)
+          setSelectedMessageSources([])
+        }
+      } catch (error) {
+        console.error('Error initializing user:', error)
+        // Reset to initial state on error
+        setMessages(initialMessages)
+        setConversationId(null)
+        setSelectedMessageSources([])
       }
     }
-  }, [conversationId])
+    
+    initializeUser()
+  }, [currentUserId])
+
+  // Save messages to localStorage whenever messages change (user-specific)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && currentUserId && messages.length > 0 && messages !== initialMessages) {
+      const userMessagesKey = `rag-chatbot-messages-${currentUserId}`
+      localStorage.setItem(userMessagesKey, JSON.stringify(messages))
+    }
+  }, [messages, currentUserId])
+
+  // Save conversation ID to localStorage whenever it changes (user-specific)
+  useEffect(() => {
+    if (typeof window !== 'undefined' && currentUserId) {
+      const userConversationKey = `rag-chatbot-conversation-id-${currentUserId}`
+      if (conversationId) {
+        localStorage.setItem(userConversationKey, conversationId)
+      } else {
+        localStorage.removeItem(userConversationKey)
+      }
+    }
+  }, [conversationId, currentUserId])
 
   // Fetch chat history from database on component mount
   useEffect(() => {
@@ -273,10 +307,10 @@ export function RAGChatbot() {
       setInputValue("")
       setSelectedMessageSources([])
       
-      // Clear localStorage
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('rag-chatbot-messages')
-        localStorage.removeItem('rag-chatbot-conversation-id')
+      // Clear user-specific localStorage
+      if (typeof window !== 'undefined' && currentUserId) {
+        localStorage.removeItem(`rag-chatbot-messages-${currentUserId}`)
+        localStorage.removeItem(`rag-chatbot-conversation-id-${currentUserId}`)
       }
       
       // Reset sidebar sources to initial state
@@ -293,9 +327,9 @@ export function RAGChatbot() {
       setInputValue("")
       setSelectedMessageSources([])
       
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('rag-chatbot-messages')
-        localStorage.removeItem('rag-chatbot-conversation-id')
+      if (typeof window !== 'undefined' && currentUserId) {
+        localStorage.removeItem(`rag-chatbot-messages-${currentUserId}`)
+        localStorage.removeItem(`rag-chatbot-conversation-id-${currentUserId}`)
       }
     }
   }
@@ -319,9 +353,9 @@ export function RAGChatbot() {
         setMessages(transformedMessages)
         setInputValue("")
         
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('rag-chatbot-messages', JSON.stringify(transformedMessages))
-          localStorage.setItem('rag-chatbot-conversation-id', chatId)
+        if (typeof window !== 'undefined' && currentUserId) {
+          localStorage.setItem(`rag-chatbot-messages-${currentUserId}`, JSON.stringify(transformedMessages))
+          localStorage.setItem(`rag-chatbot-conversation-id-${currentUserId}`, chatId)
         }
         
         const latestAssistantMessage = [...transformedMessages].reverse().find(msg => msg.type === 'assistant' && msg.sources);
