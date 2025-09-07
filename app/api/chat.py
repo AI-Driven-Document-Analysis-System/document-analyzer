@@ -10,14 +10,17 @@ from ..schemas.chat_schemas import (
     ChatMessageRequest, ChatMessageResponse, DocumentIndexRequest, DocumentIndexResponse,
     DocumentSearchRequest, DocumentSearchResponse, ConversationHistoryRequest, 
     ConversationHistoryResponse, SystemStatsResponse, LLMConfigRequest, ChatEngineConfig,
-    ErrorResponse, SuccessResponse, LLMProvider, MemoryType,
+    ErrorResponse, SuccessResponse, LLMProvider, MemoryType, SearchMode,
     ConversationCreateRequest, ConversationResponse, ConversationsListResponse, RenameConversationRequest
 )
 from ..services.chat_service import get_chatbot_service, initialize_chatbot_service
+from app.services.chatbot.rag.chat_engine import LangChainChatEngine
+from app.services.chatbot.title_generation.title_generator import ConversationTitleGenerator
+from app.core.database import get_db
+from app.db.conversations import get_conversations, get_messages
+# JWT middleware not implemented yet
 from ..services.chatbot.rag.conversation_summarizer import ConversationSummarizer
 from ..core.config import settings
-from ..db.conversations import get_conversations, get_messages
-from ..core.database import db_manager
 from uuid import UUID
 
 # Configure logging
@@ -243,7 +246,8 @@ async def send_message(request: ChatMessageRequest):
                 result = await chat_engine.process_query(
                     query=request.message,
                     conversation_id=conversation_id,
-                    user_id=request.user_id
+                    user_id=request.user_id,
+                    search_mode=request.search_mode.value
                 )
                 ai_response = result['response']
                 sources_data = result.get('sources', [])
@@ -264,7 +268,8 @@ async def send_message(request: ChatMessageRequest):
                 result = await chat_engine.process_query(
                     query=request.message,
                     conversation_id=conversation_id,
-                    user_id=request.user_id
+                    user_id=request.user_id,
+                    search_mode=request.search_mode.value
                 )
                 ai_response = result['response']
                 sources_data = result.get('sources', [])
@@ -317,6 +322,7 @@ async def send_message(request: ChatMessageRequest):
                 "processing_time": 0.1,
                 "user_id": request.user_id,
                 "memory_type": request.memory_type.value,
+                "search_mode": request.search_mode.value,
                 "needs_summarization": needs_summarization,
                 "message_pairs": message_pairs,
                 "context_window_usage": context_window_usage

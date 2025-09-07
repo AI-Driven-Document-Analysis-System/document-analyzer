@@ -18,6 +18,13 @@ class MemoryType(str, Enum):
     SUMMARY = "summary"
 
 
+class SearchMode(str, Enum):
+    """Search mode types"""
+    STANDARD = "standard"
+    REPHRASE = "rephrase"
+    MULTIPLE_QUERIES = "multiple_queries"
+
+
 class ChatMessageRequest(BaseModel):
     """Request model for chat messages"""
     message: str = Field(..., description="User's message")
@@ -25,6 +32,7 @@ class ChatMessageRequest(BaseModel):
     user_id: Optional[str] = Field(None, description="User ID for filtering documents")
     llm_config: Optional[Dict[str, Any]] = Field(None, description="LLM configuration override")
     memory_type: MemoryType = Field(MemoryType.WINDOW, description="Memory type for conversation")
+    search_mode: SearchMode = Field(SearchMode.STANDARD, description="Search mode for query processing")
 
 
 class ChatMessageResponse(BaseModel):
