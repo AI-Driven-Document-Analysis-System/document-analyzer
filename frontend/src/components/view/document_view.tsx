@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react"
 import { authService } from "../../services/authService"
-import { Search, Grid3X3, List, MoreHorizontal, Download, Trash2, X, Filter, RefreshCw } from "lucide-react"
+import "./document_view.css"
 
+// Keep interfaces unchanged
 interface Document {
   id: string
   original_filename: string
@@ -21,26 +22,22 @@ interface DocumentViewProps {
   onAuthError?: () => void
 }
 
+// Helper functions unchanged
 const getFileIcon = (contentType: string) => {
-  if (contentType.includes("pdf")) return { icon: "📄", color: "text-red-500", bg: "bg-red-50" }
-  if (contentType.includes("image")) return { icon: "🖼️", color: "text-blue-500", bg: "bg-blue-50" }
-  if (contentType.includes("spreadsheet") || contentType.includes("excel")) return { icon: "📊", color: "text-green-500", bg: "bg-green-50" }
-  if (contentType.includes("word") || contentType.includes("document")) return { icon: "📝", color: "text-blue-600", bg: "bg-blue-50" }
-  if (contentType.includes("text")) return { icon: "📄", color: "text-gray-500", bg: "bg-gray-50" }
-  return { icon: "📁", color: "text-gray-400", bg: "bg-gray-50" }
+  if (contentType.includes("pdf")) return { icon: "📄", colorClass: "docview-color-red", bgClass: "docview-bg-red", accentClass: "docview-accent-red" }
+  if (contentType.includes("image")) return { icon: "🖼️", colorClass: "docview-color-blue", bgClass: "docview-bg-blue", accentClass: "docview-accent-blue" }
+  if (contentType.includes("spreadsheet") || contentType.includes("excel")) return { icon: "📊", colorClass: "docview-color-green", bgClass: "docview-bg-green", accentClass: "docview-accent-green" }
+  if (contentType.includes("word") || contentType.includes("document")) return { icon: "📝", colorClass: "docview-color-blue-dark", bgClass: "docview-bg-blue", accentClass: "docview-accent-blue-dark" }
+  if (contentType.includes("text")) return { icon: "📄", colorClass: "docview-color-gray", bgClass: "docview-bg-gray", accentClass: "docview-accent-gray" }
+  return { icon: "📁", colorClass: "docview-color-gray-light", bgClass: "docview-bg-gray", accentClass: "docview-accent-gray-light" }
 }
 
-const getStatusBadge = (status: string) => {
-  const baseClasses = "px-2 py-1 text-xs rounded-full font-medium"
+const getStatusBadgeClass = (status: string) => {
   switch (status) {
-    case 'completed':
-      return `${baseClasses} bg-green-100 text-green-800`
-    case 'processing':
-      return `${baseClasses} bg-yellow-100 text-yellow-800`
-    case 'failed':
-      return `${baseClasses} bg-red-100 text-red-800`
-    default:
-      return `${baseClasses} bg-gray-100 text-gray-800`
+    case 'completed': return "docview-badge-success"
+    case 'processing': return "docview-badge-warning"
+    case 'failed': return "docview-badge-error"
+    default: return "docview-badge-default"
   }
 }
 
@@ -107,16 +104,13 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
       }
 
       const data = await response.json()
-      console.log('API Response:', data) // Debug log
+      console.log('API Response:', data)
       
-      // Ensure data is an array
       if (Array.isArray(data)) {
         setDocuments(data)
       } else if (data && Array.isArray(data.documents)) {
-        // Handle case where documents are nested in a documents property
         setDocuments(data.documents)
       } else if (data && Array.isArray(data.data)) {
-        // Handle case where documents are nested in a data property
         setDocuments(data.data)
       } else {
         console.warn('API response is not an array:', data)
@@ -221,29 +215,34 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
     }
   }
 
+  // LOADING STATE
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading documents...</p>
+      <div className="docview-container docview-loading">
+        <div className="docview-loading-card">
+          <div className="docview-spinner"></div>
+          <p className="docview-loading-text">Loading your documents...</p>
+          <div className="docview-progress-bar">
+            <div className="docview-progress-fill"></div>
+          </div>
         </div>
       </div>
     )
   }
 
+  // ERROR STATE
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-red-500 mb-4">
-            <i className="fas fa-exclamation-triangle text-4xl"></i>
+      <div className="docview-container docview-error">
+        <div className="docview-error-card">
+          <div className="docview-error-icon">
+            <i className="fas fa-exclamation-triangle"></i>
           </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Error Loading Documents</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <h2 className="docview-error-title">Oops! Something went wrong</h2>
+          <p className="docview-error-message">{error}</p>
           <button
             onClick={fetchDocuments}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+            className="docview-cta-button docview-cta-primary"
           >
             Try Again
           </button>
@@ -253,261 +252,133 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header with Search */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="flex items-center gap-6">
-            {/* Search Bar */}
-            <div className="flex-1 max-w-lg">
-              <div className="relative">
-                <i className="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-sm"></i>
+    <>
+      
+
+      <div className="docview-min-h-screen docview-bg-gray-50">
+        {/* Header with Search */}
+        <div className="docview-header">
+          <div className="docview-header-container docview-flex docview-items-center docview-justify-between docview-gap-6">
+            {/* Left Side - Search Bar */}
+            <div className="docview-flex-1 docview-max-w-2xl docview-relative">
+              <div className="docview-relative">
+                <div className="docview-search-icon">
+                  <i className="fas fa-search docview-icon"></i>
+                </div>
                 <input
                   type="text"
-                  placeholder="Search here"
+                  placeholder="Search documents by name..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 text-sm"
+                  className="docview-search-input docview-w-full docview-text-gray-700 docview-placeholder-gray-400"
                 />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="docview-search-clear"
+                  >
+                    <i className="fas fa-times docview-icon-sm"></i>
+                  </button>
+                )}
               </div>
             </div>
 
-            {/* View Options */}
-            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`p-2 rounded-md transition-all ${
-                  viewMode === 'grid' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                }`}
-                title="Grid View"
-              >
-                <i className="fas fa-th text-sm"></i>
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`p-2 rounded-md transition-all ${
-                  viewMode === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                }`}
-                title="List View"
-              >
-                <i className="fas fa-list text-sm"></i>
-              </button>
-            </div>
+            {/* Right Side - Controls */}
+            <div className="docview-flex docview-items-center docview-gap-4">
+              {/* View Options */}
+              <div className="docview-view-toggle">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`docview-view-button ${viewMode === 'grid' ? 'docview-active' : ''}`}
+                  title="Grid View"
+                >
+                  <i className="fas fa-th docview-icon"></i>
+                </button>
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`docview-view-button ${viewMode === 'list' ? 'docview-active' : ''}`}
+                  title="List View"
+                >
+                  <i className="fas fa-list docview-icon"></i>
+                </button>
+              </div>
 
-            {/* Filters */}
-            <div className="flex items-center gap-3">
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
-              >
-                <option value="all">All Status</option>
-                <option value="completed">Completed</option>
-                <option value="processing">Processing</option>
-                <option value="failed">Failed</option>
-              </select>
-              
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm bg-white"
-              >
-                <option value="newest">Newest First</option>
-                <option value="oldest">Oldest First</option>
-                <option value="name">Name A-Z</option>
-                <option value="size">Size (Largest)</option>
-              </select>
+              {/* Filters */}
+              <div className="docview-flex docview-items-center docview-gap-3">
+                <select
+                  value={filterStatus}
+                  onChange={(e) => setFilterStatus(e.target.value)}
+                  className="docview-select"
+                >
+                  <option value="all">All Status</option>
+                  <option value="completed">Completed</option>
+                  <option value="processing">Processing</option>
+                  <option value="failed">Failed</option>
+                </select>
+                
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="docview-select"
+                >
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="name">Name A-Z</option>
+                  <option value="size">Size (Largest)</option>
+                </select>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        {/* Recent Files Section */}
-        {recentFiles.length > 0 && (
-          <div className="mb-10">
-            <div className="flex items-center justify-between mb-5">
-              <h2 className="text-lg font-semibold text-gray-800">Recent Files</h2>
-              <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">More</button>
-            </div>
-            <div className="flex gap-4 overflow-x-auto pb-2">
-              {recentFiles.map((document) => {
-                const fileIcon = getFileIcon(document.content_type)
-                return (
-                  <div
-                    key={`recent-${document.id}`}
-                    className="flex-shrink-0 w-48 bg-white rounded-lg p-4 border border-gray-100 hover:shadow-md transition-all cursor-pointer group"
-                    onClick={() => handleDocumentClick(document)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 ${fileIcon.bg} rounded-lg flex items-center justify-center text-lg`}>
-                        {fileIcon.icon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {document.original_filename}
-                        </p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {formatDate(document.upload_date)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* Files Section */}
-        <div>
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-lg font-semibold text-gray-800">Files</h2>
-            <div className="text-sm text-gray-500">
-              {filteredDocuments.length} files
-            </div>
-          </div>
-
-          {/* Documents Grid/List */}
-          {filteredDocuments.length === 0 ? (
-            <div className="text-center py-16 bg-white rounded-xl border border-gray-100">
-              <div className="text-gray-300 mb-4">
-                <i className="fas fa-folder-open text-6xl"></i>
+        {/* Main Content */}
+        <div className="docview-max-w-7xl docview-mx-auto docview-px-6 docview-py-8">
+          {/* Recent Files Section */}
+          {recentFiles.length > 0 && (
+            <div className="docview-mb-12">
+              <div className="docview-flex docview-items-center docview-justify-between docview-mb-6">
+                <div>
+                  <h2 className="docview-text-2xl docview-font-bold docview-text-gray-800">Recent Files</h2>
+                  <p className="docview-text-gray-500 docview-mt-1 docview-text-sm">Your most recently uploaded documents</p>
+                </div>
+                <button className="docview-text-blue-600 hover:docview-text-blue-700 docview-font-medium docview-flex docview-items-center docview-gap-2 docview-transition-colors docview-duration-300 group">
+                  View All
+                  <i className="fas fa-arrow-right docview-text-xs group-hover:docview-translate-x-1 docview-transition-transform docview-duration-300"></i>
+                </button>
               </div>
-              <h3 className="text-lg font-medium text-gray-700 mb-2">No documents found</h3>
-              <p className="text-gray-500">
-                {searchQuery || filterStatus !== "all" 
-                  ? "Try adjusting your search or filters"
-                  : "Upload your first document to get started"
-                }
-              </p>
-            </div>
-          ) : viewMode === 'grid' ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
-              {filteredDocuments.map((document) => {
-                const fileIcon = getFileIcon(document.content_type)
-                return (
-                  <div
-                    key={document.id}
-                    className="bg-white rounded-xl border border-gray-100 hover:shadow-lg transition-all cursor-pointer group relative"
-                    onClick={() => handleDocumentClick(document)}
-                  >
-                    {/* Document Preview/Icon */}
-                    <div className={`aspect-[4/5] ${fileIcon.bg} rounded-t-xl flex flex-col items-center justify-center relative overflow-hidden`}>
-                      {document.thumbnail_url ? (
-                        <img
-                          src={document.thumbnail_url}
-                          alt={document.original_filename}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="flex flex-col items-center">
-                          <div className="w-16 h-16 bg-white/80 rounded-xl flex items-center justify-center text-3xl mb-3 shadow-sm">
-                            {fileIcon.icon}
-                          </div>
-                          <div className="text-xs text-gray-600 font-medium uppercase tracking-wide">
-                            {document.content_type.split('/')[1] || 'FILE'}
-                          </div>
-                        </div>
-                      )}
-                      
-                      {/* Status Badge */}
-                      <div className="absolute top-3 right-3">
-                        <span className={getStatusBadge(document.processing_status)}>
-                          {document.processing_status}
-                        </span>
-                      </div>
-
-                      {/* Action Buttons */}
-                      <div className="absolute top-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <div className="flex gap-1">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDownload(document)
-                            }}
-                            className="bg-white/90 hover:bg-white text-gray-600 hover:text-blue-600 p-2 rounded-lg shadow-sm transition-colors"
-                            title="Download"
-                          >
-                            <i className="fas fa-download text-xs"></i>
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDelete(document)
-                            }}
-                            className="bg-white/90 hover:bg-white text-gray-600 hover:text-red-600 p-2 rounded-lg shadow-sm transition-colors"
-                            title="Delete"
-                          >
-                            <i className="fas fa-trash text-xs"></i>
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Document Info */}
-                    <div className="p-4">
-                      <h3 className="font-medium text-gray-900 text-sm mb-1 line-clamp-2 leading-tight" title={document.original_filename}>
-                        {document.original_filename}
-                      </h3>
-                      <p className="text-xs text-gray-500">{formatFileSize(document.file_size)}</p>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
-          ) : (
-            /* List View */
-            <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-              <div className="divide-y divide-gray-100">
-                {filteredDocuments.map((document) => {
+              <div className="docview-flex docview-gap-6 docview-overflow-x-auto docview-pb-4 docview-scrollbar-hide">
+                {recentFiles.map((document) => {
                   const fileIcon = getFileIcon(document.content_type)
                   return (
                     <div
-                      key={document.id}
-                      className="flex items-center gap-4 p-4 hover:bg-gray-50 cursor-pointer group"
+                      key={`recent-${document.id}`}
+                      className="docview-recent-file docview-cursor-pointer docview-group docview-relative docview-overflow-hidden"
                       onClick={() => handleDocumentClick(document)}
                     >
-                      <div className={`w-10 h-10 ${fileIcon.bg} rounded-lg flex items-center justify-center text-lg flex-shrink-0`}>
-                        {fileIcon.icon}
-                      </div>
+                      {/* Decorative accent bar */}
+                      <div className={`docview-absolute docview-top-0 docview-left-0 docview-w-full docview-h-1 ${fileIcon.accentClass} docview-accent-bar`}></div>
                       
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
-                          {document.original_filename}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {formatFileSize(document.file_size)} • {formatDate(document.upload_date)}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-3">
-                        <span className={getStatusBadge(document.processing_status)}>
-                          {document.processing_status}
-                        </span>
+                      <div className="docview-flex docview-flex-col docview-h-full">
+                        <div className="docview-flex docview-items-center docview-gap-4 docview-mb-4">
+                          <div className={`docview-w-14 docview-h-14 ${fileIcon.bgClass} docview-rounded-2xl docview-flex docview-items-center docview-justify-center docview-text-2xl docview-shadow-sm`}>
+                            {fileIcon.icon}
+                          </div>
+                          <div className="docview-flex-1 docview-min-w-0">
+                            <p className="docview-text-base docview-font-semibold docview-text-gray-900 docview-line-clamp-2 docview-leading-tight group-hover:docview-text-blue-600 docview-transition-colors docview-duration-300">
+                              {document.original_filename}
+                            </p>
+                          </div>
+                        </div>
                         
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDownload(document)
-                            }}
-                            className="text-gray-400 hover:text-blue-600 p-2 transition-colors"
-                            title="Download"
-                          >
-                            <i className="fas fa-download text-sm"></i>
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDelete(document)
-                            }}
-                            className="text-gray-400 hover:text-red-600 p-2 transition-colors"
-                            title="Delete"
-                          >
-                            <i className="fas fa-trash text-sm"></i>
-                          </button>
+                        <div className="docview-mt-auto">
+                          <div className="docview-flex docview-items-center docview-justify-between">
+                            <span className="docview-text-xs docview-text-gray-500">
+                              {formatDate(document.upload_date)}
+                            </span>
+                            <span className={`docview-badge ${getStatusBadgeClass(document.processing_status)}`}>
+                              {document.processing_status}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -516,83 +387,269 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
               </div>
             </div>
           )}
-        </div>
-      </div>
 
-      {/* Document Detail Modal */}
-      {selectedDocument && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-semibold text-gray-900">Document Details</h2>
-                <button
-                  onClick={() => setSelectedDocument(null)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  <i className="fas fa-times text-xl"></i>
+          {/* Files Section */}
+          <div>
+            <div className="docview-flex docview-items-center docview-justify-between docview-mb-8">
+              <div>
+                <h2 className="docview-text-2xl docview-font-bold docview-text-gray-800">All Files</h2>
+                <p className="docview-text-gray-500 docview-mt-1 docview-text-sm">
+                  {filteredDocuments.length} {filteredDocuments.length === 1 ? 'document' : 'documents'} found
+                </p>
+              </div>
+            </div>
+
+            {/* Documents Grid/List */}
+            {filteredDocuments.length === 0 ? (
+              <div className="docview-empty-state">
+                <div className="docview-empty-icon">
+                  <i className="fas fa-folder-open"></i>
+                </div>
+                <h3 className="docview-empty-title">No documents found</h3>
+                <p className="docview-empty-message">
+                  {searchQuery || filterStatus !== "all" 
+                    ? "Try adjusting your search terms or filters to find what you're looking for"
+                    : "Upload your first document to get started. Your files will appear here."
+                  }
+                </p>
+                <button className="docview-cta-primary">
+                  Upload Document
                 </button>
               </div>
+            ) : viewMode === 'grid' ? (
+              <div className="grid docview-grid-cols-1 docview-grid-cols-2 docview-grid-cols-3 docview-grid-cols-4 docview-grid-cols-5 docview-gap-6">
+                {filteredDocuments.map((document, index) => {
+                  const fileIcon = getFileIcon(document.content_type)
+                  return (
+                    <div
+                      key={document.id}
+                      className="docview-grid-item docview-cursor-pointer docview-group docview-relative docview-overflow-hidden"
+                      onClick={() => handleDocumentClick(document)}
+                    >
+                      {/* Decorative accent bar */}
+                      <div className={`docview-absolute docview-top-0 docview-left-0 docview-w-full docview-h-1 ${fileIcon.accentClass} docview-accent-bar`}></div>
+                      
+                      {/* Document Preview/Icon */}
+                      <div className={`docview-file-preview ${fileIcon.bgClass} docview-rounded-t-2xl docview-flex docview-flex-col docview-items-center docview-justify-center docview-relative docview-overflow-hidden`}>
+                        {document.thumbnail_url ? (
+                          <img
+                            src={document.thumbnail_url}
+                            alt={document.original_filename}
+                            className="docview-w-full docview-h-full docview-object-cover group-hover:docview-scale-110 docview-transition-transform docview-duration-500"
+                          />
+                        ) : (
+                          <div className="docview-flex docview-flex-col docview-items-center docview-justify-center docview-h-full docview-p-6">
+                            <div className="docview-file-icon-container docview-group-hover:docview-scale-110 docview-transition-transform docview-duration-300">
+                              {fileIcon.icon}
+                            </div>
+                            <div className="docview-file-type">
+                              {document.content_type.split('/')[1]?.toUpperCase() || 'FILE'}
+                            </div>
+                          </div>
+                        )}
+                        
+                        {/* Action Buttons */}
+                        <div className="docview-action-buttons">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDownload(document)
+                            }}
+                            className="docview-action-button docview-download"
+                            title="Download"
+                          >
+                            <i className="fas fa-download docview-icon-sm"></i>
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDelete(document)
+                            }}
+                            className="docview-action-button docview-delete"
+                            title="Delete"
+                          >
+                            <i className="fas fa-trash docview-icon-sm"></i>
+                          </button>
+                        </div>
+                      </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className={`w-16 h-16 ${getFileIcon(selectedDocument.content_type).bg} rounded-xl flex items-center justify-center text-3xl`}>
-                    {getFileIcon(selectedDocument.content_type).icon}
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-gray-900">{selectedDocument.original_filename}</h3>
-                    <span className={getStatusBadge(selectedDocument.processing_status)}>
-                      {selectedDocument.processing_status}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium text-gray-700">File Size:</span>
-                    <p className="text-gray-600">{formatFileSize(selectedDocument.file_size)}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-700">Content Type:</span>
-                    <p className="text-gray-600">{selectedDocument.content_type}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-700">Upload Date:</span>
-                    <p className="text-gray-600">{formatDate(selectedDocument.upload_date)}</p>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-700">Document ID:</span>
-                    <p className="text-gray-600 font-mono text-xs">{selectedDocument.id}</p>
-                  </div>
-                  {selectedDocument.document_type && (
-                    <div>
-                      <span className="font-medium text-gray-700">Document Type:</span>
-                      <p className="text-gray-600 capitalize">{selectedDocument.document_type}</p>
+                      {/* Document Info */}
+                      <div className="docview-p-5">
+                        <div className="docview-flex docview-items-start docview-justify-between docview-mb-3">
+                          <h3 className="docview-font-semibold docview-text-gray-900 docview-text-base docview-mb-1 docview-line-clamp-2 docview-leading-tight group-hover:docview-text-blue-600 docview-transition-colors docview-duration-300" title={document.original_filename}>
+                            {document.original_filename}
+                          </h3>
+                          <span className={`docview-badge ${getStatusBadgeClass(document.processing_status)}`}>
+                            {document.processing_status}
+                          </span>
+                        </div>
+                        
+                        <div className="docview-flex docview-items-center docview-justify-between docview-text-sm">
+                          <span className="docview-text-gray-500">{formatFileSize(document.file_size)}</span>
+                          <span className="docview-text-gray-400">{formatDate(document.upload_date)}</span>
+                        </div>
+                      </div>
                     </div>
-                  )}
+                  )
+                })}
+              </div>
+            ) : (
+              /* List View */
+              <div className="docview-bg-white docview-rounded-2xl docview-border docview-border-gray-100 docview-overflow-hidden docview-shadow-lg">
+                <div className="docview-divide-y docview-divide-gray-100">
+                  {filteredDocuments.map((document, index) => {
+                    const fileIcon = getFileIcon(document.content_type)
+                    return (
+                      <div
+                        key={document.id}
+                        className="docview-list-item docview-cursor-pointer docview-group docview-transition-all docview-duration-300"
+                        onClick={() => handleDocumentClick(document)}
+                      >
+                        <div className={`docview-w-14 docview-h-14 ${fileIcon.bgClass} docview-rounded-2xl docview-flex docview-items-center docview-justify-center docview-text-2xl docview-flex-shrink-0 docview-shadow-sm docview-list-icon`}>
+                          {fileIcon.icon}
+                        </div>
+                        
+                        <div className="docview-flex-1 docview-min-w-0">
+                          <div className="docview-flex docview-items-center docview-gap-3 docview-mb-1">
+                            <h3 className="docview-text-base docview-font-semibold docview-text-gray-900 docview-truncate group-hover:docview-text-blue-600 docview-transition-colors docview-duration-300">
+                              {document.original_filename}
+                            </h3>
+                            <span className={`docview-badge ${getStatusBadgeClass(document.processing_status)}`}>
+                              {document.processing_status}
+                            </span>
+                          </div>
+                          <div className="docview-flex docview-items-center docview-gap-4 docview-text-sm docview-text-gray-500">
+                            <span>{formatFileSize(document.file_size)}</span>
+                            <span>•</span>
+                            <span>{formatDate(document.upload_date)}</span>
+                            {document.document_type && (
+                              <>
+                                <span>•</span>
+                                <span className="docview-capitalize">{document.document_type}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="docview-flex docview-items-center docview-gap-3 docview-opacity-0 group-hover:docview-opacity-100 docview-transition-opacity docview-duration-300">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDownload(document)
+                            }}
+                            className="docview-p-3 docview-text-gray-400 hover:docview-text-blue-600 hover:docview-bg-blue-50 docview-rounded-xl docview-transition-all docview-duration-300"
+                            title="Download"
+                          >
+                            <i className="fas fa-download docview-icon"></i>
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handleDelete(document)
+                            }}
+                            className="docview-p-3 docview-text-gray-400 hover:docview-text-red-600 hover:docview-bg-red-50 docview-rounded-xl docview-transition-all docview-duration-300"
+                            title="Delete"
+                          >
+                            <i className="fas fa-trash docview-icon"></i>
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Document Detail Modal */}
+        {selectedDocument && (
+          <div 
+            className="docview-modal-overlay"
+            onClick={() => setSelectedDocument(null)}
+          >
+            <div 
+              className="docview-modal-content"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="docview-p-8">
+                <div className="docview-modal-header">
+                  <h2 className="docview-text-2xl docview-font-bold docview-text-gray-900">Document Details</h2>
+                  <button
+                    onClick={() => setSelectedDocument(null)}
+                    className="docview-modal-close"
+                  >
+                    <i className="fas fa-times docview-icon-lg"></i>
+                  </button>
                 </div>
 
-                <div className="flex gap-3 pt-4 border-t">
-                  <button
-                    onClick={() => handleDownload(selectedDocument)}
-                    className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <i className="fas fa-download"></i>
-                    Download
-                  </button>
-                  <button
-                    onClick={() => handleDelete(selectedDocument)}
-                    className="flex-1 bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <i className="fas fa-trash"></i>
-                    Delete
-                  </button>
+                <div className="docview-space-y-8">
+                  <div className="docview-flex docview-items-center docview-gap-6">
+                    <div className={`docview-w-20 docview-h-20 ${getFileIcon(selectedDocument.content_type).bgClass} docview-rounded-2xl docview-flex docview-items-center docview-justify-center docview-text-4xl docview-shadow-lg docview-detail-icon`}>
+                      {getFileIcon(selectedDocument.content_type).icon}
+                    </div>
+                    <div className="docview-flex-1">
+                      <h3 className="docview-font-bold docview-text-xl docview-text-gray-900 docview-mb-2">{selectedDocument.original_filename}</h3>
+                      <div className="docview-flex docview-items-center docview-gap-3">
+                        <span className={`docview-badge ${getStatusBadgeClass(selectedDocument.processing_status)}`}>
+                          {selectedDocument.processing_status}
+                        </span>
+                        <span className="docview-text-sm docview-text-gray-500">{formatFileSize(selectedDocument.file_size)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="docview-detail-grid">
+                    <div>
+                      <span className="docview-detail-label">File Size</span>
+                      <p className="docview-detail-value">{formatFileSize(selectedDocument.file_size)}</p>
+                    </div>
+                    <div>
+                      <span className="docview-detail-label">Content Type</span>
+                      <p className="docview-detail-value">{selectedDocument.content_type}</p>
+                    </div>
+                    <div>
+                      <span className="docview-detail-label">Upload Date</span>
+                      <p className="docview-detail-value">{formatDate(selectedDocument.upload_date)}</p>
+                    </div>
+                    <div>
+                      <span className="docview-detail-label">Document ID</span>
+                      <p className="docview-detail-value docview-detail-id">{selectedDocument.id}</p>
+                    </div>
+                    {selectedDocument.document_type && (
+                      <div>
+                        <span className="docview-detail-label">Document Type</span>
+                        <p className="docview-detail-value">{selectedDocument.document_type}</p>
+                      </div>
+                    )}
+                    <div>
+                      <span className="docview-detail-label">Uploaded By</span>
+                      <p className="docview-detail-value">User {selectedDocument.user_id.slice(0, 8)}...</p>
+                    </div>
+                  </div>
+
+                  <div className="docview-modal-actions docview-flex docview-gap-4 docview-pt-2">
+                    <button
+                      onClick={() => handleDownload(selectedDocument)}
+                      className="docview-flex-1 docview-cta-primary"
+                    >
+                      <i className="fas fa-download"></i>
+                      Download Document
+                    </button>
+                    <button
+                      onClick={() => handleDelete(selectedDocument)}
+                      className="docview-flex-1 docview-cta-danger"
+                    >
+                      <i className="fas fa-trash"></i>
+                      Delete Document
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </>
   )
 }
