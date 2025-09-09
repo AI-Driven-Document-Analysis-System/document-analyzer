@@ -1,6 +1,6 @@
 from typing import Optional, List, Dict, Any
 from uuid import UUID, uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import logging
 
@@ -17,7 +17,8 @@ class Conversations:
     def create(self, user_id: Optional[UUID] = None, title: Optional[str] = None) -> Optional[ConversationModel]:
         try:
             conversation_id = uuid4()
-            now = datetime.utcnow()
+            # Use timezone-aware UTC datetime for global compatibility
+            now = datetime.now(timezone.utc)
             query = """
                 INSERT INTO conversations (id, user_id, title, created_at, updated_at)
                 VALUES (%s, %s, %s, %s, %s)
@@ -46,6 +47,25 @@ class Conversations:
             logger.error(f"Error listing conversations: {e}")
             raise
 
+    def list_with_message_counts(self, user_id: UUID, limit: int = 50, offset: int = 0) -> List[Dict]:
+        try:
+            query = """
+                SELECT c.*, COUNT(m.id) as message_count
+                FROM conversations c
+                LEFT JOIN chat_messages m ON c.id = m.conversation_id 
+                    AND m.role IN ('user', 'assistant')
+                WHERE c.user_id = %s
+                GROUP BY c.id, c.user_id, c.title, c.created_at, c.updated_at
+                HAVING COUNT(m.id) > 0
+                ORDER BY c.updated_at DESC
+                LIMIT %s OFFSET %s
+            """
+            results = self.db.execute_query(query, (user_id, limit, offset), fetch=True)
+            return [dict(row) for row in results]
+        except Exception as e:
+            logger.error(f"Error listing conversations with message counts: {e}")
+            raise
+
     def get(self, conversation_id: UUID, user_id: Optional[UUID] = None) -> Optional[ConversationModel]:
         try:
             if user_id:
@@ -70,7 +90,7 @@ class Conversations:
                 WHERE id = %s
                 RETURNING *
             """
-            params = (title, datetime.utcnow(), conversation_id)
+            params = (title, datetime.now(timezone.utc), conversation_id)
             result = self.db.execute_one(query, params)
             if result:
                 return ConversationModel(**dict(result))
@@ -95,7 +115,8 @@ class Messages:
     def add(self, conversation_id: UUID, role: str, content: str, metadata: Optional[Dict[str, Any]] = None) -> Optional[ChatMessageModel]:
         try:
             message_id = uuid4()
-            now = datetime.utcnow()
+            # Use timezone-aware UTC datetime for global compatibility
+            now = datetime.now(timezone.utc)
             query = """
                 INSERT INTO chat_messages (id, conversation_id, role, content, metadata, timestamp)
                 VALUES (%s, %s, %s, %s, %s, %s)

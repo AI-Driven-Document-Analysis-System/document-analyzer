@@ -19,11 +19,13 @@ class SubscriptionStatus(str, Enum):
 class User:
     id: UUID
     email: str
-    password_hash: str
+    password_hash: Optional[str] = None  # Optional for OAuth users
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     is_email_verified: bool = False
     email_verification_token: Optional[str] = None
+    google_id: Optional[str] = None  # Google OAuth ID
+    is_oauth_user: bool = False  # Flag for OAuth users
     created_at: datetime = None
     updated_at: datetime = None
 

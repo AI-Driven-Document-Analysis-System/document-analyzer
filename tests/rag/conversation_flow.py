@@ -6,6 +6,9 @@ from typing import Optional, Dict, Any
 
 import requests
 
+# Test user ID from database
+TEST_USER_ID = "79d0bed5-c1c1-4faf-82d4-fed1a28472d5"
+
 
 BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
 API_ROOT = f"{BASE_URL}/api/chat"
@@ -64,7 +67,7 @@ def maybe_llm_config() -> Optional[Dict[str, Any]]:
 def main() -> None:
 	print(f"Using API root: {API_ROOT}")
 	conv_title = f"Flow test {int(time.time())}"
-	user_id = None  # set to an existing UUID string if you want to use list endpoint
+	user_id = TEST_USER_ID  # Using test user ID from database
 	
 	# 1) Create a conversation
 	payload_create = {"title": conv_title}

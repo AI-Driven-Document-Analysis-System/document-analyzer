@@ -34,6 +34,26 @@ class UserUpdate(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
 
+class ChangeEmailRequest(BaseModel):
+    new_email: str
+    password: str
+    
+    @validator('new_email')
+    def validate_email(cls, v):
+        if not v or not v.strip():
+            raise ValueError('Email is required')
+        return v.strip().lower()
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+    
+    @validator('new_password')
+    def validate_new_password(cls, v):
+        if len(v) < 8:
+            raise ValueError('Password must be at least 8 characters long')
+        return v
+
 class Token(BaseModel):
     access_token: str
     token_type: str
