@@ -6,7 +6,7 @@
 
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form, Request
 from typing import List, Optional
-from ..api.auth import get_current_user
+from ..core.dependencies import get_current_user
 from ..core.database import db_manager
 from ..schemas.user_schemas import UserResponse
 from ..schemas.document_schemas import DocumentResponse, DocumentUploadResponse

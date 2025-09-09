@@ -8,7 +8,7 @@
 # import json                    # For JSON data handling
 # from ..services.summarization_service import summarize_with_options, get_summary_options
 # from ..core.database import db_manager  # Database connection manager
-# from ..api.auth import get_current_user  # Authentication middleware
+# from ..core.dependencies import get_current_user  # Authentication middleware
 # from ..schemas.user_schemas import UserResponse  # User data schema
 # import psycopg2  # PostgreSQL database driver
 
@@ -381,7 +381,7 @@ import traceback               # For detailed error information
 import json                    # For JSON data handling
 from ..services.summarization_service import summarize_with_options, get_summary_options
 from ..core.database import db_manager  # Database connection manager
-from ..api.auth import get_current_user  # Authentication middleware
+from ..core.dependencies import get_current_user  # Authentication middleware
 from ..schemas.user_schemas import UserResponse  # User data schema
 import psycopg2  # PostgreSQL database driver
 
