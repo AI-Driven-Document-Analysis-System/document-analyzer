@@ -43,4 +43,14 @@ class DocumentUploadResponse(BaseModel):
     processing: DocumentProcessingResponse
     message: str
 
-
+class DocumentContentResponse(BaseModel):
+    id: UUID
+    document_id: str
+    extracted_text: Optional[str]
+    layout_sections: Optional[List[Dict[str, Any]]]
+    ocr_confidence_score: Optional[float]
+    has_tables: Optional[bool]
+    has_images: Optional[bool]
+    
+    class Config:
+        from_attributes = True

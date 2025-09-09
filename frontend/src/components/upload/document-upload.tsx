@@ -205,6 +205,21 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
     handleFiles(e.target.files)
   }
 
+  const handleDropZoneClick = () => {
+    if (!authToken) return
+    
+    // Create a file input and trigger click
+    const fileInput = document.createElement('input')
+    fileInput.type = 'file'
+    fileInput.multiple = true
+    fileInput.accept = '.pdf,.doc,.docx,.png,.jpg,.jpeg,.gif'
+    fileInput.onchange = (e) => {
+      const target = e.target as HTMLInputElement
+      handleFiles(target.files)
+    }
+    fileInput.click()
+  }
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     setIsDragActive(false)
@@ -247,31 +262,26 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
         </div>
         <div className="p-6">
           <div
+            onClick={handleDropZoneClick}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             className={`
               border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all relative
-              ${!authToken ? "opacity-50 cursor-not-allowed" : ""}
-              ${isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400 hover:bg-gray-50"}
+              ${!authToken ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-50"}
+              ${isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-blue-400"}
             `}
           >
-            <input
-              type="file"
-              multiple
-              accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.gif"
-              onChange={handleFileInput}
-              disabled={!authToken}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-            />
-            <div className="flex flex-col items-center gap-4 pointer-events-none">
-              <div className="text-6xl text-blue-500"><i className="fas fa-cloud-upload-alt"></i></div>
+            <div className="flex flex-col items-center gap-4">
+              <div className={`text-6xl transition-colors ${isDragActive ? "text-blue-600" : "text-blue-500"}`}>
+                <i className="fas fa-cloud-upload-alt"></i>
+              </div>
               <div>
                 <p className="text-lg font-medium text-gray-900">
-                  {isDragActive ? "Drop files here..." : "Drag & drop files here"}
+                  {isDragActive ? "Drop files here..." : "Click here to upload or drag & drop files"}
                 </p>
                 <p className="text-sm text-gray-500 mt-1">
-                  or <span className="text-blue-600 font-medium">browse files</span> from your computer
+                  Select multiple files or <span className="text-blue-600 font-medium">browse from your computer</span>
                 </p>
               </div>
               <div className="flex gap-2 text-xs text-gray-500">
@@ -280,6 +290,12 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
                 <span className="px-2 py-1 bg-gray-100 rounded-md">DOCX</span>
                 <span className="px-2 py-1 bg-gray-100 rounded-md">Images</span>
               </div>
+              {/* {authToken && (
+                <div className="text-xs text-gray-400 bg-gray-50 px-3 py-1 rounded-full">
+                  <i className="fas fa-mouse-pointer mr-1"></i>
+                  Click anywhere in this area to upload
+                </div>
+              )} */}
             </div>
           </div>
         </div>

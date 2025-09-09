@@ -4,7 +4,7 @@ import mimetypes
 from minio import Minio
 from minio.error import S3Error
 from fastapi import UploadFile, HTTPException
-from typing import Tuple, Optional, Dict, Any
+from typing import Tuple, Optional, Dict, Any, List
 from uuid import uuid4
 import asyncio
 from datetime import datetime
@@ -12,6 +12,8 @@ from io import BytesIO
 
 from ..core.database import db_manager
 from ..core.config import settings
+from .layout_analysis.surya_processor import SuryaDocumentProcessor
+from ..db.crud import get_document_crud
 
 
 class DocumentService:
@@ -35,6 +37,7 @@ class DocumentService:
                 secure=self.minio_secure
             )
             self._ensure_bucket_exists()
+        from ..db.crud import get_document_crud
         return self._minio_client
 
     def _ensure_bucket_exists(self):
@@ -204,49 +207,94 @@ class DocumentService:
             raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
     async def _start_document_processing(self, document_id: str):
-        """Start background document processing"""
+        """Background pipeline: download file, run OCR/layout, store content, update status."""
         try:
-            # Update status to processing
+            # Mark processing
             with db_manager.get_connection() as conn:
                 with conn.cursor() as cursor:
-                    cursor.execute("""
-                        UPDATE document_processing 
-                        SET processing_status = %s 
-                        WHERE document_id = %s
-                    """, ("processing", document_id))
+                    cursor.execute("UPDATE document_processing SET processing_status=%s WHERE document_id=%s", ("processing", document_id))
                     conn.commit()
 
-            # Simulate processing delay (replace with actual processing logic)
-            await asyncio.sleep(2)
-
-            # Your processing logic here:
-            # 1. OCR for images/scanned PDFs
-            # 2. Text extraction
-            # 3. Classification
-            # 4. Summarization
-            # 5. Embedding generation
-            # 6. Indexing
-
-            # For now, just mark as completed
+            # Get file path
             with db_manager.get_connection() as conn:
                 with conn.cursor() as cursor:
-                    cursor.execute("""
-                        UPDATE document_processing 
-                        SET processing_status = %s, ocr_completed_at = %s 
-                        WHERE document_id = %s
-                    """, ("completed", datetime.utcnow(), document_id))
-                    conn.commit()
+                    cursor.execute("SELECT file_path_minio, original_filename FROM documents WHERE id=%s", (document_id,))
+                    row = cursor.fetchone()
+            if not row:
+                raise ValueError("Document not found for OCR")
+            file_path_minio, original_filename = row
 
+            # Download file to temp
+            tmp_dir = os.path.join(os.getcwd(), "_proc_tmp")
+            os.makedirs(tmp_dir, exist_ok=True)
+            local_path = os.path.join(tmp_dir, original_filename)
+            obj = self.minio_client.get_object(self.bucket_name, file_path_minio)
+            try:
+                with open(local_path, "wb") as f:
+                    for d in obj.stream(32 * 1024):
+                        f.write(d)
+            finally:
+                obj.close(); obj.release_conn()
+
+            # Run Surya OCR + layout
+            processor = SuryaDocumentProcessor(preprocess_scanned=True)
+            pages: List[List[Dict[str, Any]]] = processor.process_document(local_path)
+
+            # Aggregate
+            text_parts: List[str] = []
+            layout_sections: List[Dict[str, Any]] = []
+            confidences: List[float] = []
+            has_tables = False
+            has_images = False
+            for page_num, page in enumerate(pages, start=1):
+                for elem in page:
+                    txt = elem.get("extracted_text") or ""
+                    if txt:
+                        text_parts.append(txt)
+                    conf = elem.get("confidence")
+                    if conf is not None:
+                        confidences.append(conf)
+                    etype = (elem.get("element_type") or "").lower()
+                    if "table" in etype:
+                        has_tables = True
+                    if any(k in etype for k in ["image", "figure"]):
+                        has_images = True
+                    layout_sections.append({
+                        "page_number": page_num,
+                        "element_type": elem.get("element_type"),
+                        "bounding_box": elem.get("bounding_box"),
+                        "text": txt,
+                        "confidence": conf
+                    })
+
+            full_text = "\n".join(text_parts) if text_parts else None
+            avg_conf = sum(confidences)/len(confidences) if confidences else None
+
+            # Persist document_content
+            try:
+                crud = get_document_crud()
+                crud.save_document_content(
+                    document_id=document_id,
+                    extracted_text=full_text,
+                    layout_sections=layout_sections,
+                    ocr_confidence_score=avg_conf,
+                    has_tables=has_tables,
+                    has_images=has_images
+                )
+            except Exception as ce:
+                print(f"Warning: could not save document_content for {document_id}: {ce}")
+
+            # Mark completed
+            with db_manager.get_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute("UPDATE document_processing SET processing_status=%s, ocr_completed_at=%s WHERE document_id=%s", ("completed", datetime.utcnow(), document_id))
+                    conn.commit()
         except Exception as e:
-            # Mark as failed with error details
-            error_details = {"message": str(e), "timestamp": datetime.utcnow().isoformat()}
+            # Mark failed
+            err = {"message": str(e), "ts": datetime.utcnow().isoformat()}
             with db_manager.get_connection() as conn:
                 with conn.cursor() as cursor:
-                    cursor.execute("""
-                        UPDATE document_processing 
-                        SET processing_status = %s, processing_errors = %s 
-                        WHERE document_id = %s
-                    """, ("failed", str(error_details), document_id))
+                    cursor.execute("UPDATE document_processing SET processing_status=%s, processing_errors=%s WHERE document_id=%s", ("failed", str(err), document_id))
                     conn.commit()
 
     def get_document_download_url(self, file_path: str, expires_in_hours: int = 1) -> str:
