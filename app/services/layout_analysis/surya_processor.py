@@ -4,7 +4,6 @@ from typing import List, Dict, Any, Optional
 from pathlib import Path
 import uuid
 import pdf2image
-import requests
 import numpy as np
 from PIL import Image
 
@@ -14,8 +13,7 @@ from surya.recognition import RecognitionPredictor
 from surya.detection import DetectionPredictor
 from surya.layout import LayoutPredictor
 
-from document_element import DocumentElement
-from document_preprocessor import DocumentPreprocessor
+from .document_preprocessor import DocumentPreprocessor
 
 
 logging.basicConfig(level=logging.INFO)
