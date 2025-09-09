@@ -14,7 +14,7 @@ const navigationItems = [
     title: "Overview",
     items: [
       { title: "Dashboard", url: "/dashboard", icon: "fas fa-home" },
-      { title: "AI Chat", url: "/chat", icon: "fas fa-robot" },
+      { title: "AI Agent", url: "/chat", icon: "fas fa-robot" },
       { title: "Upload Documents", url: "/upload", icon: "fas fa-cloud-upload-alt" },
       { title: "My Documents", url: "/documents", icon: "fas fa-file-alt" },
     ],

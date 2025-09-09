@@ -24,7 +24,7 @@ const routes = {
   "/upload": { component: DocumentUpload, title: "Upload Documents", breadcrumb: ["Upload Documents"] },
   "/summarization": { component: Summarization, title: "Summarization", breadcrumb: ["Analysis", "Summarization"] },
   "/search": { component: SearchInterface, title: "Search", breadcrumb: ["Analysis", "Search"] },
-  "/chat": { component: RAGChatbot, title: "AI Chat", breadcrumb: ["Analysis", "AI Chat"] },
+  "/chat": { component: RAGChatbot, title: "AI Agent", breadcrumb: ["Analysis", "AI Agent"] },
   "/documents": { component: DocumentView, title: "My Documents", breadcrumb: ["Documents"] },
   "/profile": { component: UserProfilePage, title: "Profile",  breadcrumb: ["Account", "Profile"] },
   "/settings": { component: Settings, title: "Settings", breadcrumb: ["Account", "Settings"] }, // Fixed: Use actual component
