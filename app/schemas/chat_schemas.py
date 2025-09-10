@@ -153,6 +153,10 @@ class RenameConversationRequest(BaseModel):
     title: str
 
 
+class DeleteConversationRequest(BaseModel):
+    user_id: str = Field(..., description="User ID requesting the deletion")
+
+
 class ChatMessageItem(BaseModel):
     id: str
     role: str

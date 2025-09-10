@@ -15,20 +15,11 @@ const navigationItems = [
     items: [
       { title: "Dashboard", url: "/dashboard", icon: "fas fa-home" },
       { title: "AI Agent", url: "/chat", icon: "fas fa-robot" },
-      { title: "Upload Documents", url: "/upload", icon: "fas fa-cloud-upload-alt" },
-      { title: "My Documents", url: "/documents", icon: "fas fa-file-alt" },
-    ],
-  },
-  {
-    title: "Analysis",
-    items: [
-      { title: "Document Viewer", url: "/documents", icon: "fas fa-eye" },
       { title: "Summarization", url: "/summarization", icon: "fas fa-brain" },
+      { title: "My Documents", url: "/documents", icon: "fas fa-file-alt" },
+      { title: "Analytics", url: "/analytics", icon: "fas fa-chart-bar" },
+      { title: "Upload Document", url: "/upload", icon: "fas fa-cloud-upload-alt" },
     ],
-  },
-  {
-    title: "Insights",
-    items: [{ title: "Analytics", url: "/analytics", icon: "fas fa-chart-bar" }],
   },
   {
     title: "Account",

@@ -16,6 +16,7 @@ import './globals.css'
 import { authService } from "../services/authService"
 import UserProfilePage  from "../profile/profile"
 import Settings from "../components/settings/settings"
+import { Subscription } from "../components/subscription/subscription"
 
 const routes = {
   "/dashboard": { component: Dashboard, title: "Dashboard", breadcrumb: ["Dashboard"] },
@@ -26,6 +27,7 @@ const routes = {
   "/analytics": { component: Analytics, title: "Analytics", breadcrumb: ["Insights", "Analytics"] },
   "/documents": { component: DocumentView, title: "My Documents", breadcrumb: ["Documents"] },
   "/profile": { component: UserProfilePage, title: "Profile",  breadcrumb: ["Account", "Profile"] },
+  "/subscription": { component: Subscription, title: "Subscription", breadcrumb: ["Account", "Subscription"] },
   "/settings": { component: Settings, title: "Settings", breadcrumb: ["Account", "Settings"] }, // Fixed: Use actual component
 }
 
