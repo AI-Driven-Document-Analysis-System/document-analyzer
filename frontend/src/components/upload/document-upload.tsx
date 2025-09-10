@@ -277,7 +277,15 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
             }}
           >
-            <div className="flex flex-col items-center gap-4">
+            <input
+              type="file"
+              multiple
+              accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.gif"
+              onChange={handleFileInput}
+              disabled={!authToken}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+            />
+            <div className="flex flex-col items-center gap-4 pointer-events-none">
               <div className="text-6xl text-blue-500">
                 <i className="fas fa-cloud-upload-alt" style={{
                   background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',

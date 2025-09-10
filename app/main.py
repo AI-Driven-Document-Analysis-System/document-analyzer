@@ -6,7 +6,7 @@ import logging
 import os
 import asyncio
 from datetime import datetime
-from .api import auth, summarization, documents, chat  # Add chat import
+from .api import auth, summarization, documents, chat, analytics  # Add analytics import
 from .core.database import db_manager
 from .db.init_db import create_tables
 from .api import profile
@@ -56,9 +56,8 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(summarization.router, prefix="/api")
 app.include_router(documents.router, prefix="/api")  # Add this line
 app.include_router(chat.router, prefix="/api")  # Add chat router
-# app.include_router(ocr.router, prefix="/api")  # Add OCR router - temporarily disabled
+app.include_router(analytics.router, prefix="/api")  # Add analytics router
 app.include_router(profile.router, prefix="/api")
-
 
 @app.get("/")
 async def root():
@@ -78,11 +77,11 @@ async def health_check():
             with conn.cursor() as cursor:
                 cursor.execute("SELECT 1")
                 cursor.fetchone()
-        
+
         return {
             "status": "healthy",
             "database": "connected",
-            "timestamp": "2024-01-01T00:00:00Z"
+            "timestamp": datetime.utcnow().isoformat() + "Z"
         }
     except Exception as e:
         logger.error(f"Health check failed: {e}")
@@ -91,14 +90,14 @@ async def health_check():
             "status": "unhealthy",
             "database": "disconnected",
             "error": str(e),
-            "timestamp": "2024-01-01T00:00:00Z"
+            "timestamp": datetime.utcnow().isoformat() + "Z"
         }
 
 @app.on_event("startup")
 async def startup_event():
     """Startup event handler"""
     logger.info("DocAnalyzer API starting up...")
-    
+
     # Initialize database tables if DATABASE_URL is configured
     try:
         if os.getenv("DATABASE_URL"):
@@ -130,7 +129,7 @@ async def startup_event():
 async def shutdown_event():
     """Shutdown event handler"""
     logger.info("DocAnalyzer API shutting down...")
-    
+
     # Close database connections
     try:
         db_manager.close_pool()

@@ -1,6 +1,3 @@
-
-
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -12,6 +9,7 @@ import Summarization from "../components/summarization/summarization";
 import { SearchInterface } from "../components/search/search-interface"
 import { RAGChatbot } from "../components/chat/rag-chatbot"
 import { Sidebar } from "../components/layout/sidebar"
+import Analytics from "../components/analytics/analytics"
 import { DocumentView } from '../components/view/document_view'
 // import "../styles/globals.css"
 import './globals.css' 
@@ -25,11 +23,16 @@ const routes = {
   "/summarization": { component: Summarization, title: "Summarization", breadcrumb: ["Analysis", "Summarization"] },
   "/search": { component: SearchInterface, title: "Search", breadcrumb: ["Analysis", "Search"] },
   "/chat": { component: RAGChatbot, title: "AI Agent", breadcrumb: ["Analysis", "AI Agent"] },
+  "/analytics": { component: Analytics, title: "Analytics", breadcrumb: ["Insights", "Analytics"] },
   "/documents": { component: DocumentView, title: "My Documents", breadcrumb: ["Documents"] },
   "/profile": { component: UserProfilePage, title: "Profile",  breadcrumb: ["Account", "Profile"] },
   "/settings": { component: Settings, title: "Settings", breadcrumb: ["Account", "Settings"] }, // Fixed: Use actual component
 }
 
+/**
+ * Main page component that handles authentication, routing, and layout
+ * Implements proper SSR hydration handling and localStorage state persistence
+ */
 export default function Page() {
   // FIXED: Initialize all state with safe defaults for SSR
   // Don't access localStorage during initial render to avoid hydration mismatch
@@ -212,7 +215,7 @@ export default function Page() {
           {/* Show the user's intended page immediately, with subtle loading if needed */}
           <CurrentComponent />
         </div>
-      </div>p
+      </div>
     </div>
   )
 }
