@@ -69,7 +69,7 @@
 @media (min-width: 1280px) { .docview-grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 .docview-gap-6 { gap: 1.5rem; }
 .docview-items-start { align-items: flex-start; }
-.docview-line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.docview-line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .docview-divide-y > :not([hidden]) ~ :not([hidden]) { --tw-divide-y-reverse: 0; border-top: calc(1px * var(--tw-divide-y-reverse)) solid; border-bottom: calc(1px * calc(1 - var(--tw-divide-y-reverse))) solid; }
 .docview-divide-gray-100 > :not([hidden]) ~ :not([hidden]) { --tw-divide-opacity: 1; border-color: rgba(243, 244, 246, var(--tw-divide-opacity)); }
 
@@ -138,28 +138,56 @@
     border-width: 1px;
 }
 .docview-badge-success {
-    @extend .docview-badge;
-    background-color: #f0fdf4;
-    color: #15803d;
-    border-color: #bbf7d0;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    border-radius: 9999px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-width: 1px;
+    background-color: #dbeafe;
+    color: #1e40af;
+    border-color: #93c5fd;
 }
 .docview-badge-warning {
-    @extend .docview-badge;
-    background-color: #fffbeb;
-    color: #a16207;
-    border-color: #fde68a;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    border-radius: 9999px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-width: 1px;
+    background-color: #e0f2fe;
+    color: #0369a1;
+    border-color: #7dd3fc;
 }
 .docview-badge-error {
-    @extend .docview-badge;
-    background-color: #fef2f2;
-    color: #b91c1c;
-    border-color: #fca5a5;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    border-radius: 9999px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-width: 1px;
+    background-color: #f1f5f9;
+    color: #475569;
+    border-color: #cbd5e1;
 }
 .docview-badge-default {
-    @extend .docview-badge;
-    background-color: #f9fafb;
-    color: #374151;
-    border-color: #e5e7eb;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    border-radius: 9999px;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-width: 1px;
+    background-color: #f8fafc;
+    color: #64748b;
+    border-color: #e2e8f0;
 }
 
 /* Buttons */
@@ -180,7 +208,12 @@
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 .docview-cta-primary {
-    @extend .docview-button;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    border: none;
     background: linear-gradient(to right, #2563eb, #1d4ed8);
     color: white;
 }
@@ -188,15 +221,25 @@
     background: linear-gradient(to right, #1d4ed8, #1e40af);
 }
 .docview-cta-danger {
-    @extend .docview-button;
-    background: linear-gradient(to right, #dc2626, #b91c1c);
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    border: none;
+    background: linear-gradient(to right, #64748b, #475569);
     color: white;
 }
 .docview-cta-danger:hover {
-    background: linear-gradient(to right, #b91c1c, #991b1b);
+    background: linear-gradient(to right, #475569, #334155);
 }
 .docview-button-secondary {
-    @extend .docview-button;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    border: none;
     background-color: #f3f4f6;
     color: #4b5563;
 }
