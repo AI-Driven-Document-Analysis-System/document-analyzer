@@ -15,10 +15,10 @@ export function LandingPage({ onShowAuth }: LandingPageProps) {
             <span className="nav-logo-text">DocAnalyzer</span>
           </div>
           <div className="nav-actions">
-            <button className="btn btn-outline" onClick={onShowAuth}>
+            <button className="btn btn-outline" onClick={onShowAuth} style={{width: '120px' , backgroundColor: '#007bff', color: 'white', borderColor: '#007bff'}}>
               Sign In
             </button>
-            <button className="btn btn-primary" onClick={onShowAuth}>
+            <button className="btn btn-primary" onClick={onShowAuth} style={{width: '120px'}}>
               Get Started
             </button>
           </div>

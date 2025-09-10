@@ -1,5 +1,3 @@
-
-
 import React, { useState, useCallback } from "react"
 
 interface UploadedFile {
@@ -27,7 +25,7 @@ const getFileIcon = (type: string) => {
 const getStoredAuthToken = () => {
   try {
     // Try to get from localStorage first, then sessionStorage
-    return window.localStorage?.getItem('token') || 
+    return window.localStorage?.getItem('token') ||
            window.sessionStorage?.getItem('token') ||
            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3OWQwYmVkNS1jMWMxLTRmYWYtODJkNC1mZWQxYTI4NDcyZDUiLCJlbWFpbCI6InRlc3QxQGdtYWlsLmNvbSIsImV4cCI6MTc1NzMyNzc5OH0.h_P47qNaOhJ9r34alekxTlvXxen45dbTXokBans669c'; // Your actual token as fallback for demo
   } catch (e) {
@@ -40,7 +38,7 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const [isDragActive, setIsDragActive] = useState(false)
   const [authToken, setAuthToken] = useState<string | null>(null)
-  
+
   // Update token on mount and when prop changes
   React.useEffect(() => {
     const token = propAuthToken || getStoredAuthToken();
@@ -154,7 +152,7 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
 
         // Make actual API call
         const result = await uploadToAPI(uploadFile.file, uploadFile.id)
-        
+
         // Clear progress interval
         clearInterval(progressInterval)
 
@@ -163,9 +161,9 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
           prev.map((f) => {
             if (f.id === uploadFile.id) {
               if (result.success) {
-                return { 
-                  ...f, 
-                  status: result.status === 'duplicate' ? 'completed' : 'processing', 
+                return {
+                  ...f,
+                  status: result.status === 'duplicate' ? 'completed' : 'processing',
                   progress: 100,
                   documentId: result.document_id
                 }
@@ -181,7 +179,7 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
         if (result.success && result.status !== 'duplicate') {
           setTimeout(() => {
             setUploadedFiles((prev) =>
-              prev.map((f) => 
+              prev.map((f) =>
                 f.id === uploadFile.id ? { ...f, status: "completed" } : f
               ),
             )
@@ -192,7 +190,7 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
         // Clear any intervals and mark as error
         setUploadedFiles((prev) =>
           prev.map((f) =>
-            f.id === uploadFile.id 
+            f.id === uploadFile.id
               ? { ...f, status: "error", error: error.message || 'Upload failed' }
               : f
           ),
@@ -207,7 +205,7 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
 
   const handleDropZoneClick = () => {
     if (!authToken) return
-    
+
     // Create a file input and trigger click
     const fileInput = document.createElement('input')
     fileInput.type = 'file'
@@ -271,31 +269,70 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
               ${!authToken ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-50"}
               ${isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-blue-400"}
             `}
+            style={{
+              background: isDragActive ? 'linear-gradient(135deg, #ebf4ff 0%, #dbeafe 100%)' : 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+              borderRadius: '12px',
+              boxShadow: isDragActive ? '0 8px 25px rgba(59, 130, 246, 0.15)' : '0 4px 6px rgba(0, 0, 0, 0.05)',
+              transform: isDragActive ? 'scale(1.02)' : 'scale(1)',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}
           >
             <div className="flex flex-col items-center gap-4">
-              <div className={`text-6xl transition-colors ${isDragActive ? "text-blue-600" : "text-blue-500"}`}>
-                <i className="fas fa-cloud-upload-alt"></i>
+              <div className="text-6xl text-blue-500">
+                <i className="fas fa-cloud-upload-alt" style={{
+                  background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  filter: 'drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3))'
+                }}></i>
               </div>
               <div>
-                <p className="text-lg font-medium text-gray-900">
+                <p className="text-lg font-medium text-gray-900" style={{
+                  fontSize: '18px',
+                  fontWeight: '600',
+                  marginBottom: '8px'
+                }}>
                   {isDragActive ? "Drop files here..." : "Click here to upload or drag & drop files"}
                 </p>
                 <p className="text-sm text-gray-500 mt-1">
-                  Select multiple files or <span className="text-blue-600 font-medium">browse from your computer</span>
+                  Select multiple files or <span className="text-blue-600 font-medium" style={{
+                    background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    fontWeight: '600',
+                    textDecoration: 'underline',
+                    textDecorationColor: '#3b82f6'
+                  }}>browse from your computer</span>
                 </p>
               </div>
               <div className="flex gap-2 text-xs text-gray-500">
-                <span className="px-2 py-1 bg-gray-100 rounded-md">PDF</span>
-                <span className="px-2 py-1 bg-gray-100 rounded-md">DOC</span>
-                <span className="px-2 py-1 bg-gray-100 rounded-md">DOCX</span>
-                <span className="px-2 py-1 bg-gray-100 rounded-md">Images</span>
+                <span className="px-2 py-1 bg-gray-100 rounded-md" style={{
+                  background: 'linear-gradient(135deg, #f1f5f9, #e2e8f0)',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '6px',
+                  fontWeight: '500'
+                }}>PDF</span>
+                <span className="px-2 py-1 bg-gray-100 rounded-md" style={{
+                  background: 'linear-gradient(135deg, #f1f5f9, #e2e8f0)',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '6px',
+                  fontWeight: '500'
+                }}>DOC</span>
+                <span className="px-2 py-1 bg-gray-100 rounded-md" style={{
+                  background: 'linear-gradient(135deg, #f1f5f9, #e2e8f0)',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '6px',
+                  fontWeight: '500'
+                }}>DOCX</span>
+                <span className="px-2 py-1 bg-gray-100 rounded-md" style={{
+                  background: 'linear-gradient(135deg, #f1f5f9, #e2e8f0)',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '6px',
+                  fontWeight: '500'
+                }}>Images</span>
               </div>
-              {/* {authToken && (
-                <div className="text-xs text-gray-400 bg-gray-50 px-3 py-1 rounded-full">
-                  <i className="fas fa-mouse-pointer mr-1"></i>
-                  Click anywhere in this area to upload
-                </div>
-              )} */}
             </div>
           </div>
         </div>
@@ -332,6 +369,38 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
                                 ? "bg-yellow-100 text-yellow-800"
                                 : "bg-blue-100 text-blue-800"
                           }`}
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: '20px',
+                            fontWeight: '600',
+                            fontSize: '11px',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px',
+                            ...(uploadFile.status === "completed" && {
+                              background: 'linear-gradient(135deg, #dcfce7, #bbf7d0)',
+                              color: '#166534',
+                              border: '1px solid #22c55e',
+                              boxShadow: '0 2px 4px rgba(34, 197, 94, 0.2)'
+                            }),
+                            ...(uploadFile.status === "error" && {
+                              background: 'linear-gradient(135deg, #fecaca, #fca5a5)',
+                              color: '#991b1b',
+                              border: '1px solid #ef4444',
+                              boxShadow: '0 2px 4px rgba(239, 68, 68, 0.2)'
+                            }),
+                            ...(uploadFile.status === "processing" && {
+                              background: 'linear-gradient(135deg, #fef3c7, #fde68a)',
+                              color: '#92400e',
+                              border: '1px solid #f59e0b',
+                              boxShadow: '0 2px 4px rgba(245, 158, 11, 0.2)'
+                            }),
+                            ...(uploadFile.status === "uploading" && {
+                              background: 'linear-gradient(135deg, #dbeafe, #bfdbfe)',
+                              color: '#1e40af',
+                              border: '1px solid #3b82f6',
+                              boxShadow: '0 2px 4px rgba(59, 130, 246, 0.2)'
+                            })
+                          }}
                         >
                           {uploadFile.status === "uploading" && "Uploading"}
                           {uploadFile.status === "processing" && "Processing"}
@@ -346,8 +415,8 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
 
                       {uploadFile.status !== "completed" && uploadFile.status !== "error" && (
                         <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                          <div 
-                            className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
+                          <div
+                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
                             style={{ width: `${uploadFile.progress}%` }}
                           />
                         </div>
@@ -355,11 +424,27 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
                     </div>
 
                     <div className="flex items-center gap-2">
-                      {uploadFile.status === "completed" && <span className="text-green-600"><i className="fas fa-check-circle"></i></span>}
-                      {uploadFile.status === "error" && <span className="text-red-600"><i className="fas fa-times-circle"></i></span>}
-                      <button 
-                        className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 transition-colors" 
+                      {uploadFile.status === "completed" && <span className="text-green-600" style={{
+                        fontSize: '20px',
+                        color: '#22c55e',
+                        filter: 'drop-shadow(0 2px 4px rgba(34, 197, 94, 0.3))'
+                      }}><i className="fas fa-check-circle"></i></span>}
+                      {uploadFile.status === "error" && <span className="text-red-600" style={{
+                        fontSize: '20px',
+                        color: '#ef4444',
+                        filter: 'drop-shadow(0 2px 4px rgba(239, 68, 68, 0.3))'
+                      }}><i className="fas fa-times-circle"></i></span>}
+                      <button
+                        className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
                         onClick={() => removeFile(uploadFile.id)}
+                        style={{
+                          background: 'linear-gradient(135deg, #f8fafc, #f1f5f9)',
+                          border: '1px solid #cbd5e1',
+                          borderRadius: '6px',
+                          padding: '8px 12px',
+                          transition: 'all 0.2s ease',
+                          cursor: 'pointer'
+                        }}
                       >
                         <i className="fas fa-times"></i>
                       </button>
