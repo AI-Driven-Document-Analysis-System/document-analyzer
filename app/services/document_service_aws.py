@@ -15,7 +15,7 @@ import threading
 
 from ..core.database import db_manager
 from ..core.config import settings
-from .ocr_service import OCRService, OCRProvider
+from .ocr_service_aws_only import OCRService, OCRProvider
 from ..db.crud import get_document_crud
 from .document_embedding_service import document_embedding_service
 
@@ -279,18 +279,19 @@ class DocumentServiceAWS:
                 print(f"AWS credentials detected, using AWS Textract")
                 ocr_service = OCRService(provider=OCRProvider.AWS_TEXTRACT)
             else:
-                raise Exception("AWS Textract credentials required - Surya OCR disabled")
+                raise Exception("AWS Textract credentials required")
                 
+            # Process document with AWS OCR
             ocr_result = ocr_service.process_document(local_path, document_id)
             
-            # Extract results from unified OCR service
+            # Extract results from AWS OCR service
             full_text = ocr_result.get('extracted_text')
             searchable_content = ocr_result.get('searchable_content')
             layout_sections = ocr_result.get('layout_sections', {})
             avg_conf = ocr_result.get('ocr_confidence_score')
             has_tables = ocr_result.get('has_tables', False)
             has_images = ocr_result.get('has_images', False)
-            provider_used = ocr_result.get('provider', 'unknown')
+            provider_used = ocr_result.get('provider', 'aws_textract')
             
             print(f"OCR processing completed using {provider_used} provider")
             print(f"Extracted {len(full_text) if full_text else 0} characters of text")

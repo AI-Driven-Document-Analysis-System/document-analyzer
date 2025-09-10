@@ -11,7 +11,6 @@ from ..core.database import db_manager
 from ..schemas.user_schemas import UserResponse
 from ..schemas.document_schemas import DocumentResponse, DocumentUploadResponse
 from ..services.document_service_aws import document_service_aws as document_service
-from ..services.document_embedding_service import document_embedding_service
 import logging
 import psycopg2
 import json

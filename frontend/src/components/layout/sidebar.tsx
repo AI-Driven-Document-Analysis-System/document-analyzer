@@ -23,9 +23,7 @@ const navigationItems = [
     title: "Analysis",
     items: [
       { title: "Document Viewer", url: "/documents", icon: "fas fa-eye" },
-      { title: "Classification", url: "/classification", icon: "fas fa-tags" },
       { title: "Summarization", url: "/summarization", icon: "fas fa-brain" },
-      { title: "Search", url: "/search", icon: "fas fa-search" },
     ],
   },
   {

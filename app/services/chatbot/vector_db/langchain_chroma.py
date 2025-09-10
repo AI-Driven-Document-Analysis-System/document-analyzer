@@ -30,6 +30,7 @@ class LangChainChromaStore:
         """
         self.persist_directory = persist_directory
         self.collection_name = collection_name
+        # Use SentenceTransformer for consistent embedding across indexing and retrieval
         self.embeddings = SentenceTransformerEmbeddings(model_name=embedding_model)
         self.client = chromadb.PersistentClient(
             path=persist_directory,

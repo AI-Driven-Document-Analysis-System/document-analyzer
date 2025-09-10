@@ -59,6 +59,7 @@ app.include_router(chat.router, prefix="/api")  # Add chat router
 app.include_router(analytics.router, prefix="/api")  # Add analytics router
 app.include_router(profile.router, prefix="/api")
 
+
 @app.get("/")
 async def root():
     """Root endpoint"""
@@ -67,6 +68,7 @@ async def root():
         "version": "1.0.0",
         "status": "running"
     }
+
 
 @app.get("/health")
 async def health_check():
@@ -92,6 +94,7 @@ async def health_check():
             "error": str(e),
             "timestamp": datetime.utcnow().isoformat() + "Z"
         }
+
 
 @app.on_event("startup")
 async def startup_event():
@@ -125,6 +128,7 @@ async def startup_event():
         logger.warning(f"Startup DB init warning: {e}")
         # Don't crash the server if DB init fails
 
+
 @app.on_event("shutdown")
 async def shutdown_event():
     """Shutdown event handler"""
@@ -136,6 +140,7 @@ async def shutdown_event():
         logger.info("Database connections closed")
     except Exception as e:
         logger.error(f"Shutdown error: {e}")
+
 
 async def database_monitor_task():
     """Background task to monitor database health and clean up connections"""
@@ -166,6 +171,7 @@ async def database_monitor_task():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "main:app",
         host="0.0.0.0",

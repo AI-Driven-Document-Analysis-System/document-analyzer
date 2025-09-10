@@ -13,8 +13,8 @@ from io import BytesIO
 
 from ..core.database import db_manager
 from ..core.config import settings
-from .layout_analysis.surya_processor import SuryaDocumentProcessor
-from .ocr_service import OCRService, OCRProvider
+# from .layout_analysis.surya_processor import SuryaDocumentProcessor  # Removed - using AWS services
+# from .ocr_service import OCRService, OCRProvider  # Removed - using AWS services
 from ..db.crud import get_document_crud
 
 

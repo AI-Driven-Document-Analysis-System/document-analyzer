@@ -4,7 +4,7 @@ from typing import Dict, Any, List, Optional
 from enum import Enum
 
 from .aws_textract_service import AWSTextractService
-from .layout_analysis.surya_processor import SuryaDocumentProcessor
+# from .layout_analysis.surya_processor import SuryaDocumentProcessor  # Removed - AWS only
 
 logger = logging.getLogger(__name__)
 
