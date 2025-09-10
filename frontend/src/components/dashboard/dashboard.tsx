@@ -463,8 +463,10 @@
 
 //   // Other handler functions
 //   const handleChatWithDoc = (doc: DocumentWithSummary) => {
-//     setSelectedDocument(doc)
-//     setActiveView('chat')
+//     // MVP: Disable chat functionality
+    // MVP: Chat functionality disabled
+    // setSelectedDocument(doc)
+//     // MVP: Chat functionality disabled - show alert instead
 //   }
 
 //   const handleSummarizeDoc = (doc: DocumentWithSummary) => {
@@ -531,7 +533,7 @@
 //             </button>
 //             <button
 //               className={`tab-btn ${activeView === 'chat' ? 'active' : ''}`}
-//               onClick={() => setActiveView('chat')}
+//               onClick={() => alert('🚧 Ask DocuMind AI feature is coming soon!')}
 //             >
 //               <i className="fas fa-robot me-2"></i>Ask DocuMind AI
 //             </button>
@@ -601,13 +603,13 @@
 //                     ))
 //                   )}
 //                 </div>
-//                 <div className="chat-input-group">
+//                 <div className="chat-input-group" style={{display: 'none'}}>
 //                   <input
 //                     type="text"
 //                     className="form-control"
 //                     placeholder={selectedDocument
 //                       ? `Ask about ${selectedDocument.name}...`
-//                       : "Ask DocuMind AI anything about your documents..."
+//                       : "Search functionality coming soon..."
 //                     }
 //                   />
 //                   <button className="btn btn-primary">
@@ -658,13 +660,13 @@
 //                     </div>
 //                   )}
 //                 </div>
-//                 <div className="chat-input-group">
+//                 <div className="chat-input-group" style={{display: 'none'}}>
 //                   <input 
 //                     type="text" 
 //                     className="form-control" 
 //                     placeholder={selectedDocument 
 //                       ? `Ask about ${selectedDocument.name}...` 
-//                       : "Ask DocuMind AI anything about your documents..."
+//                       : "Search functionality coming soon..."
 //                     } 
 //                   />
 //                   <button className="btn btn-primary">
@@ -1593,8 +1595,10 @@ function Dashboard() {
 
   // Other handler functions
   const handleChatWithDoc = (doc: DocumentWithSummary) => {
-    setSelectedDocument(doc)
-    setActiveView('chat')
+    // MVP: Disable chat functionality
+    // MVP: Chat functionality disabled
+    // setSelectedDocument(doc)
+    // MVP: Chat functionality disabled - show alert instead
   }
 
   const handleSummarizeDoc = (doc: DocumentWithSummary) => {
@@ -1670,7 +1674,7 @@ function Dashboard() {
             </button>
             <button
               className={`tab-btn ${activeView === 'chat' ? 'active' : ''}`}
-              onClick={() => setActiveView('chat')}
+              onClick={() => alert('🚧 Ask DocuMind AI feature is coming soon!')}
             >
               <i className="fas fa-robot me-2"></i>Ask DocuMind AI
             </button>
@@ -1740,13 +1744,13 @@ function Dashboard() {
                     ))
                   )}
                 </div>
-                <div className="chat-input-group">
+                <div className="chat-input-group" style={{display: 'none'}}>
                   <input
                     type="text"
                     className="form-control"
                     placeholder={selectedDocument
                       ? `Ask about ${selectedDocument.name}...`
-                      : "Ask DocuMind AI anything about your documents..."
+                      : "Search functionality coming soon..."
                     }
                   />
                   <button className="btn btn-primary">
@@ -1797,13 +1801,13 @@ function Dashboard() {
                     </div>
                   )}
                 </div>
-                <div className="chat-input-group">
+                <div className="chat-input-group" style={{display: 'none'}}>
                   <input 
                     type="text" 
                     className="form-control" 
                     placeholder={selectedDocument 
                       ? `Ask about ${selectedDocument.name}...` 
-                      : "Ask DocuMind AI anything about your documents..."
+                      : "Search functionality coming soon..."
                     } 
                   />
                   <button className="btn btn-primary">
