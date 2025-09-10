@@ -27,8 +27,8 @@ const getFileIcon = (type: string) => {
 const getStoredAuthToken = () => {
   try {
     // Try to get from localStorage first, then sessionStorage
-    return window.localStorage?.getItem('authToken') || 
-           window.sessionStorage?.getItem('authToken') ||
+    return window.localStorage?.getItem('token') || 
+           window.sessionStorage?.getItem('token') ||
            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3OWQwYmVkNS1jMWMxLTRmYWYtODJkNC1mZWQxYTI4NDcyZDUiLCJlbWFpbCI6InRlc3QxQGdtYWlsLmNvbSIsImV4cCI6MTc1NzMyNzc5OH0.h_P47qNaOhJ9r34alekxTlvXxen45dbTXokBans669c'; // Your actual token as fallback for demo
   } catch (e) {
     // Fallback token for environments without localStorage
@@ -238,7 +238,7 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
       </div>
 
       {/* Upload Area */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+      <div className="bg-white rounded-lg border border-gray-200 shadow-sm" >
         <div className="p-6 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900">Document Upload</h2>
           <p className="text-sm text-gray-600 mt-1">
@@ -255,6 +255,13 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
               ${!authToken ? "opacity-50 cursor-not-allowed" : ""}
               ${isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400 hover:bg-gray-50"}
             `}
+            style={{
+    background: isDragActive ? 'linear-gradient(135deg, #ebf4ff 0%, #dbeafe 100%)' : 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+    borderRadius: '12px',
+    boxShadow: isDragActive ? '0 8px 25px rgba(59, 130, 246, 0.15)' : '0 4px 6px rgba(0, 0, 0, 0.05)',
+    transform: isDragActive ? 'scale(1.02)' : 'scale(1)',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+  }}
           >
             <input
               type="file"
@@ -265,20 +272,58 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
             />
             <div className="flex flex-col items-center gap-4 pointer-events-none">
-              <div className="text-6xl text-blue-500"><i className="fas fa-cloud-upload-alt"></i></div>
+              <div className="text-6xl text-blue-500"><i className="fas fa-cloud-upload-alt" style={{
+      background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+      WebkitBackgroundClip: 'text',
+      WebkitTextFillColor: 'transparent',
+      backgroundClip: 'text',
+      filter: 'drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3))'
+    }} ></i></div>
               <div>
-                <p className="text-lg font-medium text-gray-900">
+                <p className="text-lg font-medium text-gray-900" style={{ 
+        fontSize: '18px', 
+        fontWeight: '600',
+        marginBottom: '8px' 
+      }} >
                   {isDragActive ? "Drop files here..." : "Drag & drop files here"}
                 </p>
                 <p className="text-sm text-gray-500 mt-1">
-                  or <span className="text-blue-600 font-medium">browse files</span> from your computer
+                  or <span className="text-blue-600 font-medium" style={{
+          background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+          fontWeight: '600',
+          textDecoration: 'underline',
+          textDecorationColor: '#3b82f6'
+        }} >browse files</span> from your computer
                 </p>
               </div>
               <div className="flex gap-2 text-xs text-gray-500">
-                <span className="px-2 py-1 bg-gray-100 rounded-md">PDF</span>
-                <span className="px-2 py-1 bg-gray-100 rounded-md">DOC</span>
-                <span className="px-2 py-1 bg-gray-100 rounded-md">DOCX</span>
-                <span className="px-2 py-1 bg-gray-100 rounded-md">Images</span>
+                <span className="px-2 py-1 bg-gray-100 rounded-md" style={{
+        background: 'linear-gradient(135deg, #f1f5f9, #e2e8f0)',
+        border: '1px solid #cbd5e1',
+        borderRadius: '6px',
+        fontWeight: '500'
+      }} >PDF</span>
+                <span className="px-2 py-1 bg-gray-100 rounded-md" style={{
+        background: 'linear-gradient(135deg, #f1f5f9, #e2e8f0)',
+        border: '1px solid #cbd5e1',
+        borderRadius: '6px',
+        fontWeight: '500'
+      }}>DOC</span>
+                <span className="px-2 py-1 bg-gray-100 rounded-md" style={{
+        background: 'linear-gradient(135deg, #f1f5f9, #e2e8f0)',
+        border: '1px solid #cbd5e1',
+        borderRadius: '6px',
+        fontWeight: '500'
+      }}>DOCX</span>
+                <span className="px-2 py-1 bg-gray-100 rounded-md" style={{
+        background: 'linear-gradient(135deg, #f1f5f9, #e2e8f0)',
+        border: '1px solid #cbd5e1',
+        borderRadius: '6px',
+        fontWeight: '500'
+      }}>Images</span>
               </div>
             </div>
           </div>
@@ -315,7 +360,38 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
                                 : uploadFile.status === "processing"
                                 ? "bg-yellow-100 text-yellow-800"
                                 : "bg-blue-100 text-blue-800"
-                          }`}
+                          }`}   style={{
+    padding: '6px 12px',
+    borderRadius: '20px',
+    fontWeight: '600',
+    fontSize: '11px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px',
+    ...(uploadFile.status === "completed" && {
+      background: 'linear-gradient(135deg, #dcfce7, #bbf7d0)',
+      color: '#166534',
+      border: '1px solid #22c55e',
+      boxShadow: '0 2px 4px rgba(34, 197, 94, 0.2)'
+    }),
+    ...(uploadFile.status === "error" && {
+      background: 'linear-gradient(135deg, #fecaca, #fca5a5)',
+      color: '#991b1b',
+      border: '1px solid #ef4444',
+      boxShadow: '0 2px 4px rgba(239, 68, 68, 0.2)'
+    }),
+    ...(uploadFile.status === "processing" && {
+      background: 'linear-gradient(135deg, #fef3c7, #fde68a)',
+      color: '#92400e',
+      border: '1px solid #f59e0b',
+      boxShadow: '0 2px 4px rgba(245, 158, 11, 0.2)'
+    }),
+    ...(uploadFile.status === "uploading" && {
+      background: 'linear-gradient(135deg, #dbeafe, #bfdbfe)',
+      color: '#1e40af',
+      border: '1px solid #3b82f6',
+      boxShadow: '0 2px 4px rgba(59, 130, 246, 0.2)'
+    })
+  }}
                         >
                           {uploadFile.status === "uploading" && "Uploading"}
                           {uploadFile.status === "processing" && "Processing"}
@@ -339,11 +415,23 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
                     </div>
 
                     <div className="flex items-center gap-2">
-                      {uploadFile.status === "completed" && <span className="text-green-600"><i className="fas fa-check-circle"></i></span>}
-                      {uploadFile.status === "error" && <span className="text-red-600"><i className="fas fa-times-circle"></i></span>}
+                      {uploadFile.status === "completed" && <span className="text-green-600" text-green-600><i className="fas fa-check-circle"></i></span>}
+                      {uploadFile.status === "error" && <span className="text-red-600" style={{
+        fontSize: '20px',
+        color: '#ef4444',
+        filter: 'drop-shadow(0 2px 4px rgba(239, 68, 68, 0.3))'
+      }}><i className="fas fa-times-circle"></i></span>}
                       <button 
                         className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 transition-colors" 
-                        onClick={() => removeFile(uploadFile.id)}
+                        onClick={() => removeFile(uploadFile.id)} 
+                        style={{
+      background: 'linear-gradient(135deg, #f8fafc, #f1f5f9)',
+      border: '1px solid #cbd5e1',
+      borderRadius: '6px',
+      padding: '8px 12px',
+      transition: 'all 0.2s ease',
+      cursor: 'pointer'
+    }}
                       >
                         <i className="fas fa-times"></i>
                       </button>

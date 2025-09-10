@@ -12,7 +12,9 @@ import Summarization from "../components/summarization/summarization";
 import { SearchInterface } from "../components/search/search-interface"
 import { RAGChatbot } from "../components/chat/rag-chatbot"
 import { Sidebar } from "../components/layout/sidebar"
+
 import Analytics from "../components/analytics/analytics"
+import { DocumentView } from '../components/view/document_view'
 // import "../styles/globals.css"
 import './globals.css' 
 import { authService } from "../services/authService"
@@ -26,6 +28,7 @@ const routes = {
   "/search": { component: SearchInterface, title: "Search", breadcrumb: ["Analysis", "Search"] },
   "/chat": { component: RAGChatbot, title: "AI Chat", breadcrumb: ["Analysis", "AI Chat"] },
   "/analytics": { component: Analytics, title: "Analytics", breadcrumb: ["Insights", "Analytics"] },
+  "/documents": { component: DocumentView, title: "My Documents", breadcrumb: ["Documents"] },
   "/profile": { component: UserProfilePage, title: "Profile",  breadcrumb: ["Account", "Profile"] },
   "/settings": { component: Settings, title: "Settings", breadcrumb: ["Account", "Settings"] }, // Fixed: Use actual component
 }
