@@ -11,6 +11,7 @@ from ..core.database import db_manager
 from ..schemas.user_schemas import UserResponse
 from ..schemas.document_schemas import DocumentResponse, DocumentUploadResponse
 from ..services.document_service_aws import document_service_aws as document_service
+from ..services.document_embedding_service import document_embedding_service
 import logging
 import psycopg2
 import json
@@ -559,11 +560,90 @@ async def search_documents(
         logger.error(f"Error searching documents: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error searching documents: {str(e)}")
 
+
+@router.get("/{document_id}/embedding-status")
+async def get_document_embedding_status(
+    document_id: str,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Get the embedding status of a document"""
+    try:
+        # Check if document exists and belongs to user
+        with db_manager.get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    SELECT id, original_filename 
+                    FROM documents 
+                    WHERE id = %s AND user_id = %s
+                """, (document_id, current_user.id))
+                
+                document = cursor.fetchone()
+                if not document:
+                    raise HTTPException(status_code=404, detail="Document not found")
+        
+        # Check embedding status
+        is_embedded = document_embedding_service.check_document_embedded(document_id)
+        
+        # Get collection info
+        collection_info = document_embedding_service.get_collection_info()
+        
+        return {
+            "document_id": document_id,
+            "filename": document[1],
+            "is_embedded": is_embedded,
+            "collection_info": collection_info
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error checking embedding status: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error checking embedding status: {str(e)}")
+
+
+@router.post("/{document_id}/embed")
+async def manually_embed_document(
+    document_id: str,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Manually trigger document embedding (useful if automatic embedding failed)"""
+    try:
+        # Check if document exists and belongs to user
+        with db_manager.get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    SELECT id, original_filename 
+                    FROM documents 
+                    WHERE id = %s AND user_id = %s
+                """, (document_id, current_user.id))
+                
+                document = cursor.fetchone()
+                if not document:
+                    raise HTTPException(status_code=404, detail="Document not found")
+        
+        # Trigger embedding
+        result = document_embedding_service.embed_document(document_id)
+        
+        return {
+            "document_id": document_id,
+            "filename": document[1],
+            "embedding_result": result
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error manually embedding document: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error manually embedding document: {str(e)}")
+
+
 #overall what this code do is define a router for the document service, which includes the following endpoints:
 #GET /documents: Get a list of documents for the current user.
 #POST /documents: Upload a new document for the current user.
 #GET /documents/{document_id}: Get a specific document by ID.
 #GET /documents/{document_id}/download: Get download URL for a document.
 #DELETE /documents/{document_id}: Delete a document.
+#GET /documents/{document_id}/embedding-status: Check if document is embedded in ChromaDB.
+#POST /documents/{document_id}/embed: Manually trigger document embedding.
 #The code uses the FastAPI framework to define the endpoints and the Pydantic models to define the request and response schemas.
 #The code also uses the SQLAlchemy ORM to interact with the database and the MinIO client to interact with the object storage.
