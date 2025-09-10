@@ -1113,9 +1113,13 @@ const modalStyles = {
     alignItems: 'center',
     justifyContent: 'center',
     height: '100%',
-    color: '#718096'
+    color: '#718096',
+    
+    
+
   },
   loadingSpinner: {
+    
     width: '48px',
     height: '48px',
     border: '4px solid #e2e8f0',
@@ -1123,7 +1127,10 @@ const modalStyles = {
     borderRadius: '50%',
     animation: 'spin 1s linear infinite',
     marginBottom: '16px'
+    
   },
+
+  
   error: {
     display: 'flex',
     flexDirection: 'column' as const,

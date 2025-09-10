@@ -330,11 +330,13 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
+            
             className={`
               border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all relative
               ${!authToken ? "opacity-50 cursor-not-allowed" : ""}
               ${isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400 hover:bg-gray-50"}
             `}
+            
           >
             {/* Hidden file input - triggered when user clicks anywhere in drop zone */}
             <input
