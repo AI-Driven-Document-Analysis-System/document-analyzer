@@ -196,6 +196,18 @@ class Messages:
             logger.error(f"Error pruning chat messages: {e}")
             raise
 
+    def delete_by_conversation(self, conversation_id: UUID) -> int:
+        """
+        Delete all messages for a specific conversation.
+        Returns number of deleted rows.
+        """
+        try:
+            query = "DELETE FROM chat_messages WHERE conversation_id = %s"
+            return self.db.execute_query(query, (conversation_id,))
+        except Exception as e:
+            logger.error(f"Error deleting messages for conversation {conversation_id}: {e}")
+            raise
+
 
 def get_conversations() -> Conversations:
     return Conversations(get_db())

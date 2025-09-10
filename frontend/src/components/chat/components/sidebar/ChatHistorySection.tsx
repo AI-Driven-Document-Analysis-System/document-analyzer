@@ -5,10 +5,11 @@ interface ChatHistorySectionProps {
   toggleSection: (section: keyof ExpandedSections) => void
   chatHistory: ChatHistory[]
   onChatHistoryClick: (chatId: string) => void
+  onDeleteChat: (chatId: string) => void
   selectedChatId?: string
 }
 
-export function ChatHistorySection({ expandedSections, toggleSection, chatHistory, onChatHistoryClick, selectedChatId }: ChatHistorySectionProps) {
+export function ChatHistorySection({ expandedSections, toggleSection, chatHistory, onChatHistoryClick, onDeleteChat, selectedChatId }: ChatHistorySectionProps) {
   return (
     <div style={{ borderBottom: '1px solid #4b5563', flexShrink: 0 }}>
       <div 
@@ -56,13 +57,52 @@ export function ChatHistorySection({ expandedSections, toggleSection, chatHistor
                      e.currentTarget.style.backgroundColor = '#374151'
                    }
                  }}
-                 onClick={() => onChatHistoryClick(chat.id)}>
+                 onClick={(e) => {
+                   // Only trigger chat selection if not clicking on delete button
+                   if (!(e.target as HTMLElement).closest('.delete-btn')) {
+                     onChatHistoryClick(chat.id);
+                   }
+                 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <i className="fas fa-comment" style={{ color: '#d1d5db', fontSize: '14px' }}></i>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontWeight: '500', fontSize: '12px', color: 'white', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{chat.title}</p>
                   <p style={{ fontSize: '10px', color: '#d1d5db', margin: '2px 0 0 0' }}>{chat.timestamp}</p>
                 </div>
+                <button
+                  className="delete-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDeleteChat(chat.id);
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#ef4444',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    opacity: 0.7,
+                    transition: 'all 0.2s ease',
+                    fontSize: '12px',
+                    width: '24px',
+                    height: '24px'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.opacity = '1';
+                    e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.opacity = '0.7';
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                  title="Delete conversation"
+                >
+                  <i className="fas fa-trash" style={{ fontSize: '10px' }}></i>
+                </button>
               </div>
             </div>
           ))}

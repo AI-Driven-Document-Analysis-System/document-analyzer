@@ -269,7 +269,23 @@ def create_tables():
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_documents_type ON document_classifications(document_type);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_documents_upload_timestamp ON documents(upload_timestamp);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_processing_status ON document_processing(processing_status);")
-        cursor.execute("CREATE INDEX IF NOT EXISTS idx_content_search ON document_content USING gin(to_tsvector('english', searchable_content));")
+        # Check if searchable_content column exists before creating index
+        try:
+            cursor.execute("""
+                SELECT column_name 
+                FROM information_schema.columns 
+                WHERE table_name = 'document_content' 
+                AND column_name = 'searchable_content';
+            """)
+            column_exists = cursor.fetchone()
+            
+            if column_exists:
+                cursor.execute("CREATE INDEX IF NOT EXISTS idx_content_search ON document_content USING gin(to_tsvector('english', searchable_content));")
+                logger.info("Created full-text search index on searchable_content")
+            else:
+                logger.warning("searchable_content column does not exist, skipping index creation")
+        except Exception as e:
+            logger.warning(f"Could not create search index: {e}")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_conversations_user ON conversations(user_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_conversations_updated_at ON conversations(updated_at);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_chat_messages_conversation ON chat_messages(conversation_id);")

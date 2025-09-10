@@ -11,7 +11,8 @@ from ..schemas.chat_schemas import (
     DocumentSearchRequest, DocumentSearchResponse, ConversationHistoryRequest, 
     ConversationHistoryResponse, SystemStatsResponse, LLMConfigRequest, ChatEngineConfig,
     ErrorResponse, SuccessResponse, LLMProvider, MemoryType, SearchMode,
-    ConversationCreateRequest, ConversationResponse, ConversationsListResponse, RenameConversationRequest
+    ConversationCreateRequest, ConversationResponse, ConversationsListResponse, RenameConversationRequest,
+    DeleteConversationRequest
 )
 from ..services.chat_service import get_chatbot_service, initialize_chatbot_service
 from app.services.chatbot.rag.chat_engine import LangChainChatEngine
@@ -657,20 +658,38 @@ async def export_conversation(conversation_id: str, format_type: str = "json"):
 
 
 @router.delete("/conversations/{conversation_id}")
-async def clear_conversation(conversation_id: str):
+async def delete_conversation(conversation_id: str, request: DeleteConversationRequest):
     """
-    Clear conversation history for a specific conversation
+    Delete a conversation and all its messages
     
-    This endpoint removes all conversation history for the given
-    conversation ID.
+    This endpoint removes a conversation and all associated messages
+    for the authenticated user.
     """
     try:
         conversation_repo = get_conversations()
+        message_repo = get_messages()
+        
+        # Verify conversation exists and belongs to the user
+        conv = conversation_repo.get(UUID(conversation_id))
+        if not conv:
+            raise HTTPException(status_code=404, detail="Conversation not found")
+        
+        # Check if the conversation belongs to the requesting user
+        if conv.user_id and str(conv.user_id) != request.user_id:
+            raise HTTPException(status_code=403, detail="Access denied: You can only delete your own conversations")
+        
+        # Delete all messages in the conversation first
+        message_repo.delete_by_conversation(UUID(conversation_id))
+        
+        # Delete the conversation
         conversation_repo.delete(UUID(conversation_id))
-        return SuccessResponse(message=f"Conversation {conversation_id} cleared successfully")
+        
+        return SuccessResponse(message=f"Conversation {conversation_id} deleted successfully")
     
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error clearing conversation: {e}")
+        logger.error(f"Error deleting conversation: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

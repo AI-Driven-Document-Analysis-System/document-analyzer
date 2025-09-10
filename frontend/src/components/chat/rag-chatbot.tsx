@@ -44,6 +44,13 @@ export function RAGChatbot() {
   const [isLoadingHistory, setIsLoadingHistory] = useState(true)
   const [isLoadingConversation, setIsLoadingConversation] = useState(false)
 
+  // Delete confirmation state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [chatToDelete, setChatToDelete] = useState<{ id: string, title: string } | null>(null)
+  
+  // New chat loading state
+  const [isCreatingNewChat, setIsCreatingNewChat] = useState(false)
+
   // Handle feedback from messages
   const handleFeedback = async (messageId: string, feedback: 'thumbs_up' | 'thumbs_down', reason?: string) => {
     console.log('Feedback received:', { messageId, feedback, reason })
@@ -308,6 +315,8 @@ export function RAGChatbot() {
   }
 
   const handleNewChat = async () => {
+    setIsCreatingNewChat(true)
+    
     try {
       // Create a new conversation on the backend
       const newConversation = await chatService.createConversation("New Chat")
@@ -342,6 +351,8 @@ export function RAGChatbot() {
         localStorage.removeItem(`rag-chatbot-messages-${currentUserId}`)
         localStorage.removeItem(`rag-chatbot-conversation-id-${currentUserId}`)
       }
+    } finally {
+      setIsCreatingNewChat(false)
     }
   }
 
@@ -393,6 +404,59 @@ export function RAGChatbot() {
     }
   }
 
+  const handleDeleteChat = (chatId: string) => {
+    // Find the chat to get its title for the confirmation dialog
+    const chatToDelete = chatHistory.find(chat => chat.id === chatId)
+    if (chatToDelete) {
+      setChatToDelete({ id: chatId, title: chatToDelete.title })
+      setShowDeleteConfirm(true)
+    }
+  }
+
+  const confirmDeleteChat = async () => {
+    if (!chatToDelete) return
+    
+    try {
+      await chatService.deleteConversation(chatToDelete.id)
+      
+      // Remove the deleted chat from the chat history
+      setChatHistory(prev => prev.filter(chat => chat.id !== chatToDelete.id))
+      
+      // If the deleted chat was the current conversation, reset to initial state
+      if (conversationId === chatToDelete.id) {
+        setMessages(initialMessages)
+        setConversationId(null)
+        setInputValue("")
+        setSelectedMessageSources([])
+        
+        // Clear user-specific localStorage
+        if (typeof window !== 'undefined' && currentUserId) {
+          localStorage.removeItem(`rag-chatbot-messages-${currentUserId}`)
+          localStorage.removeItem(`rag-chatbot-conversation-id-${currentUserId}`)
+        }
+        
+        // Reset sidebar sources to initial state
+        const latestAssistantMessage = [...initialMessages].reverse().find(msg => msg.type === 'assistant' && msg.sources);
+        if (latestAssistantMessage?.sources) {
+          setSelectedMessageSources(latestAssistantMessage.sources)
+          setExpandedSections(prev => ({ ...prev, sources: true }))
+        }
+      }
+    } catch (error) {
+      console.error('Error deleting conversation:', error)
+      // You could add a toast notification here to inform the user of the error
+    } finally {
+      // Close the confirmation dialog
+      setShowDeleteConfirm(false)
+      setChatToDelete(null)
+    }
+  }
+
+  const cancelDeleteChat = () => {
+    setShowDeleteConfirm(false)
+    setChatToDelete(null)
+  }
+
   return (
     <div className="bg-gray-50" style={{ height: '100vh', overflow: 'hidden' }}>
       <div className="flex" style={{ height: '100vh', overflow: 'hidden', flexDirection: 'row' }}>
@@ -424,7 +488,7 @@ export function RAGChatbot() {
                 }
               }}
             >
-              {isLoadingConversation ? (
+              {isLoadingConversation || isCreatingNewChat ? (
                 <div style={{ 
                   display: 'flex', 
                   flexDirection: 'column', 
@@ -442,7 +506,9 @@ export function RAGChatbot() {
                     animation: 'spin 1s linear infinite',
                     marginBottom: '16px'
                   }}></div>
-                  <p style={{ margin: 0, fontSize: '14px' }}>Loading conversation...</p>
+                  <p style={{ margin: 0, fontSize: '14px' }}>
+                    {isCreatingNewChat ? 'Creating new chat...' : 'Loading conversation...'}
+                  </p>
                   <style jsx>{`
                     @keyframes spin {
                       0% { transform: rotate(0deg); }
@@ -492,6 +558,7 @@ export function RAGChatbot() {
           onRemoveDocument={removeDocument}
           onNewChat={handleNewChat}
           onChatHistoryClick={handleChatHistoryClick}
+          onDeleteChat={handleDeleteChat}
           selectedChatId={conversationId || undefined}
         />
       </div>
@@ -512,6 +579,101 @@ export function RAGChatbot() {
         onToggleDocumentSelection={toggleDocumentSelection}
         onClearAllDocuments={clearAllDocuments}
       />
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            padding: '24px',
+            maxWidth: '400px',
+            width: '90%',
+            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)'
+          }}>
+            <div style={{ marginBottom: '16px' }}>
+              <h3 style={{ 
+                margin: '0 0 8px 0', 
+                fontSize: '18px', 
+                fontWeight: '600', 
+                color: '#1f2937' 
+              }}>
+                Delete Conversation
+              </h3>
+              <p style={{ 
+                margin: 0, 
+                fontSize: '14px', 
+                color: '#6b7280',
+                lineHeight: '1.5'
+              }}>
+                Are you sure you want to delete "{chatToDelete?.title}"? This action cannot be undone.
+              </p>
+            </div>
+            
+            <div style={{ 
+              display: 'flex', 
+              gap: '12px', 
+              justifyContent: 'flex-end' 
+            }}>
+              <button
+                onClick={cancelDeleteChat}
+                style={{
+                  padding: '8px 16px',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '6px',
+                  backgroundColor: 'white',
+                  color: '#374151',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#f9fafb'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'white'
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteChat}
+                style={{
+                  padding: '8px 16px',
+                  border: 'none',
+                  borderRadius: '6px',
+                  backgroundColor: '#ef4444',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = '#dc2626'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = '#ef4444'
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
