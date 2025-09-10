@@ -39,7 +39,17 @@ python -m pip install -e .[rag,summarization]
 python -m pip install -e .[all]
 ```
 
-### 4. Setup Environment Variables
+### 4. Start MinIO Server
+```bash
+.\minio.exe server ./data --console-address ":9001"
+```
+
+**MinIO Access:**
+- **API**: http://127.0.0.1:9000 (for application)
+- **Web Console**: http://127.0.0.1:9001 (for management)
+- **Default Credentials**: minioadmin / minioadmin
+
+### 5. Setup Environment Variables
 ```bash
 cp .env.example .env
 # Edit .env with your configuration

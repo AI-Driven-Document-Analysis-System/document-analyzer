@@ -158,7 +158,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
     .slice(0, 3)
 
   const handleDocumentClick = (document: Document) => {
-    setSelectedDocument(document)
+    // setSelectedDocument(document) // Disabled to fix preview errors
   }
 
   const handleDownload = async (document: Document) => {

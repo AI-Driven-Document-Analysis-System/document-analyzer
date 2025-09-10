@@ -10,7 +10,7 @@ from ..core.dependencies import get_current_user
 from ..core.database import db_manager
 from ..schemas.user_schemas import UserResponse
 from ..schemas.document_schemas import DocumentResponse, DocumentUploadResponse
-from ..services.document_service import document_service
+from ..services.document_service_aws import document_service_aws as document_service
 import logging
 import psycopg2
 import json
@@ -51,13 +51,13 @@ async def upload_document(
         
         return {
             "success": True,
-            "message": result["message"],
-            "document_id": result["document_id"],
-            "status": result["status"],
+            "message": result.get("message", "Document uploaded"),
+            "document_id": result.get("document_id"),
+            "status": result.get("status", "unknown"),
             "file_info": {
                 "filename": file.filename,
-                "size": result["file_size"],
-                "mime_type": result["mime_type"]
+                "size": result.get("file_size", 0),
+                "mime_type": result.get("mime_type", "unknown")
             }
         }
         
@@ -278,6 +278,70 @@ async def get_document(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving document: {str(e)}")
 
+@router.get("/{document_id}/content")
+async def get_document_content(
+    document_id: str,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Get extracted text content from OCR processing."""
+    try:
+        if not hasattr(current_user, 'id') or current_user.id is None:
+            raise HTTPException(status_code=400, detail="Invalid user token")
+        user_id = str(current_user.id)
+        
+        with db_manager.get_connection() as conn:
+            with conn.cursor() as cursor:
+                query = """
+                    SELECT d.original_filename, dc.extracted_text, dc.entities_extracted, 
+                           dp.processing_status, d.page_count
+                    FROM documents d
+                    LEFT JOIN document_content dc ON d.id = dc.document_id
+                    LEFT JOIN document_processing dp ON d.id = dp.document_id
+                    WHERE d.id = %s AND d.user_id = %s
+                """
+                cursor.execute(query, (document_id, user_id))
+                result = cursor.fetchone()
+                
+                if not result:
+                    raise HTTPException(status_code=404, detail="Document not found")
+                
+                filename, extracted_text, entities, processing_status, page_count = result
+                
+                if processing_status != "completed":
+                    return {
+                        "document_id": document_id,
+                        "filename": filename,
+                        "processing_status": processing_status,
+                        "extracted_text": None,
+                        "message": f"Document is still being processed. Status: {processing_status}"
+                    }
+                
+                if not extracted_text:
+                    return {
+                        "document_id": document_id,
+                        "filename": filename,
+                        "processing_status": processing_status,
+                        "extracted_text": None,
+                        "message": "No text content extracted from this document"
+                    }
+                
+                return {
+                    "document_id": document_id,
+                    "filename": filename,
+                    "processing_status": processing_status,
+                    "extracted_text": extracted_text,
+                    "entities": json.loads(entities) if entities else None,
+                    "page_count": page_count,
+                    "character_count": len(extracted_text),
+                    "word_count": len(extracted_text.split()) if extracted_text else 0
+                }
+                
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting document content: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving document content: {str(e)}")
+
 @router.get("/{document_id}/download")
 async def download_document(
     document_id: str,
@@ -301,9 +365,13 @@ async def download_document(
                     raise HTTPException(status_code=404, detail="Document not found")
                 
                 file_path = result[0]
-                download_url = document_service.get_document_download_url(file_path)
-                
-                return {"download_url": download_url}
+                try:
+                    download_url = document_service.get_document_download_url(file_path)
+                    if download_url is None:
+                        raise HTTPException(status_code=503, detail="Document storage service unavailable")
+                    return {"download_url": download_url}
+                except Exception as storage_error:
+                    raise HTTPException(status_code=503, detail="Document storage service unavailable")
                 
     except HTTPException:
         raise

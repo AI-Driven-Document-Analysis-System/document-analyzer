@@ -44,3 +44,16 @@ frontend/.vercel/
 # MinIO files
 minio.exe
 minio-data/
+
+# Temporary processing files
+_proc_tmp/
+
+# MinIO data directory
+data/
+
+# Poppler binaries
+poppler/
+poppler.zip
+
+# Test files
+test_aws_creds.py

@@ -299,6 +299,64 @@ class DocumentCRUD:
         except Exception as e:
             logger.error(f"Error getting document by ID: {e}")
             raise
+    
+    def save_document_content(self, document_id: UUID, extracted_text: str = None, 
+                            searchable_content: str = None, layout_sections: Dict[str, Any] = None,
+                            entities_extracted: Dict[str, Any] = None, ocr_confidence_score: float = None,
+                            has_tables: bool = False, has_images: bool = False) -> Optional[DocumentContent]:
+        """Save or update document content after OCR processing"""
+        try:
+            content_id = uuid4()
+            
+            # First, try to add missing columns if they don't exist
+            try:
+                self.db.execute_query("""
+                    ALTER TABLE document_content 
+                    ADD COLUMN IF NOT EXISTS entities_extracted JSONB
+                """)
+                self.db.execute_query("""
+                    ALTER TABLE document_content 
+                    ADD COLUMN IF NOT EXISTS ocr_confidence_score DECIMAL(5,4)
+                """)
+                self.db.execute_query("""
+                    ALTER TABLE document_content 
+                    ADD COLUMN IF NOT EXISTS has_tables BOOLEAN DEFAULT FALSE
+                """)
+                self.db.execute_query("""
+                    ALTER TABLE document_content 
+                    ADD COLUMN IF NOT EXISTS has_images BOOLEAN DEFAULT FALSE
+                """)
+            except Exception as e:
+                logger.warning(f"Could not add missing columns (they may already exist): {e}")
+            
+            # Simple INSERT - remove ON CONFLICT since constraint doesn't exist
+            query = """
+                INSERT INTO document_content (
+                    id, document_id, extracted_text, searchable_content, layout_sections,
+                    entities_extracted, ocr_confidence_score, has_tables, has_images
+                )
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            
+            # Convert dict objects to JSON strings for database storage
+            layout_sections_json = json.dumps(layout_sections) if layout_sections else None
+            entities_extracted_json = json.dumps(entities_extracted) if entities_extracted else None
+            
+            params = (
+                content_id, document_id, extracted_text, searchable_content,
+                layout_sections_json, entities_extracted_json, ocr_confidence_score,
+                has_tables, has_images
+            )
+            
+            # Execute INSERT without expecting a result
+            self.db.execute_query(query, params)
+            
+            # Return success indicator
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error saving document content: {e}")
+            raise
 
 # Initialize CRUD instances
 def get_user_crud():
