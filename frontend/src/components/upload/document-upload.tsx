@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from "react"
+import './documentUpload.css' 
 
 interface UploadedFile {
   id: string
