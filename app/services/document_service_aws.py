@@ -11,11 +11,13 @@ import asyncio
 from datetime import datetime
 from io import BytesIO
 from dotenv import load_dotenv
+import threading
 
 from ..core.database import db_manager
 from ..core.config import settings
 from .ocr_service import OCRService, OCRProvider
 from ..db.crud import get_document_crud
+from .document_embedding_service import document_embedding_service
 
 
 class DocumentServiceAWS:
@@ -312,6 +314,35 @@ class DocumentServiceAWS:
                     has_images=has_images
                 )
                 print(f"Document content saved successfully for {document_id}")
+                
+                # Start automatic embedding in background thread
+                def embed_document_background():
+                    try:
+                        # Import inside thread to ensure module availability
+                        import sys
+                        import os
+                        app_dir = os.path.join(os.path.dirname(__file__), '..')
+                        if app_dir not in sys.path:
+                            sys.path.append(app_dir)
+                        
+                        from services.document_embedding_service import document_embedding_service
+                        
+                        print(f"Starting automatic embedding for document {document_id}")
+                        result = document_embedding_service.embed_document(document_id)
+                        if result['success']:
+                            print(f"Document {document_id} embedded successfully: {result['chunks_created']} chunks created")
+                        else:
+                            print(f"Document {document_id} embedding failed: {result['error']}")
+                    except Exception as e:
+                        print(f"Background embedding error for {document_id}: {str(e)}")
+                        import traceback
+                        traceback.print_exc()
+                
+                # Start embedding in background thread (non-blocking)
+                embedding_thread = threading.Thread(target=embed_document_background)
+                embedding_thread.daemon = True
+                embedding_thread.start()
+                
             except Exception as ce:
                 print(f"Warning: could not save document_content for {document_id}: {ce}")
 
