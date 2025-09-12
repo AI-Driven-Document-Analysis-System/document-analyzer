@@ -144,21 +144,6 @@ class QueryPreprocessor:
             # Return original query if preprocessing fails
             return query
 
-    def add_custom_words(self, words: list):
-        """
-        Add custom words to the spell checker dictionary.
-
-        Useful for domain-specific terms that shouldn't be corrected.
-
-        Args:
-            words (list): List of words to add to dictionary
-        """
-        for word in words:
-            self.spell_checker.word_frequency.load_words([word.lower()])
-
-        logger.info(f"Added {len(words)} custom words to spell checker")
-
-
 # Global preprocessor instance
 query_preprocessor = QueryPreprocessor()
 
