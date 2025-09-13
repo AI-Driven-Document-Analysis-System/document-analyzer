@@ -1,6 +1,5 @@
-
-
 import React, { useState, useCallback } from "react"
+import './documentUpload.css' 
 
 interface UploadedFile {
   id: string
@@ -27,7 +26,7 @@ const getFileIcon = (type: string) => {
 const getStoredAuthToken = () => {
   try {
     // Try to get from localStorage first, then sessionStorage
-    return window.localStorage?.getItem('token') || 
+    return window.localStorage?.getItem('token') ||
            window.sessionStorage?.getItem('token') ||
            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI3OWQwYmVkNS1jMWMxLTRmYWYtODJkNC1mZWQxYTI4NDcyZDUiLCJlbWFpbCI6InRlc3QxQGdtYWlsLmNvbSIsImV4cCI6MTc1NzMyNzc5OH0.h_P47qNaOhJ9r34alekxTlvXxen45dbTXokBans669c'; // Your actual token as fallback for demo
   } catch (e) {
@@ -40,7 +39,7 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const [isDragActive, setIsDragActive] = useState(false)
   const [authToken, setAuthToken] = useState<string | null>(null)
-  
+
   // Update token on mount and when prop changes
   React.useEffect(() => {
     const token = propAuthToken || getStoredAuthToken();
@@ -154,7 +153,7 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
 
         // Make actual API call
         const result = await uploadToAPI(uploadFile.file, uploadFile.id)
-        
+
         // Clear progress interval
         clearInterval(progressInterval)
 
@@ -163,9 +162,9 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
           prev.map((f) => {
             if (f.id === uploadFile.id) {
               if (result.success) {
-                return { 
-                  ...f, 
-                  status: result.status === 'duplicate' ? 'completed' : 'processing', 
+                return {
+                  ...f,
+                  status: result.status === 'duplicate' ? 'completed' : 'processing',
                   progress: 100,
                   documentId: result.document_id
                 }
@@ -181,7 +180,7 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
         if (result.success && result.status !== 'duplicate') {
           setTimeout(() => {
             setUploadedFiles((prev) =>
-              prev.map((f) => 
+              prev.map((f) =>
                 f.id === uploadFile.id ? { ...f, status: "completed" } : f
               ),
             )
@@ -192,7 +191,7 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
         // Clear any intervals and mark as error
         setUploadedFiles((prev) =>
           prev.map((f) =>
-            f.id === uploadFile.id 
+            f.id === uploadFile.id
               ? { ...f, status: "error", error: error.message || 'Upload failed' }
               : f
           ),
@@ -203,6 +202,21 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     handleFiles(e.target.files)
+  }
+
+  const handleDropZoneClick = () => {
+    if (!authToken) return
+
+    // Create a file input and trigger click
+    const fileInput = document.createElement('input')
+    fileInput.type = 'file'
+    fileInput.multiple = true
+    fileInput.accept = '.pdf,.doc,.docx,.png,.jpg,.jpeg,.gif'
+    fileInput.onchange = (e) => {
+      const target = e.target as HTMLInputElement
+      handleFiles(target.files)
+    }
+    fileInput.click()
   }
 
   const handleDrop = (e: React.DragEvent) => {
@@ -226,223 +240,349 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
   }
 
   return (
-    <div className="p-6 space-y-6 max-w-4xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Upload Documents</h1>
-        <p className="text-gray-600">Upload your documents for AI-powered analysis and processing</p>
-        {!authToken && (
-          <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-yellow-800"><i className="fas fa-exclamation-triangle"></i> Please log in to upload documents</p>
-          </div>
-        )}
-      </div>
-
-      {/* Upload Area */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm" >
-        <div className="p-6 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">Document Upload</h2>
-          <p className="text-sm text-gray-600 mt-1">
-            Drag and drop your files here, or click to browse. Supported formats: PDF, DOC, DOCX, Images
+    <div style={{ 
+      minHeight: '100vh', 
+      backgroundColor: '#f8f9fa', 
+      padding: '24px',
+      fontFamily: 'system-ui, -apple-system, sans-serif'
+    }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <h1 style={{ 
+            fontSize: '24px', 
+            fontWeight: '600', 
+            color: '#1f2937', 
+            marginBottom: '8px',
+            margin: '0 0 8px 0'
+          }}>Document Upload</h1>
+          <p style={{ 
+            color: '#6b7280',
+            fontSize: '16px',
+            margin: '0'
+          }}>
+            Upload your documents for AI-powered analysis and processing
           </p>
         </div>
-        <div className="p-6">
-          <div
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            className={`
-              border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all relative
-              ${!authToken ? "opacity-50 cursor-not-allowed" : ""}
-              ${isDragActive ? "border-blue-500 bg-blue-50" : "border-gray-300 hover:border-gray-400 hover:bg-gray-50"}
-            `}
-            style={{
-    background: isDragActive ? 'linear-gradient(135deg, #ebf4ff 0%, #dbeafe 100%)' : 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
-    borderRadius: '12px',
-    boxShadow: isDragActive ? '0 8px 25px rgba(59, 130, 246, 0.15)' : '0 4px 6px rgba(0, 0, 0, 0.05)',
-    transform: isDragActive ? 'scale(1.02)' : 'scale(1)',
-    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-  }}
-          >
+
+        {/* Upload Card */}
+        <div style={{ 
+          backgroundColor: 'white', 
+          borderRadius: '8px', 
+          border: '1px solid #e5e7eb', 
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+          marginBottom: '24px'
+        }}>
+          <div style={{ 
+            padding: '24px', 
+            borderBottom: '1px solid #e5e7eb'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <h2 style={{ 
+                  fontSize: '18px', 
+                  fontWeight: '500', 
+                  color: '#1f2937',
+                  margin: '0 0 4px 0'
+                }}>Upload Documents</h2>
+                <p style={{ 
+                  fontSize: '14px', 
+                  color: '#6b7280', 
+                  margin: '0'
+                }}>
+                  Drag and drop files or click to browse
+                </p>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <span style={{ 
+                  padding: '4px 8px', 
+                  backgroundColor: '#f3f4f6', 
+                  color: '#374151', 
+                  borderRadius: '4px', 
+                  fontSize: '12px', 
+                  fontWeight: '500'
+                }}>PDF</span>
+                <span style={{ 
+                  padding: '4px 8px', 
+                  backgroundColor: '#f3f4f6', 
+                  color: '#374151', 
+                  borderRadius: '4px', 
+                  fontSize: '12px', 
+                  fontWeight: '500'
+                }}>DOC</span>
+                <span style={{ 
+                  padding: '4px 8px', 
+                  backgroundColor: '#f3f4f6', 
+                  color: '#374151', 
+                  borderRadius: '4px', 
+                  fontSize: '12px', 
+                  fontWeight: '500'
+                }}>Images</span>
+              </div>
+            </div>
+          </div>
+          
+          <div style={{ padding: '24px' }}>
             <input
               type="file"
               multiple
               accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.gif"
               onChange={handleFileInput}
               disabled={!authToken}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+              style={{ display: 'none' }}
+              id="fileInput"
             />
-            <div className="flex flex-col items-center gap-4 pointer-events-none">
-              <div className="text-6xl text-blue-500"><i className="fas fa-cloud-upload-alt" style={{
-      background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
-      WebkitBackgroundClip: 'text',
-      WebkitTextFillColor: 'transparent',
-      backgroundClip: 'text',
-      filter: 'drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3))'
-    }} ></i></div>
-              <div>
-                <p className="text-lg font-medium text-gray-900" style={{ 
-        fontSize: '18px', 
-        fontWeight: '600',
-        marginBottom: '8px' 
-      }} >
-                  {isDragActive ? "Drop files here..." : "Drag & drop files here"}
-                </p>
-                <p className="text-sm text-gray-500 mt-1">
-                  or <span className="text-blue-600 font-medium" style={{
-          background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          fontWeight: '600',
-          textDecoration: 'underline',
-          textDecorationColor: '#3b82f6'
-        }} >browse files</span> from your computer
-                </p>
-              </div>
-              <div className="flex gap-2 text-xs text-gray-500">
-                <span className="px-2 py-1 bg-gray-100 rounded-md" style={{
-        background: 'linear-gradient(135deg, #f1f5f9, #e2e8f0)',
-        border: '1px solid #cbd5e1',
-        borderRadius: '6px',
-        fontWeight: '500'
-      }} >PDF</span>
-                <span className="px-2 py-1 bg-gray-100 rounded-md" style={{
-        background: 'linear-gradient(135deg, #f1f5f9, #e2e8f0)',
-        border: '1px solid #cbd5e1',
-        borderRadius: '6px',
-        fontWeight: '500'
-      }}>DOC</span>
-                <span className="px-2 py-1 bg-gray-100 rounded-md" style={{
-        background: 'linear-gradient(135deg, #f1f5f9, #e2e8f0)',
-        border: '1px solid #cbd5e1',
-        borderRadius: '6px',
-        fontWeight: '500'
-      }}>DOCX</span>
-                <span className="px-2 py-1 bg-gray-100 rounded-md" style={{
-        background: 'linear-gradient(135deg, #f1f5f9, #e2e8f0)',
-        border: '1px solid #cbd5e1',
-        borderRadius: '6px',
-        fontWeight: '500'
-      }}>Images</span>
+            
+            <div
+              onClick={handleDropZoneClick}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              style={{
+                border: `2px dashed ${isDragActive ? '#3b82f6' : '#d1d5db'}`,
+                borderRadius: '8px',
+                padding: '48px',
+                textAlign: 'center',
+                cursor: authToken ? 'pointer' : 'not-allowed',
+                backgroundColor: isDragActive ? '#eff6ff' : 'transparent',
+                transition: 'all 0.2s ease',
+                opacity: authToken ? 1 : 0.5
+              }}
+            >
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <div style={{ 
+                  fontSize: '48px', 
+                  color: '#3b82f6', 
+                  marginBottom: '16px'
+                }}>
+                  <i className="fas fa-cloud-upload-alt"></i>
+                </div>
+                
+                <div style={{ marginBottom: '16px' }}>
+                  <p style={{ 
+                    fontSize: '18px', 
+                    fontWeight: '500', 
+                    color: '#374151', 
+                    marginBottom: '8px',
+                    margin: '0 0 8px 0'
+                  }}>
+                    {isDragActive ? "Drop files here" : "Drag & drop files here"} or{' '}
+                    <span style={{ color: '#3b82f6', textDecoration: 'underline' }}>browse files</span>
+                  </p>
+                  <p style={{ 
+                    fontSize: '14px', 
+                    color: '#6b7280',
+                    margin: '0'
+                  }}>
+                    Supports PDF, DOC, DOCX, PNG, JPG, GIF up to 50MB each
+                  </p>
+                </div>
+                
+                <button 
+                  style={{
+                    padding: '12px 16px',
+                    backgroundColor: '#3b82f6',
+                    color: 'white',
+                    borderRadius: '8px',
+                    border: 'none',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    document.getElementById('fileInput')?.click();
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#2563eb';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#3b82f6';
+                  }}
+                >
+                  Browse Files
+                </button>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Uploaded Files */}
-      {uploadedFiles.length > 0 && (
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-900">Upload Progress</h2>
-            <p className="text-sm text-gray-600 mt-1">Track the progress of your document uploads and processing</p>
-          </div>
-          <div className="p-6">
-            <div className="space-y-4">
-              {uploadedFiles.map((uploadFile) => {
-                const fileIcon = getFileIcon(uploadFile.file.type)
-                return (
-                  <div key={uploadFile.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg border">
-                    <div className="text-2xl text-blue-600"><i className={fileIcon}></i></div>
-
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-gray-900 truncate">{uploadFile.file.name}</h4>
-                      <div className="flex items-center gap-4 mt-1">
-                        <span className="text-sm text-gray-500">
-                          {(uploadFile.file.size / 1024 / 1024).toFixed(2)} MB
-                        </span>
-                        <span
-                          className={`px-2 py-1 text-xs rounded-full font-medium ${
-                            uploadFile.status === "completed"
-                              ? "bg-green-100 text-green-800"
-                              : uploadFile.status === "error"
-                                ? "bg-red-100 text-red-800"
-                                : uploadFile.status === "processing"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-blue-100 text-blue-800"
-                          }`}   style={{
-    padding: '6px 12px',
-    borderRadius: '20px',
-    fontWeight: '600',
-    fontSize: '11px',
-    textTransform: 'uppercase',
-    letterSpacing: '0.5px',
-    ...(uploadFile.status === "completed" && {
-      background: 'linear-gradient(135deg, #dcfce7, #bbf7d0)',
-      color: '#166534',
-      border: '1px solid #22c55e',
-      boxShadow: '0 2px 4px rgba(34, 197, 94, 0.2)'
-    }),
-    ...(uploadFile.status === "error" && {
-      background: 'linear-gradient(135deg, #fecaca, #fca5a5)',
-      color: '#991b1b',
-      border: '1px solid #ef4444',
-      boxShadow: '0 2px 4px rgba(239, 68, 68, 0.2)'
-    }),
-    ...(uploadFile.status === "processing" && {
-      background: 'linear-gradient(135deg, #fef3c7, #fde68a)',
-      color: '#92400e',
-      border: '1px solid #f59e0b',
-      boxShadow: '0 2px 4px rgba(245, 158, 11, 0.2)'
-    }),
-    ...(uploadFile.status === "uploading" && {
-      background: 'linear-gradient(135deg, #dbeafe, #bfdbfe)',
-      color: '#1e40af',
-      border: '1px solid #3b82f6',
-      boxShadow: '0 2px 4px rgba(59, 130, 246, 0.2)'
-    })
-  }}
-                        >
-                          {uploadFile.status === "uploading" && "Uploading"}
-                          {uploadFile.status === "processing" && "Processing"}
-                          {uploadFile.status === "completed" && "Completed"}
-                          {uploadFile.status === "error" && "Error"}
-                        </span>
+        {/* Upload Progress Section */}
+        {uploadedFiles.length > 0 && (
+          <div style={{ 
+            backgroundColor: 'white', 
+            borderRadius: '8px', 
+            border: '1px solid #e5e7eb', 
+            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+          }}>
+            <div style={{ 
+              padding: '24px', 
+              borderBottom: '1px solid #e5e7eb'
+            }}>
+              <h2 style={{ 
+                fontSize: '18px', 
+                fontWeight: '500', 
+                color: '#1f2937',
+                margin: '0 0 4px 0'
+              }}>Upload Progress</h2>
+              <p style={{ 
+                fontSize: '14px', 
+                color: '#6b7280', 
+                margin: '0'
+              }}>
+                Track your document uploads and processing status
+              </p>
+            </div>
+            <div style={{ padding: '24px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                {uploadedFiles.map((uploadFile) => {
+                  const fileIcon = getFileIcon(uploadFile.file.type)
+                  return (
+                    <div key={uploadFile.id} style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '16px',
+                      padding: '12px',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      backgroundColor: '#f9fafb',
+                      transition: 'background-color 0.2s ease'
+                    }}>
+                      <div style={{ fontSize: '20px', color: '#3b82f6' }}>
+                        <i className={fileIcon}></i>
                       </div>
 
-                      {uploadFile.error && (
-                        <p className="text-sm text-red-600 mt-1">{uploadFile.error}</p>
-                      )}
-
-                      {uploadFile.status !== "completed" && uploadFile.status !== "error" && (
-                        <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                          <div 
-                            className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
-                            style={{ width: `${uploadFile.progress}%` }}
-                          />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <h4 style={{ 
+                          fontWeight: '500', 
+                          color: '#1f2937', 
+                          fontSize: '14px',
+                          margin: '0 0 4px 0',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}>{uploadFile.file.name}</h4>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '4px' }}>
+                          <span style={{ fontSize: '12px', color: '#6b7280' }}>
+                            {(uploadFile.file.size / 1024 / 1024).toFixed(2)} MB
+                          </span>
+                          <span style={{
+                            padding: '2px 8px',
+                            fontSize: '12px',
+                            borderRadius: '4px',
+                            fontWeight: '500',
+                            ...(uploadFile.status === "completed" && {
+                              backgroundColor: '#dcfce7',
+                              color: '#166534'
+                            }),
+                            ...(uploadFile.status === "error" && {
+                              backgroundColor: '#fecaca',
+                              color: '#991b1b'
+                            }),
+                            ...(uploadFile.status === "processing" && {
+                              backgroundColor: '#fef3c7',
+                              color: '#92400e'
+                            }),
+                            ...(uploadFile.status === "uploading" && {
+                              backgroundColor: '#dbeafe',
+                              color: '#1e40af'
+                            })
+                          }}>
+                            {uploadFile.status === "uploading" && "Uploading"}
+                            {uploadFile.status === "processing" && "Processing"}
+                            {uploadFile.status === "completed" && "Completed"}
+                            {uploadFile.status === "error" && "Error"}
+                          </span>
                         </div>
-                      )}
-                    </div>
 
-                    <div className="flex items-center gap-2">
-                      {uploadFile.status === "completed" && <span className="text-green-600" text-green-600><i className="fas fa-check-circle"></i></span>}
-                      {uploadFile.status === "error" && <span className="text-red-600" style={{
-        fontSize: '20px',
-        color: '#ef4444',
-        filter: 'drop-shadow(0 2px 4px rgba(239, 68, 68, 0.3))'
-      }}><i className="fas fa-times-circle"></i></span>}
-                      <button 
-                        className="px-3 py-1 text-sm border border-gray-300 rounded-md hover:bg-gray-50 transition-colors" 
-                        onClick={() => removeFile(uploadFile.id)} 
-                        style={{
-      background: 'linear-gradient(135deg, #f8fafc, #f1f5f9)',
-      border: '1px solid #cbd5e1',
-      borderRadius: '6px',
-      padding: '8px 12px',
-      transition: 'all 0.2s ease',
-      cursor: 'pointer'
-    }}
-                      >
-                        <i className="fas fa-times"></i>
-                      </button>
+                        {uploadFile.error && (
+                          <p style={{ fontSize: '12px', color: '#dc2626', margin: '4px 0 0 0' }}>
+                            {uploadFile.error}
+                          </p>
+                        )}
+                        
+                        {uploadFile.status !== "completed" && uploadFile.status !== "error" && (
+                          <div style={{
+                            width: '100%',
+                            backgroundColor: '#e5e7eb',
+                            borderRadius: '4px',
+                            height: '6px',
+                            marginTop: '8px',
+                            overflow: 'hidden'
+                          }}>
+                            <div style={{
+                              backgroundColor: '#3b82f6',
+                              height: '100%',
+                              borderRadius: '4px',
+                              width: `${uploadFile.progress}%`,
+                              transition: 'width 0.3s ease'
+                            }} />
+                          </div>
+                        )}
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {uploadFile.status === "completed" && (
+                          <span style={{ color: '#10b981', fontSize: '18px' }}>
+                            <i className="fas fa-check-circle"></i>
+                          </span>
+                        )}
+                        {uploadFile.status === "error" && (
+                          <span style={{ color: '#ef4444', fontSize: '18px' }}>
+                            <i className="fas fa-times-circle"></i>
+                          </span>
+                        )}
+                        
+                        <button
+                          style={{
+                            padding: '4px',
+                            color: '#9ca3af',
+                            backgroundColor: 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            borderRadius: '4px',
+                            transition: 'color 0.2s ease'
+                          }}
+                          onClick={() => removeFile(uploadFile.id)}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.color = '#ef4444';
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.color = '#9ca3af';
+                          }}
+                        >
+                          <i className="fas fa-times" style={{ fontSize: '14px' }}></i>
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+        
+        {/* Empty State */}
+        {uploadedFiles.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '64px 0' }}>
+            <div style={{ fontSize: '48px', color: '#d1d5db', marginBottom: '16px' }}>
+              <i className="fas fa-file-upload"></i>
+            </div>
+            <h3 style={{ 
+              fontSize: '18px', 
+              fontWeight: '500', 
+              color: '#6b7280',
+              margin: '0 0 4px 0'
+            }}>No files uploaded yet</h3>
+            <p style={{ 
+              color: '#9ca3af', 
+              margin: '0',
+              fontSize: '14px'
+            }}>Upload your first document to get started</p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

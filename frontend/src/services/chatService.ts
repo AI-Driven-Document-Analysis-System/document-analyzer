@@ -180,6 +180,34 @@ class ChatService {
     }
   }
 
+  async deleteConversation(conversationId: string) {
+    try {
+      const userId = await this.getCurrentUserId();
+      if (!userId) {
+        throw new Error('User not authenticated');
+      }
+
+      const response = await fetch(`${this.baseUrl}/chat/conversations/${conversationId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: userId
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error deleting conversation:', error);
+      throw error;
+    }
+  }
+
   private getFileExtension(filename: string): string {
     if (!filename) return 'file';
     

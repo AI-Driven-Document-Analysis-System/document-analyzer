@@ -69,7 +69,7 @@ class LangChainChatEngine:
             conversation_id = str(uuid.uuid4())
 
         try:
-            print(f"DEBUG CHAT ENGINE: Processing query: {query} with search mode: {search_mode}")
+            # Processing query with search mode
             
             # Use enhanced search based on search mode
             if search_mode != "standard":
@@ -86,8 +86,8 @@ class LangChainChatEngine:
                 # Standard processing
                 result = await self.chain.arun(query)
             
-            print(f"DEBUG CHAT ENGINE: Got result with keys: {result.keys()}")
-            print(f"DEBUG CHAT ENGINE: Source documents count: {len(result.get('source_documents', []))}")
+            # Got result from chain
+            # Source documents processed
 
             # Extract and format source documents for the response
             sources = []

@@ -10,7 +10,7 @@ from ..core.dependencies import get_current_user
 from ..core.database import db_manager
 from ..schemas.user_schemas import UserResponse
 from ..schemas.document_schemas import DocumentResponse, DocumentUploadResponse
-from ..services.document_service import document_service
+from ..services.document_service_aws import document_service_aws as document_service
 import logging
 import psycopg2
 import json
@@ -51,13 +51,13 @@ async def upload_document(
         
         return {
             "success": True,
-            "message": result["message"],
-            "document_id": result["document_id"],
-            "status": result["status"],
+            "message": result.get("message", "Document uploaded"),
+            "document_id": result.get("document_id"),
+            "status": result.get("status", "unknown"),
             "file_info": {
                 "filename": file.filename,
-                "size": result["file_size"],
-                "mime_type": result["mime_type"]
+                "size": result.get("file_size", 0),
+                "mime_type": result.get("mime_type", "unknown")
             }
         }
         
@@ -278,6 +278,70 @@ async def get_document(
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving document: {str(e)}")
 
+@router.get("/{document_id}/content")
+async def get_document_content(
+    document_id: str,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Get extracted text content from OCR processing."""
+    try:
+        if not hasattr(current_user, 'id') or current_user.id is None:
+            raise HTTPException(status_code=400, detail="Invalid user token")
+        user_id = str(current_user.id)
+        
+        with db_manager.get_connection() as conn:
+            with conn.cursor() as cursor:
+                query = """
+                    SELECT d.original_filename, dc.extracted_text, dc.entities_extracted, 
+                           dp.processing_status, d.page_count
+                    FROM documents d
+                    LEFT JOIN document_content dc ON d.id = dc.document_id
+                    LEFT JOIN document_processing dp ON d.id = dp.document_id
+                    WHERE d.id = %s AND d.user_id = %s
+                """
+                cursor.execute(query, (document_id, user_id))
+                result = cursor.fetchone()
+                
+                if not result:
+                    raise HTTPException(status_code=404, detail="Document not found")
+                
+                filename, extracted_text, entities, processing_status, page_count = result
+                
+                if processing_status != "completed":
+                    return {
+                        "document_id": document_id,
+                        "filename": filename,
+                        "processing_status": processing_status,
+                        "extracted_text": None,
+                        "message": f"Document is still being processed. Status: {processing_status}"
+                    }
+                
+                if not extracted_text:
+                    return {
+                        "document_id": document_id,
+                        "filename": filename,
+                        "processing_status": processing_status,
+                        "extracted_text": None,
+                        "message": "No text content extracted from this document"
+                    }
+                
+                return {
+                    "document_id": document_id,
+                    "filename": filename,
+                    "processing_status": processing_status,
+                    "extracted_text": extracted_text,
+                    "entities": json.loads(entities) if entities else None,
+                    "page_count": page_count,
+                    "character_count": len(extracted_text),
+                    "word_count": len(extracted_text.split()) if extracted_text else 0
+                }
+                
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting document content: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving document content: {str(e)}")
+
 @router.get("/{document_id}/download")
 async def download_document(
     document_id: str,
@@ -301,9 +365,13 @@ async def download_document(
                     raise HTTPException(status_code=404, detail="Document not found")
                 
                 file_path = result[0]
-                download_url = document_service.get_document_download_url(file_path)
-                
-                return {"download_url": download_url}
+                try:
+                    download_url = document_service.get_document_download_url(file_path)
+                    if download_url is None:
+                        raise HTTPException(status_code=503, detail="Document storage service unavailable")
+                    return {"download_url": download_url}
+                except Exception as storage_error:
+                    raise HTTPException(status_code=503, detail="Document storage service unavailable")
                 
     except HTTPException:
         raise
@@ -491,11 +559,90 @@ async def search_documents(
         logger.error(f"Error searching documents: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error searching documents: {str(e)}")
 
+
+@router.get("/{document_id}/embedding-status")
+async def get_document_embedding_status(
+    document_id: str,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Get the embedding status of a document"""
+    try:
+        # Check if document exists and belongs to user
+        with db_manager.get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    SELECT id, original_filename 
+                    FROM documents 
+                    WHERE id = %s AND user_id = %s
+                """, (document_id, current_user.id))
+                
+                document = cursor.fetchone()
+                if not document:
+                    raise HTTPException(status_code=404, detail="Document not found")
+        
+        # Check embedding status
+        is_embedded = document_embedding_service.check_document_embedded(document_id)
+        
+        # Get collection info
+        collection_info = document_embedding_service.get_collection_info()
+        
+        return {
+            "document_id": document_id,
+            "filename": document[1],
+            "is_embedded": is_embedded,
+            "collection_info": collection_info
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error checking embedding status: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error checking embedding status: {str(e)}")
+
+
+@router.post("/{document_id}/embed")
+async def manually_embed_document(
+    document_id: str,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Manually trigger document embedding (useful if automatic embedding failed)"""
+    try:
+        # Check if document exists and belongs to user
+        with db_manager.get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    SELECT id, original_filename 
+                    FROM documents 
+                    WHERE id = %s AND user_id = %s
+                """, (document_id, current_user.id))
+                
+                document = cursor.fetchone()
+                if not document:
+                    raise HTTPException(status_code=404, detail="Document not found")
+        
+        # Trigger embedding
+        result = document_embedding_service.embed_document(document_id)
+        
+        return {
+            "document_id": document_id,
+            "filename": document[1],
+            "embedding_result": result
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error manually embedding document: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error manually embedding document: {str(e)}")
+
+
 #overall what this code do is define a router for the document service, which includes the following endpoints:
 #GET /documents: Get a list of documents for the current user.
 #POST /documents: Upload a new document for the current user.
 #GET /documents/{document_id}: Get a specific document by ID.
 #GET /documents/{document_id}/download: Get download URL for a document.
 #DELETE /documents/{document_id}: Delete a document.
+#GET /documents/{document_id}/embedding-status: Check if document is embedded in ChromaDB.
+#POST /documents/{document_id}/embed: Manually trigger document embedding.
 #The code uses the FastAPI framework to define the endpoints and the Pydantic models to define the request and response schemas.
 #The code also uses the SQLAlchemy ORM to interact with the database and the MinIO client to interact with the object storage.

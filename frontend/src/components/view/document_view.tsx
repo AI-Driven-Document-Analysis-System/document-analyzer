@@ -22,22 +22,76 @@ interface DocumentViewProps {
   onAuthError?: () => void
 }
 
-// Helper functions unchanged
+// Helper functions with PNG icons
 const getFileIcon = (contentType: string) => {
-  if (contentType.includes("pdf")) return { icon: "📄", colorClass: "docview-color-red", bgClass: "docview-bg-red", accentClass: "docview-accent-red" }
-  if (contentType.includes("image")) return { icon: "🖼️", colorClass: "docview-color-blue", bgClass: "docview-bg-blue", accentClass: "docview-accent-blue" }
-  if (contentType.includes("spreadsheet") || contentType.includes("excel")) return { icon: "📊", colorClass: "docview-color-green", bgClass: "docview-bg-green", accentClass: "docview-accent-green" }
-  if (contentType.includes("word") || contentType.includes("document")) return { icon: "📝", colorClass: "docview-color-blue-dark", bgClass: "docview-bg-blue", accentClass: "docview-accent-blue-dark" }
-  if (contentType.includes("text")) return { icon: "📄", colorClass: "docview-color-gray", bgClass: "docview-bg-gray", accentClass: "docview-accent-gray" }
-  return { icon: "📁", colorClass: "docview-color-gray-light", bgClass: "docview-bg-gray", accentClass: "docview-accent-gray-light" }
+  if (contentType.includes("pdf")) return { 
+    icon: <img src="/icons/pdf-icon.png" alt="PDF" style={{ width: '2rem', height: '2rem' }} />,
+    colorClass: "text-red-600", bgClass: "bg-red-50", accentClass: "bg-red-500" 
+  }
+  if (contentType.includes("image")) return { 
+    icon: <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>,
+    colorClass: "text-blue-600", bgClass: "bg-blue-50", accentClass: "bg-blue-500" 
+  }
+  if (contentType.includes("spreadsheet") || contentType.includes("excel")) return { 
+    icon: <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H9v-2h5v2zm0-4H9v-2h5v2zm0-4H9V7h5v2zm5 8h-3V7h3v10z"/></svg>,
+    colorClass: "text-green-600", bgClass: "bg-green-50", accentClass: "bg-green-500" 
+  }
+  if (contentType.includes("word") || contentType.includes("document") || contentType.includes("docx")) return { 
+    icon: <img src="/icons/docx-icon.png" alt="DOCX" style={{ width: '2rem', height: '2rem' }} />,
+    colorClass: "text-indigo-600", bgClass: "bg-indigo-50", accentClass: "bg-indigo-500" 
+  }
+  if (contentType.includes("text") || contentType.includes("txt")) return { 
+    icon: <img src="/icons/txt-icon.png" alt="TXT" style={{ width: '2rem', height: '2rem' }} />,
+    colorClass: "text-gray-600", bgClass: "bg-gray-50", accentClass: "bg-gray-500" 
+  }
+  return { 
+    icon: <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg>,
+    colorClass: "text-gray-500", bgClass: "bg-gray-50", accentClass: "bg-gray-400" 
+  }
 }
 
-const getStatusBadgeClass = (status: string) => {
+const getStatusBadgeStyle = (status: string) => {
+  const baseStyle = {
+    padding: '0.25rem 0.75rem',
+    fontSize: '0.75rem',
+    borderRadius: '9999px',
+    fontWeight: '500',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.25rem',
+    borderWidth: '1px',
+    borderStyle: 'solid'
+  }
+  
   switch (status) {
-    case 'completed': return "docview-badge-success"
-    case 'processing': return "docview-badge-warning"
-    case 'failed': return "docview-badge-error"
-    default: return "docview-badge-default"
+    case 'completed': 
+      return {
+        ...baseStyle,
+        backgroundColor: '#dbeafe',
+        color: '#1e40af',
+        borderColor: '#93c5fd'
+      }
+    case 'processing': 
+      return {
+        ...baseStyle,
+        backgroundColor: '#e0f2fe',
+        color: '#0369a1',
+        borderColor: '#7dd3fc'
+      }
+    case 'failed': 
+      return {
+        ...baseStyle,
+        backgroundColor: '#dbeafe !important',
+        color: '#1e40af !important',
+        borderColor: '#93c5fd !important'
+      }
+    default: 
+      return {
+        ...baseStyle,
+        backgroundColor: '#f8fafc',
+        color: '#64748b',
+        borderColor: '#e2e8f0'
+      }
   }
 }
 
@@ -60,7 +114,7 @@ const formatDate = (dateString: string): string => {
   })
 }
 
-export function DocumentView({ authToken: propAuthToken, onAuthError }: DocumentViewProps = {}) {
+export function DocumentView({ authToken: propAuthToken, onAuthError }: DocumentViewProps) {
   const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -158,7 +212,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
     .slice(0, 3)
 
   const handleDocumentClick = (document: Document) => {
-    setSelectedDocument(document)
+    // setSelectedDocument(document) // Disabled to fix preview errors
   }
 
   const handleDownload = async (document: Document) => {
@@ -253,129 +307,462 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
 
   return (
     <>
-      
-
-      <div className="docview-min-h-screen docview-bg-gray-50">
-        {/* Header with Search */}
-        <div className="docview-header">
-          <div className="docview-header-container docview-flex docview-items-center docview-justify-between docview-gap-6">
-            {/* Left Side - Search Bar */}
-            <div className="docview-flex-1 docview-max-w-2xl docview-relative">
-              <div className="docview-relative">
-                <div className="docview-search-icon">
-                  <i className="fas fa-search docview-icon"></i>
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #f8fafc 0%, #e0f2fe 50%, #e8eaf6 100%)',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+      }}>
+        {/* Modern Header with Glass Effect */}
+        <div style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 40,
+          background: 'rgba(255, 255, 255, 0.85)',
+          backdropFilter: 'blur(20px)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+        }}>
+          <div style={{
+            maxWidth: '80rem',
+            margin: '0 auto',
+            padding: '1rem 1.5rem'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '1.5rem'
+            }}>
+              {/* Left Side - Search Bar */}
+              <div style={{
+                flex: '1 1 0%',
+                maxWidth: '32rem'
+              }}>
+                <div style={{ position: 'relative' }}>
+                  <div style={{
+                    position: 'absolute',
+                    top: '50%',
+                    left: '1rem',
+                    transform: 'translateY(-50%)',
+                    pointerEvents: 'none'
+                  }}>
+                    <svg style={{
+                      width: '1.25rem',
+                      height: '1.25rem',
+                      color: '#9ca3af'
+                    }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
+                  <input
+                    type="text"
+                    placeholder="Search documents by name..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{
+                      width: '100%',
+                      paddingLeft: '3rem',
+                      paddingRight: '3rem',
+                      paddingTop: '0.875rem',
+                      paddingBottom: '0.875rem',
+                      background: 'rgba(255, 255, 255, 0.7)',
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(229, 231, 235, 0.6)',
+                      borderRadius: '1rem',
+                      color: '#111827',
+                      fontSize: '0.875rem',
+                      transition: 'all 0.3s ease',
+                      boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.outline = 'none'
+                      e.target.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.1)'
+                      e.target.style.borderColor = '#3b82f6'
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)'
+                      e.target.style.borderColor = 'rgba(229, 231, 235, 0.6)'
+                    }}
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery("")}
+                      style={{
+                        position: 'absolute',
+                        top: '50%',
+                        right: '1rem',
+                        transform: 'translateY(-50%)',
+                        color: '#9ca3af',
+                        cursor: 'pointer',
+                        transition: 'color 0.2s ease'
+                      }}
+                      onMouseEnter={(e) => (e.target as HTMLButtonElement).style.color = '#6b7280'}
+                      onMouseLeave={(e) => (e.target as HTMLButtonElement).style.color = '#9ca3af'}
+                    >
+                      <svg style={{
+                        width: '1.25rem',
+                        height: '1.25rem'
+                      }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
                 </div>
-                <input
-                  type="text"
-                  placeholder="Search documents by name..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="docview-search-input docview-w-full docview-text-gray-700 docview-placeholder-gray-400"
-                />
-                {searchQuery && (
+              </div>
+
+              {/* Right Side - Modern Controls */}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '1rem'
+              }}>
+                {/* View Toggle with Modern Design */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  background: 'rgba(255, 255, 255, 0.7)',
+                  backdropFilter: 'blur(10px)',
+                  borderRadius: '0.75rem',
+                  padding: '0.25rem',
+                  border: '1px solid rgba(229, 231, 235, 0.6)',
+                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
+                }}>
                   <button
-                    onClick={() => setSearchQuery("")}
-                    className="docview-search-clear"
+                    onClick={() => setViewMode('grid')}
+                    style={{
+                      padding: '0.625rem',
+                      borderRadius: '0.5rem',
+                      transition: 'all 0.3s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: viewMode === 'grid' ? '#3b82f6' : 'transparent',
+                      color: viewMode === 'grid' ? 'white' : '#6b7280',
+                      boxShadow: viewMode === 'grid' ? '0 4px 14px rgba(59, 130, 246, 0.25)' : 'none',
+                      transform: viewMode === 'grid' ? 'scale(1.05)' : 'scale(1)',
+                      cursor: 'pointer',
+                      border: 'none'
+                    }}
+                    title="Grid View"
+                    onMouseEnter={(e) => (e.target as HTMLButtonElement).style.color = '#3b82f6'}
+                    onMouseLeave={(e) => (e.target as HTMLButtonElement).style.color = '#6b7280'}
                   >
-                    <i className="fas fa-times docview-icon-sm"></i>
+                    <svg style={{
+                      width: '1.25rem',
+                      height: '1.25rem'
+                    }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    </svg>
                   </button>
-                )}
-              </div>
-            </div>
+                  <button
+                    onClick={() => setViewMode('list')}
+                    style={{
+                      padding: '0.625rem',
+                      borderRadius: '0.5rem',
+                      transition: 'all 0.3s ease',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: viewMode === 'list' ? '#3b82f6' : 'transparent',
+                      color: viewMode === 'list' ? 'white' : '#6b7280',
+                      boxShadow: viewMode === 'list' ? '0 4px 14px rgba(59, 130, 246, 0.25)' : 'none',
+                      transform: viewMode === 'list' ? 'scale(1.05)' : 'scale(1)',
+                      cursor: 'pointer',
+                      border: 'none'
+                    }}
+                    title="List View"
+                    onMouseEnter={(e) => (e.target as HTMLButtonElement).style.color = '#3b82f6'}
+                    onMouseLeave={(e) => (e.target as HTMLButtonElement).style.color = '#6b7280'}
+                  >
+                    <svg style={{
+                      width: '1.25rem',
+                      height: '1.25rem'
+                    }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                    </svg>
+                  </button>
+                </div>
 
-            {/* Right Side - Controls */}
-            <div className="docview-flex docview-items-center docview-gap-4">
-              {/* View Options */}
-              <div className="docview-view-toggle">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`docview-view-button ${viewMode === 'grid' ? 'docview-active' : ''}`}
-                  title="Grid View"
-                >
-                  <i className="fas fa-th docview-icon"></i>
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`docview-view-button ${viewMode === 'list' ? 'docview-active' : ''}`}
-                  title="List View"
-                >
-                  <i className="fas fa-list docview-icon"></i>
-                </button>
-              </div>
-
-              {/* Filters */}
-              <div className="docview-flex docview-items-center docview-gap-3">
-                <select
-                  value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
-                  className="docview-select"
-                >
-                  <option value="all">All Status</option>
-                  <option value="completed">Completed</option>
-                  <option value="processing">Processing</option>
-                  <option value="failed">Failed</option>
-                </select>
-                
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="docview-select"
-                >
-                  <option value="newest">Newest First</option>
-                  <option value="oldest">Oldest First</option>
-                  <option value="name">Name A-Z</option>
-                  <option value="size">Size (Largest)</option>
-                </select>
+                {/* Modern Filter Dropdowns */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.75rem'
+                }}>
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    style={{
+                      padding: '0.625rem 1rem',
+                      background: 'rgba(255, 255, 255, 0.7)',
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(229, 231, 235, 0.6)',
+                      borderRadius: '0.75rem',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#374151',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+                      appearance: 'none',
+                      backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3e%3cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3e%3c/svg%3e")',
+                      backgroundRepeat: 'no-repeat',
+                      backgroundPosition: 'right 0.75rem center',
+                      backgroundSize: '1em 1em',
+                      paddingRight: '2.5rem'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.outline = 'none'
+                      e.target.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.1)'
+                      e.target.style.borderColor = '#3b82f6'
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)'
+                      e.target.style.borderColor = 'rgba(229, 231, 235, 0.6)'
+                    }}
+                  >
+                    <option value="all">All Status</option>
+                    <option value="completed">Completed</option>
+                    <option value="processing">Processing</option>
+                    <option value="failed">Failed</option>
+                  </select>
+                  
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    style={{
+                      padding: '0.625rem 1rem',
+                      background: 'rgba(255, 255, 255, 0.7)',
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(229, 231, 235, 0.6)',
+                      borderRadius: '0.75rem',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#374151',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+                      appearance: 'none',
+                      backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3e%3cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3e%3c/svg%3e")',
+                      backgroundRepeat: 'no-repeat',
+                      backgroundPosition: 'right 0.75rem center',
+                      backgroundSize: '1em 1em',
+                      paddingRight: '2.5rem'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.outline = 'none'
+                      e.target.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.1)'
+                      e.target.style.borderColor = '#3b82f6'
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)'
+                      e.target.style.borderColor = 'rgba(229, 231, 235, 0.6)'
+                    }}
+                  >
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="name">Name A-Z</option>
+                    <option value="size">Size (Largest)</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="docview-max-w-7xl docview-mx-auto docview-px-6 docview-py-8">
-          {/* Recent Files Section */}
+        {/* Main Content with Better Spacing */}
+        <div style={{
+          maxWidth: '80rem',
+          margin: '0 auto',
+          padding: '2rem 1.5rem'
+        }}>
+          {/* Enhanced Recent Files Section */}
           {recentFiles.length > 0 && (
-            <div className="docview-mb-12">
-              <div className="docview-flex docview-items-center docview-justify-between docview-mb-6">
+            <div style={{ marginBottom: '3rem' }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: '2rem'
+              }}>
                 <div>
-                  <h2 className="docview-text-2xl docview-font-bold docview-text-gray-800">Recent Files</h2>
-                  <p className="docview-text-gray-500 docview-mt-1 docview-text-sm">Your most recently uploaded documents</p>
+                  <h2 style={{
+                    fontSize: '1.875rem',
+                    fontWeight: '700',
+                    color: '#111827',
+                    marginBottom: '0.5rem'
+                  }}>Recent Files</h2>
+                  <p style={{
+                    color: '#6b7280',
+                    fontSize: '1rem'
+                  }}>Your most recently uploaded documents</p>
                 </div>
-                <button className="docview-text-blue-600 hover:docview-text-blue-700 docview-font-medium docview-flex docview-items-center docview-gap-2 docview-transition-colors docview-duration-300 group">
+                <button style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 1rem',
+                  color: '#2563eb',
+                  fontWeight: '500',
+                  transition: 'all 0.3s ease',
+                  borderRadius: '0.75rem',
+                  cursor: 'pointer',
+                  border: 'none',
+                  background: 'transparent'
+                }}
+                onMouseEnter={(e) => {
+                  const target = e.target as HTMLSelectElement
+                  target.style.color = '#1d4ed8'
+                  target.style.background = 'rgba(59, 130, 246, 0.1)'
+                }}
+                onMouseLeave={(e) => {
+                  const target = e.target as HTMLSelectElement
+                  target.style.color = '#2563eb'
+                  target.style.background = 'transparent'
+                }}>
                   View All
-                  <i className="fas fa-arrow-right docview-text-xs group-hover:docview-translate-x-1 docview-transition-transform docview-duration-300"></i>
+                  <svg style={{
+                    width: '1rem',
+                    height: '1rem',
+                    transition: 'transform 0.3s ease'
+                  }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
                 </button>
               </div>
-              <div className="docview-flex docview-gap-6 docview-overflow-x-auto docview-pb-4 docview-scrollbar-hide">
+              <div style={{
+                display: 'flex',
+                gap: '1.5rem',
+                overflowX: 'auto',
+                paddingBottom: '1rem',
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none'
+              }}>
                 {recentFiles.map((document) => {
                   const fileIcon = getFileIcon(document.content_type)
                   return (
                     <div
                       key={`recent-${document.id}`}
-                      className="docview-recent-file docview-cursor-pointer docview-group docview-relative docview-overflow-hidden"
+                      style={{
+                        cursor: 'pointer',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        flexShrink: 0,
+                        width: '20rem',
+                        background: 'rgba(255, 255, 255, 0.8)',
+                        backdropFilter: 'blur(20px)',
+                        borderRadius: '1rem',
+                        padding: '1.5rem',
+                        border: '1px solid rgba(255, 255, 255, 0.5)',
+                        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+                        transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+                      }}
                       onClick={() => handleDocumentClick(document)}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-8px) scale(1.02)'
+                        e.currentTarget.style.boxShadow = '0 25px 50px rgba(0, 0, 0, 0.15)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0) scale(1)'
+                        e.currentTarget.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.1)'
+                      }}
                     >
                       {/* Decorative accent bar */}
-                      <div className={`docview-absolute docview-top-0 docview-left-0 docview-w-full docview-h-1 ${fileIcon.accentClass} docview-accent-bar`}></div>
+                      <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '4px',
+                        background: fileIcon.accentClass === 'bg-red-500' ? '#ef4444' :
+                                   fileIcon.accentClass === 'bg-blue-500' ? '#3b82f6' :
+                                   fileIcon.accentClass === 'bg-green-500' ? '#10b981' :
+                                   fileIcon.accentClass === 'bg-indigo-500' ? '#6366f1' : '#6b7280',
+                        borderRadius: '1rem 1rem 0 0'
+                      }}></div>
                       
-                      <div className="docview-flex docview-flex-col docview-h-full">
-                        <div className="docview-flex docview-items-center docview-gap-4 docview-mb-4">
-                          <div className={`docview-w-14 docview-h-14 ${fileIcon.bgClass} docview-rounded-2xl docview-flex docview-items-center docview-justify-center docview-text-2xl docview-shadow-sm`}>
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        height: '100%'
+                      }}>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '1rem',
+                          marginBottom: '1rem'
+                        }}>
+                          <div style={{
+                            width: '4rem',
+                            height: '4rem',
+                            background: fileIcon.bgClass === 'bg-red-50' ? '#fef2f2' :
+                                       fileIcon.bgClass === 'bg-blue-50' ? '#eff6ff' :
+                                       fileIcon.bgClass === 'bg-green-50' ? '#ecfdf5' :
+                                       fileIcon.bgClass === 'bg-indigo-50' ? '#eef2ff' : '#f9fafb',
+                            color: fileIcon.colorClass === 'text-red-600' ? '#dc2626' :
+                                   fileIcon.colorClass === 'text-blue-600' ? '#2563eb' :
+                                   fileIcon.colorClass === 'text-green-600' ? '#16a34a' :
+                                   fileIcon.colorClass === 'text-indigo-600' ? '#4f46e5' : '#6b7280',
+                            borderRadius: '1rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                            transition: 'transform 0.3s ease'
+                          }}>
                             {fileIcon.icon}
                           </div>
-                          <div className="docview-flex-1 docview-min-w-0">
-                            <p className="docview-text-base docview-font-semibold docview-text-gray-900 docview-line-clamp-2 docview-leading-tight group-hover:docview-text-blue-600 docview-transition-colors docview-duration-300">
+                          <div style={{
+                            flex: '1 1 0%',
+                            minWidth: 0
+                          }}>
+                            <p style={{
+                              fontSize: '1.125rem',
+                              fontWeight: '600',
+                              color: '#111827',
+                              lineHeight: '1.4',
+                              marginBottom: '0.25rem',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              transition: 'color 0.3s ease'
+                            }}>
                               {document.original_filename}
+                            </p>
+                            <p style={{
+                              fontSize: '0.875rem',
+                              color: '#6b7280',
+                              fontWeight: '500'
+                            }}>
+                              {formatFileSize(document.file_size)}
                             </p>
                           </div>
                         </div>
                         
-                        <div className="docview-mt-auto">
-                          <div className="docview-flex docview-items-center docview-justify-between">
-                            <span className="docview-text-xs docview-text-gray-500">
+                        <div style={{ marginTop: 'auto' }}>
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between'
+                          }}>
+                            <span style={{
+                              fontSize: '0.875rem',
+                              color: '#6b7280'
+                            }}>
                               {formatDate(document.upload_date)}
                             </span>
-                            <span className={`docview-badge ${getStatusBadgeClass(document.processing_status)}`}>
+                            <span style={{
+                              padding: '0.25rem 0.75rem',
+                              borderRadius: '9999px',
+                              fontSize: '0.75rem',
+                              fontWeight: '500',
+                              background: document.processing_status === 'completed' ? '#dbeafe' :
+                                         document.processing_status === 'processing' ? '#e0f2fe' : '#dbeafe',
+                              color: document.processing_status === 'completed' ? '#1e40af' :
+                                     document.processing_status === 'processing' ? '#0369a1' : '#1e40af'
+                            }}>
                               {document.processing_status}
                             </span>
                           </div>
@@ -390,10 +777,23 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
 
           {/* Files Section */}
           <div>
-            <div className="docview-flex docview-items-center docview-justify-between docview-mb-8">
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: '2rem'
+            }}>
               <div>
-                <h2 className="docview-text-2xl docview-font-bold docview-text-gray-800">All Files</h2>
-                <p className="docview-text-gray-500 docview-mt-1 docview-text-sm">
+                <h2 style={{
+                  fontSize: '1.875rem',
+                  fontWeight: '700',
+                  color: '#111827',
+                  marginBottom: '0.5rem'
+                }}>All Files</h2>
+                <p style={{
+                  color: '#6b7280',
+                  fontSize: '1rem'
+                }}>
                   {filteredDocuments.length} {filteredDocuments.length === 1 ? 'document' : 'documents'} found
                 </p>
               </div>
@@ -401,92 +801,350 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
 
             {/* Documents Grid/List */}
             {filteredDocuments.length === 0 ? (
-              <div className="docview-empty-state">
-                <div className="docview-empty-icon">
-                  <i className="fas fa-folder-open"></i>
+              <div style={{
+                textAlign: 'center',
+                padding: '5rem 2rem',
+                background: 'rgba(255, 255, 255, 0.7)',
+                backdropFilter: 'blur(20px)',
+                borderRadius: '1.5rem',
+                border: '1px solid rgba(255, 255, 255, 0.5)',
+                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)'
+              }}>
+                <div style={{
+                  width: '6rem',
+                  height: '6rem',
+                  background: '#f3f4f6',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 1.5rem'
+                }}>
+                  <svg style={{
+                    width: '3rem',
+                    height: '3rem',
+                    color: '#9ca3af'
+                  }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z" />
+                  </svg>
                 </div>
-                <h3 className="docview-empty-title">No documents found</h3>
-                <p className="docview-empty-message">
+                <h3 style={{
+                  fontSize: '1.5rem',
+                  fontWeight: '700',
+                  color: '#111827',
+                  marginBottom: '0.75rem'
+                }}>No documents found</h3>
+                <p style={{
+                  color: '#6b7280',
+                  fontSize: '1.125rem',
+                  maxWidth: '28rem',
+                  margin: '0 auto 2rem',
+                  lineHeight: '1.6'
+                }}>
                   {searchQuery || filterStatus !== "all" 
                     ? "Try adjusting your search terms or filters to find what you're looking for"
                     : "Upload your first document to get started. Your files will appear here."
                   }
                 </p>
-                <button className="docview-cta-primary">
+                <button style={{
+                  padding: '1rem 2rem',
+                  background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)',
+                  color: 'white',
+                  fontWeight: '600',
+                  borderRadius: '1rem',
+                  boxShadow: '0 10px 25px rgba(59, 130, 246, 0.3)',
+                  transition: 'all 0.3s ease',
+                  cursor: 'pointer',
+                  border: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}
+                onMouseEnter={(e) => {
+                  const target = e.target as HTMLButtonElement
+                  target.style.transform = 'translateY(-2px) scale(1.05)'
+                  target.style.boxShadow = '0 20px 40px rgba(59, 130, 246, 0.4)'
+                }}
+                onMouseLeave={(e) => {
+                  const target = e.target as HTMLButtonElement
+                  target.style.transform = 'translateY(0) scale(1)'
+                  target.style.boxShadow = '0 10px 25px rgba(59, 130, 246, 0.3)'
+                }}>
+                  <svg style={{
+                    width: '1.25rem',
+                    height: '1.25rem'
+                  }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
                   Upload Document
                 </button>
               </div>
             ) : viewMode === 'grid' ? (
-              <div className="grid docview-grid-cols-1 docview-grid-cols-2 docview-grid-cols-3 docview-grid-cols-4 docview-grid-cols-5 docview-gap-6">
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                gap: '1.5rem'
+              }}>
                 {filteredDocuments.map((document, index) => {
                   const fileIcon = getFileIcon(document.content_type)
                   return (
                     <div
                       key={document.id}
-                      className="docview-grid-item docview-cursor-pointer docview-group docview-relative docview-overflow-hidden"
+                      style={{
+                        cursor: 'pointer',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        background: 'rgba(255, 255, 255, 0.8)',
+                        backdropFilter: 'blur(20px)',
+                        borderRadius: '1rem',
+                        border: '1px solid rgba(255, 255, 255, 0.5)',
+                        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+                        transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+                      }}
                       onClick={() => handleDocumentClick(document)}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)'
+                        e.currentTarget.style.boxShadow = '0 25px 50px rgba(0, 0, 0, 0.15)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0) scale(1)'
+                        e.currentTarget.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.1)'
+                      }}
                     >
                       {/* Decorative accent bar */}
-                      <div className={`docview-absolute docview-top-0 docview-left-0 docview-w-full docview-h-1 ${fileIcon.accentClass} docview-accent-bar`}></div>
+                      <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '4px',
+                        background: fileIcon.accentClass === 'bg-red-500' ? '#ef4444' :
+                                   fileIcon.accentClass === 'bg-blue-500' ? '#3b82f6' :
+                                   fileIcon.accentClass === 'bg-green-500' ? '#10b981' :
+                                   fileIcon.accentClass === 'bg-indigo-500' ? '#6366f1' : '#6b7280',
+                        borderRadius: '1rem 1rem 0 0'
+                      }}></div>
                       
                       {/* Document Preview/Icon */}
-                      <div className={`docview-file-preview ${fileIcon.bgClass} docview-rounded-t-2xl docview-flex docview-flex-col docview-items-center docview-justify-center docview-relative docview-overflow-hidden`}>
+                      <div style={{
+                        height: '10rem',
+                        background: fileIcon.bgClass === 'bg-red-50' ? '#fef2f2' :
+                                   fileIcon.bgClass === 'bg-blue-50' ? '#eff6ff' :
+                                   fileIcon.bgClass === 'bg-green-50' ? '#ecfdf5' :
+                                   fileIcon.bgClass === 'bg-indigo-50' ? '#eef2ff' : '#f9fafb',
+                        borderRadius: '1rem 1rem 0 0',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        position: 'relative',
+                        overflow: 'hidden'
+                      }}>
                         {document.thumbnail_url ? (
                           <img
                             src={document.thumbnail_url}
                             alt={document.original_filename}
-                            className="docview-w-full docview-h-full docview-object-cover group-hover:docview-scale-110 docview-transition-transform docview-duration-500"
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                              transition: 'transform 0.5s ease'
+                            }}
                           />
                         ) : (
-                          <div className="docview-flex docview-flex-col docview-items-center docview-justify-center docview-h-full docview-p-6">
-                            <div className="docview-file-icon-container docview-group-hover:docview-scale-110 docview-transition-transform docview-duration-300">
-                              {fileIcon.icon}
-                            </div>
-                            <div className="docview-file-type">
-                              {document.content_type.split('/')[1]?.toUpperCase() || 'FILE'}
-                            </div>
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            height: '100%',
+                            background: 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
+                            color: '#9ca3af',
+                            fontSize: '0.875rem',
+                            fontWeight: '500',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.1em'
+                          }}>
+                            No Preview Available
                           </div>
                         )}
                         
                         {/* Action Buttons */}
-                        <div className="docview-action-buttons">
+                        <div style={{
+                          position: 'absolute',
+                          top: '0.75rem',
+                          right: '0.75rem',
+                          opacity: 0,
+                          transition: 'opacity 0.3s ease',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.5rem'
+                        }}
+                        className="group-hover:opacity-100">
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
                               handleDownload(document)
                             }}
-                            className="docview-action-button docview-download"
+                            style={{
+                              width: '2.5rem',
+                              height: '2.5rem',
+                              background: 'rgba(255, 255, 255, 0.9)',
+                              backdropFilter: 'blur(10px)',
+                              borderRadius: '0.75rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#6b7280',
+                              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+                              transition: 'all 0.3s ease',
+                              cursor: 'pointer',
+                              border: 'none'
+                            }}
+                            onMouseEnter={(e) => {
+                              const target = e.target as HTMLButtonElement
+                              target.style.color = '#2563eb'
+                              target.style.background = '#ffffff'
+                              target.style.boxShadow = '0 20px 40px rgba(0, 0, 0, 0.15)'
+                            }}
+                            onMouseLeave={(e) => {
+                              const target = e.target as HTMLButtonElement
+                              target.style.color = '#6b7280'
+                              target.style.background = 'rgba(255, 255, 255, 0.9)'
+                              target.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.1)'
+                            }}
                             title="Download"
                           >
-                            <i className="fas fa-download docview-icon-sm"></i>
+                            <svg style={{ width: '1.25rem', height: '1.25rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
                           </button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
                               handleDelete(document)
                             }}
-                            className="docview-action-button docview-delete"
+                            style={{
+                              width: '2.5rem',
+                              height: '2.5rem',
+                              background: 'rgba(255, 255, 255, 0.9)',
+                              backdropFilter: 'blur(10px)',
+                              borderRadius: '0.75rem',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#6b7280',
+                              boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+                              transition: 'all 0.3s ease',
+                              cursor: 'pointer',
+                              border: 'none'
+                            }}
+                            onMouseEnter={(e) => {
+                              const target = e.target as HTMLButtonElement
+                              target.style.color = '#dc2626'
+                              target.style.background = '#ffffff'
+                              target.style.boxShadow = '0 20px 40px rgba(0, 0, 0, 0.15)'
+                            }}
+                            onMouseLeave={(e) => {
+                              const target = e.target as HTMLButtonElement
+                              target.style.color = '#6b7280'
+                              target.style.background = 'rgba(255, 255, 255, 0.9)'
+                              target.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.1)'
+                            }}
                             title="Delete"
                           >
-                            <i className="fas fa-trash docview-icon-sm"></i>
+                            <svg style={{ width: '1.25rem', height: '1.25rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
                           </button>
                         </div>
                       </div>
 
                       {/* Document Info */}
-                      <div className="docview-p-5">
-                        <div className="docview-flex docview-items-start docview-justify-between docview-mb-3">
-                          <h3 className="docview-font-semibold docview-text-gray-900 docview-text-base docview-mb-1 docview-line-clamp-2 docview-leading-tight group-hover:docview-text-blue-600 docview-transition-colors docview-duration-300" title={document.original_filename}>
-                            {document.original_filename}
-                          </h3>
-                          <span className={`docview-badge ${getStatusBadgeClass(document.processing_status)}`}>
+                      <div style={{ padding: '1.5rem' }}>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '1rem',
+                          marginBottom: '1rem'
+                        }}>
+                          <div style={{
+                            width: '3.5rem',
+                            height: '3.5rem',
+                            background: fileIcon.bgClass === 'bg-red-50' ? '#fef2f2' :
+                                       fileIcon.bgClass === 'bg-blue-50' ? '#eff6ff' :
+                                       fileIcon.bgClass === 'bg-green-50' ? '#ecfdf5' :
+                                       fileIcon.bgClass === 'bg-indigo-50' ? '#eef2ff' : '#f9fafb',
+                            color: fileIcon.colorClass === 'text-red-600' ? '#dc2626' :
+                                   fileIcon.colorClass === 'text-blue-600' ? '#2563eb' :
+                                   fileIcon.colorClass === 'text-green-600' ? '#16a34a' :
+                                   fileIcon.colorClass === 'text-indigo-600' ? '#4f46e5' : '#6b7280',
+                            borderRadius: '0.75rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                            transition: 'transform 0.3s ease'
+                          }}>
+                            {fileIcon.icon}
+                          </div>
+                          <div style={{
+                            flex: '1 1 0%',
+                            minWidth: 0
+                          }}>
+                            <p style={{
+                              fontSize: '1.125rem',
+                              fontWeight: '600',
+                              color: '#111827',
+                              lineHeight: '1.4',
+                              marginBottom: '0.25rem',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              transition: 'color 0.3s ease'
+                            }}>
+                              {document.original_filename}
+                            </p>
+                            <p style={{
+                              fontSize: '0.875rem',
+                              color: '#6b7280',
+                              fontWeight: '500'
+                            }}>
+                              {formatFileSize(document.file_size)}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between'
+                        }}>
+                          <span style={{
+                            fontSize: '0.875rem',
+                            color: '#6b7280'
+                          }}>
+                            {formatDate(document.upload_date)}
+                          </span>
+                          <span style={{
+                            padding: '0.25rem 0.75rem',
+                            borderRadius: '9999px',
+                            fontSize: '0.75rem',
+                            fontWeight: '500',
+                            background: document.processing_status === 'completed' ? '#dbeafe' :
+                                       document.processing_status === 'processing' ? '#e0f2fe' : '#dbeafe',
+                            color: document.processing_status === 'completed' ? '#1e40af' :
+                                   document.processing_status === 'processing' ? '#0369a1' : '#1e40af'
+                          }}>
                             {document.processing_status}
                           </span>
                         </div>
                         
-                        <div className="docview-flex docview-items-center docview-justify-between docview-text-sm">
-                          <span className="docview-text-gray-500">{formatFileSize(document.file_size)}</span>
-                          <span className="docview-text-gray-400">{formatDate(document.upload_date)}</span>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-gray-500 font-medium">{formatFileSize(document.file_size)}</span>
+                          <span className="text-gray-400">{formatDate(document.upload_date)}</span>
                         </div>
                       </div>
                     </div>
@@ -494,9 +1152,9 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                 })}
               </div>
             ) : (
-              /* List View */
-              <div className="docview-bg-white docview-rounded-2xl docview-border docview-border-gray-100 docview-overflow-hidden docview-shadow-lg">
-                <div className="docview-divide-y docview-divide-gray-100">
+              /* Enhanced List View */
+              <div className="bg-white/70 backdrop-blur-sm rounded-2xl border border-white/40 overflow-hidden shadow-lg">
+                <div className="divide-y divide-gray-100/60">
                   {filteredDocuments.map((document, index) => {
                     const fileIcon = getFileIcon(document.content_type)
                     return (
@@ -514,7 +1172,12 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                             <h3 className="docview-text-base docview-font-semibold docview-text-gray-900 docview-truncate group-hover:docview-text-blue-600 docview-transition-colors docview-duration-300">
                               {document.original_filename}
                             </h3>
-                            <span className={`docview-badge ${getStatusBadgeClass(document.processing_status)}`}>
+                            <span style={{
+                              ...getStatusBadgeStyle(document.processing_status),
+                              backgroundColor: document.processing_status === 'failed' ? '#dbeafe' : getStatusBadgeStyle(document.processing_status).backgroundColor,
+                              color: document.processing_status === 'failed' ? '#1e40af' : getStatusBadgeStyle(document.processing_status).color,
+                              borderColor: document.processing_status === 'failed' ? '#93c5fd' : getStatusBadgeStyle(document.processing_status).borderColor
+                            }}>
                               {document.processing_status}
                             </span>
                           </div>
@@ -591,7 +1254,12 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                     <div className="docview-flex-1">
                       <h3 className="docview-font-bold docview-text-xl docview-text-gray-900 docview-mb-2">{selectedDocument.original_filename}</h3>
                       <div className="docview-flex docview-items-center docview-gap-3">
-                        <span className={`docview-badge ${getStatusBadgeClass(selectedDocument.processing_status)}`}>
+                        <span style={{
+                          ...getStatusBadgeStyle(selectedDocument.processing_status),
+                          backgroundColor: selectedDocument.processing_status === 'failed' ? '#dbeafe' : getStatusBadgeStyle(selectedDocument.processing_status).backgroundColor,
+                          color: selectedDocument.processing_status === 'failed' ? '#1e40af' : getStatusBadgeStyle(selectedDocument.processing_status).color,
+                          borderColor: selectedDocument.processing_status === 'failed' ? '#93c5fd' : getStatusBadgeStyle(selectedDocument.processing_status).borderColor
+                        }}>
                           {selectedDocument.processing_status}
                         </span>
                         <span className="docview-text-sm docview-text-gray-500">{formatFileSize(selectedDocument.file_size)}</span>
