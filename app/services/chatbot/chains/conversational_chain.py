@@ -4,7 +4,7 @@ from langchain.prompts import PromptTemplate
 from langchain.schema import BaseRetriever
 from typing import Any, Dict, List, Optional
 from ..rag.prompt_templates import PromptTemplates
-
+from ....core.langfuse_config import get_langfuse_callbacks, get_langfuse_config
 
 class CustomConversationalChain:
     """
@@ -106,6 +106,9 @@ class CustomConversationalChain:
                 - source_documents: List of source documents used for the response
                 - chat_history: Current conversation history from memory
         """
+        # Use callbacks as-is (Langfuse callbacks already merged in chat service)
+        all_callbacks = callbacks or []
+        
         # First check if we have relevant documents by doing a similarity search
         relevant_docs = self.retriever.get_relevant_documents(question)
         print(f"DEBUG: Retrieved {len(relevant_docs)} documents for question: {question}")
@@ -135,10 +138,10 @@ class CustomConversationalChain:
         
         if has_relevant_docs:
             # Use LangChain's RetrievalQAWithSourcesChain for document-based questions
-            if callbacks:
+            if all_callbacks:
                 sources_result = await self.sources_chain.ainvoke(
                     {"question": question},
-                    config={"callbacks": callbacks}
+                    config={"callbacks": all_callbacks}
                 )
             else:
                 sources_result = await self.sources_chain.ainvoke({"question": question})
@@ -150,10 +153,10 @@ class CustomConversationalChain:
                 source_documents = [source_documents[0]]
         else:
             # Use conversational chain for general knowledge questions
-            if callbacks:
+            if all_callbacks:
                 conv_result = await self.chain.ainvoke(
                     {"question": question},
-                    config={"callbacks": callbacks}
+                    config={"callbacks": all_callbacks}
                 )
             else:
                 conv_result = await self.chain.ainvoke({"question": question})
@@ -193,6 +196,9 @@ class CustomConversationalChain:
                 - source_documents: List of source documents used for the response
                 - chat_history: Current conversation history from memory
         """
+        # Use callbacks as-is (Langfuse callbacks already merged in chat service)
+        all_callbacks = callbacks or []
+        
         # First check if we have relevant documents by doing a similarity search
         relevant_docs = self.retriever.get_relevant_documents(question)
         print(f"DEBUG: Retrieved {len(relevant_docs)} documents for question: {question}")
@@ -222,10 +228,10 @@ class CustomConversationalChain:
         
         if has_relevant_docs:
             # Use LangChain's RetrievalQAWithSourcesChain for document-based questions
-            if callbacks:
+            if all_callbacks:
                 sources_result = self.sources_chain.invoke(
                     {"question": question},
-                    config={"callbacks": callbacks}
+                    config={"callbacks": all_callbacks}
                 )
             else:
                 sources_result = self.sources_chain.invoke({"question": question})
@@ -237,10 +243,10 @@ class CustomConversationalChain:
                 source_documents = [source_documents[0]]
         else:
             # Use conversational chain for general knowledge questions
-            if callbacks:
+            if all_callbacks:
                 conv_result = self.chain.invoke(
                     {"question": question},
-                    config={"callbacks": callbacks}
+                    config={"callbacks": all_callbacks}
                 )
             else:
                 conv_result = self.chain.invoke({"question": question})

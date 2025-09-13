@@ -11,6 +11,7 @@ from .chatbot.llm.llm_factory import LLMFactory
 from .chatbot.chains.conversational_chain import CustomConversationalChain
 from .chatbot.rag.chat_engine import LangChainChatEngine
 from .chatbot.rag.conversation_manager import ConversationManager
+from ..core.langfuse_config import get_langfuse_callbacks
 
 
 class ChatbotService:
@@ -331,6 +332,15 @@ class ChatbotService:
     def _create_llm(self, llm_config: Dict[str, Any]):
         """Create LLM instance based on configuration."""
         provider = llm_config.get('provider', 'openai').lower()
+        
+        # Always add Langfuse callbacks to the config
+        langfuse_callbacks = get_langfuse_callbacks()
+        existing_callbacks = llm_config.get('callbacks', [])
+        if existing_callbacks is None:
+            existing_callbacks = []
+        all_callbacks = existing_callbacks + langfuse_callbacks
+        llm_config['callbacks'] = all_callbacks
+        
 
         if provider == 'openai':
             return LLMFactory.create_openai_llm(

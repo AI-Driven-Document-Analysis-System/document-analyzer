@@ -78,13 +78,15 @@ class LangChainChatEngine:
                 
                 # Create a custom chain result with enhanced documents
                 # Instead of overriding retriever, we'll modify the chain's behavior
-                result = await self.chain.arun(query)
+                callbacks = getattr(self.chain.llm, 'callbacks', None)
+                result = await self.chain.arun(query, callbacks=callbacks)
                 
                 # Replace the source documents with enhanced search results
                 result["source_documents"] = enhanced_docs
             else:
-                # Standard processing
-                result = await self.chain.arun(query)
+                # Standard processing - pass callbacks from LLM
+                callbacks = getattr(self.chain.llm, 'callbacks', None)
+                result = await self.chain.arun(query, callbacks=callbacks)
             
             # Got result from chain
             # Source documents processed
@@ -142,9 +144,11 @@ class LangChainChatEngine:
 
             # Start the query processing task asynchronously
             # This allows us to stream tokens while the full response is being generated
+            callbacks = getattr(self.chain.llm, 'callbacks', [])
+            all_callbacks = callbacks + [streaming_callback] if callbacks else [streaming_callback]
             task = asyncio.create_task(
                 # streaming_callback.get_tokens() function gets "called back" every time the LLM generates a new token
-                self.chain.arun(query, callbacks=[streaming_callback])
+                self.chain.arun(query, callbacks=all_callbacks)
             )
 
             # Send initial event to indicate processing has started
