@@ -21,6 +21,7 @@ from app.core.database import get_db
 from app.db.conversations import get_conversations, get_messages
 # JWT middleware not implemented yet
 from ..services.chatbot.rag.conversation_summarizer import ConversationSummarizer
+from ..services.chatbot.rag.query_preprocessing import preprocess_user_query
 from ..core.config import settings
 from uuid import UUID
 
@@ -146,14 +147,19 @@ async def send_message(request: ChatMessageRequest):
             if not conv:
                 raise HTTPException(status_code=404, detail="Conversation not found")
         
-        # Store user message in database
+        # Preprocess user query for better retrieval
+        preprocessed_query = preprocess_user_query(request.message)
+        logger.info(f"Query preprocessing: '{request.message}' -> '{preprocessed_query}'")
+        
+        # Store user message in database (store original message, not preprocessed)
         user_message = message_repo.add(
             conversation_id=UUID(conversation_id),
             role="user",
             content=request.message,
             metadata={
                 "user_id": request.user_id,
-                "memory_type": request.memory_type.value
+                "memory_type": request.memory_type.value,
+                "preprocessed_query": preprocessed_query
             }
         )
         
@@ -245,7 +251,7 @@ async def send_message(request: ChatMessageRequest):
             try:
                 chat_engine = build_engine(dict(llm_config))
                 result = await chat_engine.process_query(
-                    query=request.message,
+                    query=preprocessed_query,  # Use preprocessed query for better retrieval
                     conversation_id=conversation_id,
                     user_id=request.user_id,
                     search_mode=request.search_mode.value
@@ -267,7 +273,7 @@ async def send_message(request: ChatMessageRequest):
 
                 chat_engine = build_engine(fallback_conf)
                 result = await chat_engine.process_query(
-                    query=request.message,
+                    query=preprocessed_query,  # Use preprocessed query for better retrieval
                     conversation_id=conversation_id,
                     user_id=request.user_id,
                     search_mode=request.search_mode.value
@@ -469,9 +475,13 @@ async def search_documents(request: DocumentSearchRequest):
         
         start_time = time.time()
         
+        # Preprocess search query for better retrieval
+        preprocessed_query = preprocess_user_query(request.query)
+        logger.debug(f"Search query preprocessing: '{request.query}' -> '{preprocessed_query}'")
+        
         # Search documents
         results = service.search_documents(
-            query=request.query,
+            query=preprocessed_query,
             k=request.k,
             user_id=request.user_id
         )

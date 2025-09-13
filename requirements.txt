@@ -62,6 +62,7 @@ google-generativeai
 huggingface-hub==0.34.3
 tokenizers==0.21.4
 tf-keras==2.15.0
+pyspellchecker==0.7.2
 
 # Testing
 pytest==7.4.3

@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class QueryPreprocessor:
     """
     Handles preprocessing of user queries for improved RAG retrieval.
-
+    
     This class implements various text normalization techniques to enhance
     the quality of user input before it's used for similarity search in
     the vector database.
@@ -31,7 +31,7 @@ class QueryPreprocessor:
     def __init__(self, language: str = 'en'):
         """
         Initialize the query preprocessor.
-
+        
         Args:
             language (str): Language code for spell checker (default: 'en')
         """
@@ -79,19 +79,19 @@ class QueryPreprocessor:
     def correct_spelling(self, text: str) -> str:
         """
         Correct spelling errors in the input text using pyspellchecker.
-
+        
         This improves retrieval by ensuring misspelled words don't cause
         vocabulary mismatches with the stored document content.
-
+        
         Args:
             text (str): Input text with potential spelling errors
-
+            
         Returns:
             str: Text with corrected spelling
         """
         words = text.split()
         corrected_words = []
-
+        
         for word in words:
             # Check if word is in the dictionary
             if word in self.spell_checker:
@@ -105,7 +105,7 @@ class QueryPreprocessor:
                 else:
                     # Keep original word if no correction found
                     corrected_words.append(word)
-
+        
         return ' '.join(corrected_words)
 
     def preprocess_query(self, query: str) -> str:
