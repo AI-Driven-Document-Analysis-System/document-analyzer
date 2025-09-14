@@ -7,11 +7,13 @@ import json
 import time
 import re
 from typing import Dict, List, Optional, Union
+import os
+from dotenv import load_dotenv
 
 logger = logging.getLogger(__name__)
 
 # Hard-coded API key - YOU NEED TO UPDATE THIS WITH A VALID KEY
-HF_API_KEY = "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"
+HF_API_KEY = os.getenv("HF_API_KEY")
 
 # NER endpoints for different domains
 NER_ENDPOINTS = {
