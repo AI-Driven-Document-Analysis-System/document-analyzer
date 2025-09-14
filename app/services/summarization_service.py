@@ -1,198 +1,25 @@
 
-# from transformers import pipeline
-# import logging
-# import re
+#************************************NER**********************************
 
-# logger = logging.getLogger(__name__)
-
-# def get_summary_options():
-#     """Return available summarization options."""
-#     return {
-#         "brief": {
-#             "name": "Brief Summary", 
-#             "model": "bart",
-#             "max_length": 150,
-#             "min_length": 50
-#         },
-#         "detailed": {
-#             "name": "Detailed Summary", 
-#             "model": "pegasus",
-#             "max_length": 250,
-#             "min_length": 80
-#         },
-#         "domain_specific": {
-#             "name": "Domain Specific Summary", 
-#             "model": "t5",
-#             "max_length": 200,
-#             "min_length": 70
-#         }
-#     }
-
-# def _get_model_pipeline(model_name: str):
-#     """Initialize the appropriate model pipeline."""
-#     models = {
-#         "bart": "facebook/bart-large-cnn",
-#         "pegasus": "google/pegasus-cnn_dailymail", 
-#         "t5": "t5-base"
-#     }
-    
-#     if model_name not in models:
-#         raise ValueError(f"Unknown model: {model_name}")
-    
-#     try:
-#         return pipeline("summarization", model=models[model_name], framework="pt")
-#     except Exception as e:
-#         logger.error(f"Error loading model {model_name}: {e}")
-#         # Fallback to BART if model loading fails
-#         logger.info("Falling back to BART model...")
-#         return pipeline("summarization", model="facebook/bart-large-cnn", framework="pt")
-
-# def _preprocess_text_for_model(text: str, model_name: str) -> str:
-#     """Preprocess text based on model requirements."""
-#     if model_name == "t5":
-#         return f"summarize: {text}"
-#     return text
-
-# def _handle_long_text(text: str, model_name: str, max_length: int, min_length: int, summarizer):
-#     """Handle long text by chunking appropriately for each model."""
-#     max_input_lengths = {
-#         "bart": 1024,
-#         "pegasus": 512,
-#         "t5": 512
-#     }
-    
-#     max_input_length = max_input_lengths.get(model_name, 1024)
-    
-#     if len(text) <= max_input_length:
-#         processed_text = _preprocess_text_for_model(text, model_name)
-#         try:
-#             result = summarizer(processed_text, 
-#                               max_length=max_length, 
-#                               min_length=min_length, 
-#                               do_sample=False)
-#             return result[0]["summary_text"]
-#         except Exception as e:
-#             logger.error(f"Error with single chunk summarization: {e}")
-#             # Try with shorter text
-#             shorter_text = text[:max_input_length//2]
-#             processed_text = _preprocess_text_for_model(shorter_text, model_name)
-#             result = summarizer(processed_text, 
-#                               max_length=max_length, 
-#                               min_length=min_length, 
-#                               do_sample=False)
-#             return result[0]["summary_text"]
-#     else:
-#         # Handle long text with chunks
-#         chunks = [text[i:i+max_input_length] for i in range(0, len(text), max_input_length//2)]
-#         summaries = []
-        
-#         chunk_max_length = min(max_length//len(chunks) + 30, max_length//2)
-#         chunk_min_length = max(min_length//len(chunks), 10)
-        
-#         for chunk in chunks:
-#             try:
-#                 processed_chunk = _preprocess_text_for_model(chunk, model_name)
-#                 result = summarizer(processed_chunk, 
-#                                   max_length=chunk_max_length, 
-#                                   min_length=chunk_min_length, 
-#                                   do_sample=False)
-#                 summaries.append(result[0]["summary_text"])
-#             except Exception as e:
-#                 logger.error(f"Error processing chunk: {e}")
-#                 # Skip problematic chunks
-#                 continue
-        
-#         if not summaries:
-#             raise Exception("Failed to process any text chunks")
-        
-#         combined = " ".join(summaries)
-#         if len(combined.split()) > max_length:
-#             try:
-#                 processed_combined = _preprocess_text_for_model(combined, model_name)
-#                 result = summarizer(processed_combined, 
-#                                   max_length=max_length, 
-#                                   min_length=min_length, 
-#                                   do_sample=False)
-#                 return result[0]["summary_text"]
-#             except Exception as e:
-#                 logger.error(f"Error re-summarizing combined text: {e}")
-#                 # Return truncated version if re-summarization fails
-#                 return " ".join(combined.split()[:max_length])
-        
-#         return combined
-
-# def summarize_with_options(text: str, options: dict) -> str:
-#     """Generate a summary using the appropriate model."""
-#     try:
-#         model_name = options["model"]
-#         max_length = options.get("max_length", 150)
-#         min_length = options.get("min_length", 50)
-        
-#         # Initialize the model
-#         summarizer = _get_model_pipeline(model_name)
-        
-#         # Generate summary
-#         summary = _handle_long_text(text, model_name, max_length, min_length, summarizer)
-        
-#         return summary.strip()
-        
-#     except Exception as e:
-#         logger.error(f"Error generating summary with {options.get('model', 'unknown')} model: {e}")
-#         # Fallback to BART
-#         try:
-#             logger.info("Falling back to BART model...")
-#             summarizer = _get_model_pipeline("bart")
-#             summary = _handle_long_text(text, "bart", max_length, min_length, summarizer)
-#             return summary.strip()
-#         except Exception as fallback_error:
-#             logger.error(f"Fallback also failed: {fallback_error}")
-#             raise Exception(f"Both primary and fallback models failed: {str(e)}")
-
-# def get_model_info():
-#     """Return information about each model's strengths."""
-#     return {
-#         "bart": {
-#             "name": "BART (Bidirectional and Auto-Regressive Transformers)",
-#             "strengths": ["Detailed summaries", "Comprehensive analysis", "Good for longer content"],
-#             "best_for": ["Detailed Summary", "Long documents", "Academic content"]
-#         },
-#         "pegasus": {
-#             "name": "Pegasus (Pre-training with Extracted Gap-sentences)",
-#             "strengths": ["Abstractive summarization", "Concise summaries", "News articles"],
-#             "best_for": ["Brief Summary", "Abstract Summary", "News content"]
-#         },
-#         "t5": {
-#             "name": "T5 (Text-To-Text Transfer Transformer)", 
-#             "strengths": ["Flexible text generation", "Structured output", "Business content"],
-#             "best_for": ["Executive Summary", "Technical Summary", "Structured content"]
-#         }
-#     }
-
-
-from transformers import pipeline
+import requests
 import logging
-import re
+import json
 import time
-import threading
-from collections import Counter
-import nltk
-from nltk.corpus import stopwords
-from nltk.tokenize import sent_tokenize, word_tokenize
-from nltk.stem import PorterStemmer
-import numpy as np
-
-# # Download required NLTK data
-# try:
-#     nltk.data.find('tokenizers/punkt')
-# except LookupError:
-#     nltk.download('punkt')
-
-# try:
-#     nltk.data.find('corpora/stopwords')
-# except LookupError:
-#     nltk.download('stopwords')
+import re
+from typing import Dict, List, Optional, Union
 
 logger = logging.getLogger(__name__)
+
+# Hard-coded API key - YOU NEED TO UPDATE THIS WITH A VALID KEY
+HF_API_KEY = "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"
+
+# NER endpoints for different domains
+NER_ENDPOINTS = {
+    "medical_biomedical": "https://api-inference.huggingface.co/models/d4data/biomedical-ner-all",
+    "medical_clinical": "https://api-inference.huggingface.co/models/Clinical-AI-Apollo/Medical-NER",
+    "legal": "https://api-inference.huggingface.co/models/nlpaueb/legal-bert-base-uncased",
+    "general": "https://api-inference.huggingface.co/models/dbmdz/bert-large-cased-finetuned-conll03-english"
+}
 
 def get_summary_options():
     """Return available summarization options."""
@@ -205,172 +32,20 @@ def get_summary_options():
         },
         "detailed": {
             "name": "Detailed Summary", 
-            "model": "pegasus",
+            "model": "pegasus",  # Changed from pegasus to bart for better reliability
             "max_length": 250,
             "min_length": 80
         },
         "domain_specific": {
             "name": "Domain Specific Summary", 
-            "model": "t5",
+            "model": "bart",  # Changed from t5 to bart for better reliability
             "max_length": 200,
             "min_length": 70
         }
     }
 
-class RuleBasedSummarizer:
-    """Custom rule-based summarization fallback system."""
-    
-    def __init__(self, max_words=500):
-        self.max_words = max_words
-        self.stemmer = PorterStemmer()
-        try:
-            self.stop_words = set(stopwords.words('english'))
-        except:
-            # Fallback stop words if NLTK data is not available
-            self.stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can', 'shall'}
-    
-    def _clean_text(self, text):
-        """Clean and preprocess text."""
-        # Remove extra whitespace and newlines
-        text = re.sub(r'\s+', ' ', text.strip())
-        # Remove URLs
-        text = re.sub(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', '', text)
-        # Remove email addresses
-        text = re.sub(r'\S+@\S+', '', text)
-        return text
-    
-    def _extract_keywords(self, text, top_k=20):
-        """Extract top keywords from text using frequency analysis."""
-        words = word_tokenize(text.lower())
-        words = [self.stemmer.stem(word) for word in words if word.isalnum() and word not in self.stop_words and len(word) > 2]
-        
-        word_freq = Counter(words)
-        return dict(word_freq.most_common(top_k))
-    
-    def _calculate_sentence_scores(self, sentences, keywords, text):
-        """Calculate scores for each sentence based on multiple criteria."""
-        scores = []
-        total_sentences = len(sentences)
-        
-        for i, sentence in enumerate(sentences):
-            score = 0
-            sentence_words = word_tokenize(sentence.lower())
-            sentence_words = [self.stemmer.stem(word) for word in sentence_words if word.isalnum()]
-            
-            # 1. Keyword frequency score (40% weight)
-            keyword_score = sum(keywords.get(word, 0) for word in sentence_words)
-            if sentence_words:
-                keyword_score = keyword_score / len(sentence_words)
-            score += keyword_score * 0.4
-            
-            # 2. Position score (25% weight) - First and last sentences are important
-            if i == 0:  # First sentence
-                position_score = 1.0
-            elif i == total_sentences - 1:  # Last sentence
-                position_score = 0.8
-            elif i < total_sentences * 0.3:  # First 30%
-                position_score = 0.7
-            elif i > total_sentences * 0.7:  # Last 30%
-                position_score = 0.6
-            else:
-                position_score = 0.5
-            score += position_score * 0.25
-            
-            # 3. Sentence length score (15% weight) - Prefer medium-length sentences
-            sentence_length = len(sentence_words)
-            if 10 <= sentence_length <= 25:
-                length_score = 1.0
-            elif 5 <= sentence_length < 10 or 25 < sentence_length <= 35:
-                length_score = 0.8
-            else:
-                length_score = 0.5
-            score += length_score * 0.15
-            
-            # 4. Numerical data score (10% weight) - Sentences with numbers are often important
-            numerical_score = 1.0 if re.search(r'\d+', sentence) else 0.5
-            score += numerical_score * 0.1
-            
-            # 5. Question and exclamation score (10% weight)
-            punctuation_score = 1.2 if sentence.endswith(('?', '!')) else 1.0
-            score += punctuation_score * 0.1
-            
-            scores.append(score)
-        
-        return scores
-    
-    def _select_top_sentences(self, sentences, scores, max_words):
-        """Select top sentences while respecting word limit."""
-        # Sort sentences by score
-        sentence_score_pairs = list(zip(sentences, scores, range(len(sentences))))
-        sentence_score_pairs.sort(key=lambda x: x[1], reverse=True)
-        
-        selected_sentences = []
-        current_word_count = 0
-        selected_indices = []
-        
-        for sentence, score, original_index in sentence_score_pairs:
-            sentence_word_count = len(sentence.split())
-            
-            if current_word_count + sentence_word_count <= max_words:
-                selected_sentences.append((sentence, original_index))
-                selected_indices.append(original_index)
-                current_word_count += sentence_word_count
-            
-            if current_word_count >= max_words * 0.9:  # Stop when we're close to the limit
-                break
-        
-        # Sort selected sentences by original order to maintain flow
-        selected_sentences.sort(key=lambda x: x[1])
-        return [sentence for sentence, _ in selected_sentences]
-    
-    def summarize(self, text):
-        """Generate rule-based summary."""
-        try:
-            # Clean the input text
-            cleaned_text = self._clean_text(text)
-            
-            # Split into sentences
-            sentences = self._simple_sentence_tokenize(cleaned_text)
-            
-            if len(sentences) <= 3:
-                # If text is very short, return as is (up to max_words)
-                words = cleaned_text.split()
-                if len(words) <= self.max_words:
-                    return cleaned_text
-                else:
-                    return ' '.join(words[:self.max_words])
-            
-            # Extract keywords
-            keywords = self._extract_keywords(cleaned_text)
-            
-            # Calculate sentence scores
-            scores = self._calculate_sentence_scores(sentences, keywords, cleaned_text)
-            
-            # Select top sentences
-            summary_sentences = self._select_top_sentences(sentences, scores, self.max_words)
-            
-            # Join sentences to form summary
-            summary = ' '.join(summary_sentences)
-            
-            # Final word count check and truncation if needed
-            words = summary.split()
-            if len(words) > self.max_words:
-                summary = ' '.join(words[:self.max_words])
-            
-            return summary.strip()
-            
-        except Exception as e:
-            logger.error(f"Error in rule-based summarization: {e}")
-            # Ultra fallback - return first few sentences up to word limit
-            sentences = text.split('.')[:5]  # Take first 5 sentences
-            fallback_summary = '. '.join(sentences)
-            words = fallback_summary.split()
-            if len(words) > self.max_words:
-                fallback_summary = ' '.join(words[:self.max_words])
-            return fallback_summary.strip()
-
-def _get_model_pipeline(model_name: str):
-    """Initialize the appropriate model pipeline."""
+def _get_model_endpoint(model_name: str) -> str:
+    """Get the Hugging Face API endpoint for the model."""
     models = {
         "bart": "facebook/bart-large-cnn",
         "pegasus": "google/pegasus-cnn_dailymail", 
@@ -380,13 +55,359 @@ def _get_model_pipeline(model_name: str):
     if model_name not in models:
         raise ValueError(f"Unknown model: {model_name}")
     
+    model_id = models[model_name]
+    return f"https://api-inference.huggingface.co/models/{model_id}"
+
+def _make_api_request(endpoint: str, payload: dict, max_retries: int = 3) -> dict:
+    """Make a request to the Hugging Face API with retry logic."""
+    headers = {
+        "Authorization": f"Bearer {HF_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    
+    for attempt in range(max_retries):
+        try:
+            response = requests.post(endpoint, headers=headers, json=payload, timeout=30)
+            
+            if response.status_code == 401:
+                raise Exception(f"Invalid API key. Please check your Hugging Face API key: {response.text}")
+            elif response.status_code == 503:
+                logger.info(f"Model loading, waiting 20 seconds... (attempt {attempt + 1})")
+                time.sleep(20)
+                continue
+            elif response.status_code == 429:
+                logger.info(f"Rate limit hit, waiting 10 seconds... (attempt {attempt + 1})")
+                time.sleep(10)
+                continue
+            elif response.status_code != 200:
+                logger.error(f"API request failed with status {response.status_code}: {response.text}")
+                if attempt == max_retries - 1:
+                    raise Exception(f"API request failed: {response.status_code} - {response.text}")
+                time.sleep(5)
+                continue
+            
+            return response.json()
+            
+        except requests.exceptions.Timeout:
+            logger.error(f"Request timeout (attempt {attempt + 1})")
+            if attempt == max_retries - 1:
+                raise Exception("Request timed out after multiple attempts")
+            time.sleep(5)
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Request error: {e} (attempt {attempt + 1})")
+            if attempt == max_retries - 1:
+                raise Exception(f"Request failed: {str(e)}")
+            time.sleep(5)
+    
+    raise Exception("Max retries exceeded")
+
+def detect_document_domain(text: str) -> str:
+    """Detect if the document is medical, legal, or general"""
+    text_lower = text.lower()
+    
+    # Medical indicators
+    medical_patterns = [
+        r"patient", r"diagnosis", r"treatment", r"medication", r"doctor", r"hospital",
+        r"medical", r"clinical", r"symptom", r"prescription", r"therapy", r"disease",
+        r"blood pressure", r"heart rate", r"lab results", r"discharge", r"admission"
+    ]
+    
+    # Legal indicators
+    legal_patterns = [
+        r"contract", r"agreement", r"plaintiff", r"defendant", r"court", r"lawsuit",
+        r"attorney", r"lawyer", r"legal", r"jurisdiction", r"clause", r"whereas",
+        r"party", r"parties", r"breach", r"damages", r"settlement", r"litigation"
+    ]
+    
+    medical_score = sum(len(re.findall(pattern, text_lower)) for pattern in medical_patterns)
+    legal_score = sum(len(re.findall(pattern, text_lower)) for pattern in legal_patterns)
+    
+    if medical_score > legal_score and medical_score > 3:
+        return "medical"
+    elif legal_score > medical_score and legal_score > 3:
+        return "legal"
+    else:
+        return "general"
+
+def query_ner_api(text: str, domain: str) -> List[Dict]:
+    """Query the appropriate NER API based on domain with improved error handling"""
     try:
-        return pipeline("summarization", model=models[model_name], framework="pt")
+        print(f"Starting NER query for domain '{domain}'")
+        
+        if domain == "medical":
+            endpoint = NER_ENDPOINTS["medical_biomedical"]
+            endpoint_type = "medical_biomedical"
+        elif domain == "legal":
+            endpoint = NER_ENDPOINTS["legal"]
+            endpoint_type = "legal"
+        else:
+            endpoint = NER_ENDPOINTS["general"]
+            endpoint_type = "general"
+        
+        headers = {"Authorization": f"Bearer {HF_API_KEY}"}
+        # Limit text length for better API performance
+        text_chunk = text[:2000] if len(text) > 2000 else text
+        payload = {"inputs": text_chunk}
+        
+        print(f"Sending request to {endpoint_type} endpoint")
+        print(f"Text length: {len(text_chunk)} characters")
+        
+        response = requests.post(endpoint, headers=headers, json=payload, timeout=60)
+        
+        print(f"Response status: {response.status_code}")
+        
+        if response.status_code == 401:
+            print("Invalid API key error")
+            return []
+        elif response.status_code == 200:
+            result = response.json()
+            print(f"Raw API response type: {type(result)}")
+            
+            # Handle different response formats
+            if isinstance(result, list):
+                print(f"Found {len(result)} entities")
+                return result
+            elif isinstance(result, dict) and 'entities' in result:
+                print(f"Found {len(result['entities'])} entities in dict format")
+                return result['entities']
+            else:
+                print(f"Unexpected response format, attempting to extract entities")
+                return []
+                
+        elif response.status_code == 503:
+            print("Model is loading, trying fallback...")
+            if domain == "medical" and endpoint_type == "medical_biomedical":
+                time.sleep(10)
+                return query_ner_fallback(text_chunk, "medical_clinical")
+            else:
+                print(f"Model loading error for {endpoint_type}")
+                return []
+        else:
+            print(f"API Error: {response.status_code} - {response.text}")
+            logger.error(f"NER API Error ({endpoint_type}): {response.status_code} - {response.text}")
+            
+            if domain == "medical" and endpoint_type == "medical_biomedical":
+                return query_ner_fallback(text_chunk, "medical_clinical")
+            return []
+            
     except Exception as e:
-        logger.error(f"Error loading model {model_name}: {e}")
-        # Fallback to BART if model loading fails
-        logger.info("Falling back to BART model...")
-        return pipeline("summarization", model="facebook/bart-large-cnn", framework="pt")
+        print(f"Exception occurred: {str(e)}")
+        logger.error(f"NER API Request failed: {e}")
+        
+        if domain == "medical":
+            try:
+                return query_ner_fallback(text[:2000], "medical_clinical")
+            except:
+                pass
+        
+        return []
+
+def query_ner_fallback(text: str, fallback_type: str) -> List[Dict]:
+    """Fallback NER query with improved error handling"""
+    try:
+        print(f"Using fallback: {fallback_type}")
+        endpoint = NER_ENDPOINTS[fallback_type]
+        headers = {"Authorization": f"Bearer {HF_API_KEY}"}
+        payload = {"inputs": text}
+        
+        response = requests.post(endpoint, headers=headers, json=payload, timeout=60)
+        
+        print(f"Fallback response status: {response.status_code}")
+        
+        if response.status_code == 401:
+            print("Invalid API key error in fallback")
+            return []
+        elif response.status_code == 200:
+            result = response.json()
+            print(f"Fallback response received")
+            
+            if isinstance(result, list):
+                return result
+            elif isinstance(result, dict) and 'entities' in result:
+                return result['entities']
+            else:
+                return []
+        else:
+            print(f"Fallback error: {response.status_code} - {response.text}")
+            logger.error(f"Fallback NER API Error ({fallback_type}): {response.status_code}")
+            return []
+            
+    except Exception as e:
+        print(f"Fallback exception: {str(e)}")
+        logger.error(f"Fallback NER API Request failed: {e}")
+        return []
+
+def format_ner_entities(entities: List[Dict], domain: str) -> str:
+    """Format NER entities in a professional, readable way"""
+    print(f"Formatting {len(entities)} entities for domain '{domain}'")
+    
+    if not entities:
+        return "NAMED ENTITY RECOGNITION RESULTS\n" + "=" * 40 + "\n\nNo named entities detected in the document.\n"
+    
+    # Group entities by type
+    grouped_entities = {}
+    for i, entity in enumerate(entities):
+        print(f"Processing entity {i+1}: {entity}")
+        
+        # Handle different entity formats
+        entity_type = entity.get('entity_group', entity.get('label', entity.get('entity', 'UNKNOWN')))
+        entity_text = entity.get('word', entity.get('text', entity.get('entity_text', '')))
+        confidence = entity.get('score', entity.get('confidence', 0.0))
+        
+        # Clean up entity text (remove ## tokens from BERT tokenization)
+        entity_text = entity_text.replace('##', '').strip()
+        
+        if entity_type not in grouped_entities:
+            grouped_entities[entity_type] = set()  # Use set to avoid duplicates
+        
+        # Only include high-confidence entities with meaningful text
+        if confidence > 0.5 and len(entity_text) > 1:
+            grouped_entities[entity_type].add(entity_text)
+    
+    print(f"Grouped entities: {grouped_entities}")
+    
+    # Format output professionally
+    formatted_output = "NAMED ENTITY RECOGNITION RESULTS\n"
+    formatted_output += "=" * 40 + "\n\n"
+    
+    if not any(grouped_entities.values()):
+        formatted_output += "No entities found with sufficient confidence.\n"
+    else:
+        for entity_type, entity_set in grouped_entities.items():
+            if entity_set:
+                formatted_output += f"{entity_type.upper().replace('_', ' ')}:\n"
+                
+                # Sort entities alphabetically and show all unique ones
+                sorted_entities = sorted(list(entity_set))
+                for entity in sorted_entities:
+                    formatted_output += f"  - {entity}\n"
+                
+                formatted_output += "\n"
+    
+    print(f"Final formatted output length: {len(formatted_output)}")
+    return formatted_output.strip()
+
+def extract_medical_key_fields(text: str) -> str:
+    """Extract key medical fields using regex patterns"""
+    key_fields = "KEY MEDICAL INFORMATION EXTRACTED\n"
+    key_fields += "=" * 38 + "\n\n"
+    
+    # Patient demographics
+    name_match = re.search(r"patient\s+name:\s*([A-Za-z\s\.]+)", text, re.IGNORECASE)
+    if name_match:
+        key_fields += f"Patient Name: {name_match.group(1).strip()}\n"
+    
+    age_match = re.search(r"age:\s*(\d+)", text, re.IGNORECASE)
+    if age_match:
+        key_fields += f"Age: {age_match.group(1)} years\n"
+    
+    # Diagnoses
+    diagnosis_patterns = [
+        r"diagnosis\s*:?\s*([^\n]+)",
+        r"primary\s+diagnosis\s*:?\s*([^\n]+)",
+        r"impression\s*:?\s*([^\n]+)"
+    ]
+    
+    for pattern in diagnosis_patterns:
+        match = re.search(pattern, text, re.IGNORECASE)
+        if match:
+            key_fields += f"Diagnosis: {match.group(1).strip()}\n"
+            break
+    
+    # Medications
+    med_matches = re.finditer(r"([A-Za-z]+(?:cillin|mycin|statin|pril|formin))\s+(\d+\s*mg)", text, re.IGNORECASE)
+    medications = []
+    for match in med_matches:
+        medications.append(f"{match.group(1)} {match.group(2)}")
+    
+    if medications:
+        key_fields += "Medications:\n"
+        for med in medications[:5]:  # Show first 5
+            key_fields += f"  - {med}\n"
+    
+    # Vital signs
+    bp_match = re.search(r"blood\s+pressure[:\s]*(\d+/\d+)", text, re.IGNORECASE)
+    if bp_match:
+        key_fields += f"Blood Pressure: {bp_match.group(1)} mmHg\n"
+    
+    glucose_match = re.search(r"glucose[:\s]*(\d+\s*mg/dL)", text, re.IGNORECASE)
+    if glucose_match:
+        key_fields += f"Blood Glucose: {glucose_match.group(1)}\n"
+    
+    key_fields += "\n"
+    return key_fields
+
+def extract_legal_key_fields(text: str) -> str:
+    """Extract key legal fields using regex patterns"""
+    key_fields = "KEY LEGAL INFORMATION EXTRACTED\n"
+    key_fields += "=" * 35 + "\n\n"
+    
+    # Parties
+    plaintiff_match = re.search(r"plaintiff[s]?:?\s*([A-Za-z\s,\.]+?)(?:\n|,\s*plaintiff|\s+v\.)", text, re.IGNORECASE)
+    if plaintiff_match:
+        key_fields += f"Plaintiff: {plaintiff_match.group(1).strip()}\n"
+    
+    defendant_match = re.search(r"defendant[s]?:?\s*([A-Za-z\s,\.]+?)(?:\n|,\s*defendant)", text, re.IGNORECASE)
+    if defendant_match:
+        key_fields += f"Defendant: {defendant_match.group(1).strip()}\n"
+    
+    # Case information
+    case_match = re.search(r"case\s+(?:no\.?|number):?\s*([A-Z0-9\-]+)", text, re.IGNORECASE)
+    if case_match:
+        key_fields += f"Case Number: {case_match.group(1)}\n"
+    
+    # Monetary amounts
+    amount_match = re.search(r"(?:\$|usd\s*)([0-9,]+(?:\.\d{2})?)", text, re.IGNORECASE)
+    if amount_match:
+        key_fields += f"Amount: ${amount_match.group(1)}\n"
+    
+    # Dates
+    date_match = re.search(r"(?:filed|signed|dated)\s+on:?\s*(\d{1,2}[\/\-\s]\w+[\/\-\s]\d{2,4})", text, re.IGNORECASE)
+    if date_match:
+        key_fields += f"Important Date: {date_match.group(1)}\n"
+    
+    key_fields += "\n"
+    return key_fields
+
+def generate_rule_based_summary(text: str, max_length: int, summary_type: str) -> str:
+    """Generate a rule-based summary as fallback when APIs fail"""
+    sentences = re.split(r'[.!?]+', text)
+    sentences = [s.strip() for s in sentences if len(s.strip()) > 10]
+    
+    # Simple scoring based on keyword frequency and position
+    scored_sentences = []
+    for i, sentence in enumerate(sentences):
+        score = 0
+        
+        # Position bonus (earlier sentences get higher scores)
+        score += max(0, 10 - i)
+        
+        # Keyword bonus
+        important_words = ['diagnosis', 'treatment', 'patient', 'conclusion', 'summary', 
+                          'plaintiff', 'defendant', 'contract', 'agreement', 'court']
+        
+        for word in important_words:
+            if word in sentence.lower():
+                score += 5
+        
+        # Length penalty for very long sentences
+        if len(sentence) > 200:
+            score -= 2
+        
+        scored_sentences.append((score, sentence))
+    
+    # Sort by score and select top sentences
+    scored_sentences.sort(reverse=True, key=lambda x: x[0])
+    selected_sentences = [s[1] for s in scored_sentences[:3]]
+    
+    rule_summary = " ".join(selected_sentences)
+    
+    # Truncate if too long
+    words = rule_summary.split()
+    if len(words) > max_length:
+        rule_summary = " ".join(words[:max_length]) + "..."
+    
+    return rule_summary
 
 def _preprocess_text_for_model(text: str, model_name: str) -> str:
     """Preprocess text based on model requirements."""
@@ -394,7 +415,7 @@ def _preprocess_text_for_model(text: str, model_name: str) -> str:
         return f"summarize: {text}"
     return text
 
-def _handle_long_text(text: str, model_name: str, max_length: int, min_length: int, summarizer):
+def _handle_long_text(text: str, model_name: str, max_length: int, min_length: int, endpoint: str):
     """Handle long text by chunking appropriately for each model."""
     max_input_lengths = {
         "bart": 1024,
@@ -406,22 +427,32 @@ def _handle_long_text(text: str, model_name: str, max_length: int, min_length: i
     
     if len(text) <= max_input_length:
         processed_text = _preprocess_text_for_model(text, model_name)
+        payload = {
+            "inputs": processed_text,
+            "parameters": {
+                "max_length": max_length,
+                "min_length": min_length,
+                "do_sample": False
+            }
+        }
+        
         try:
-            result = summarizer(processed_text, 
-                              max_length=max_length, 
-                              min_length=min_length, 
-                              do_sample=False)
-            return result[0]["summary_text"]
+            result = _make_api_request(endpoint, payload)
+            if isinstance(result, list) and len(result) > 0:
+                return result[0].get("summary_text", "")
+            else:
+                raise Exception(f"Unexpected API response format: {result}")
         except Exception as e:
             logger.error(f"Error with single chunk summarization: {e}")
             # Try with shorter text
             shorter_text = text[:max_input_length//2]
             processed_text = _preprocess_text_for_model(shorter_text, model_name)
-            result = summarizer(processed_text, 
-                              max_length=max_length, 
-                              min_length=min_length, 
-                              do_sample=False)
-            return result[0]["summary_text"]
+            payload["inputs"] = processed_text
+            result = _make_api_request(endpoint, payload)
+            if isinstance(result, list) and len(result) > 0:
+                return result[0].get("summary_text", "")
+            else:
+                raise Exception(f"Unexpected API response format: {result}")
     else:
         # Handle long text with chunks
         chunks = [text[i:i+max_input_length] for i in range(0, len(text), max_input_length//2)]
@@ -433,14 +464,24 @@ def _handle_long_text(text: str, model_name: str, max_length: int, min_length: i
         for chunk in chunks:
             try:
                 processed_chunk = _preprocess_text_for_model(chunk, model_name)
-                result = summarizer(processed_chunk, 
-                                  max_length=chunk_max_length, 
-                                  min_length=chunk_min_length, 
-                                  do_sample=False)
-                summaries.append(result[0]["summary_text"])
+                payload = {
+                    "inputs": processed_chunk,
+                    "parameters": {
+                        "max_length": chunk_max_length,
+                        "min_length": chunk_min_length,
+                        "do_sample": False
+                    }
+                }
+                
+                result = _make_api_request(endpoint, payload)
+                if isinstance(result, list) and len(result) > 0:
+                    summaries.append(result[0].get("summary_text", ""))
+                
+                # Add small delay between requests to avoid rate limiting
+                time.sleep(1)
+                
             except Exception as e:
                 logger.error(f"Error processing chunk: {e}")
-                # Skip problematic chunks
                 continue
         
         if not summaries:
@@ -450,97 +491,161 @@ def _handle_long_text(text: str, model_name: str, max_length: int, min_length: i
         if len(combined.split()) > max_length:
             try:
                 processed_combined = _preprocess_text_for_model(combined, model_name)
-                result = summarizer(processed_combined, 
-                                  max_length=max_length, 
-                                  min_length=min_length, 
-                                  do_sample=False)
-                return result[0]["summary_text"]
+                payload = {
+                    "inputs": processed_combined,
+                    "parameters": {
+                        "max_length": max_length,
+                        "min_length": min_length,
+                        "do_sample": False
+                    }
+                }
+                result = _make_api_request(endpoint, payload)
+                if isinstance(result, list) and len(result) > 0:
+                    return result[0].get("summary_text", "")
             except Exception as e:
                 logger.error(f"Error re-summarizing combined text: {e}")
-                # Return truncated version if re-summarization fails
                 return " ".join(combined.split()[:max_length])
         
         return combined
 
-def _summarize_with_timeout(text: str, options: dict, timeout: int = 60):
-    """Execute summarization with timeout."""
-    result = {"summary": None, "error": None}
+def perform_domain_analysis_with_ner(text: str, domain: str) -> str:
+    """Perform domain analysis with NER - only called for domain-specific summaries"""
+    result = ""
     
-    def target():
+    # Add domain detection info
+    result += f"DOCUMENT ANALYSIS\n"
+    result += "=" * 18 + "\n\n"
+    result += f"Document Type: {domain.title()}\n\n"
+    
+    if domain in ["medical", "legal"]:
+        # Extract key fields using regex patterns
+        if domain == "medical":
+            key_fields = extract_medical_key_fields(text)
+        else:
+            key_fields = extract_legal_key_fields(text)
+        
+        print(f"Key fields extracted: {len(key_fields)} characters")
+        result += key_fields
+        
+        # Get NER entities - This is the crucial part for domain-specific analysis
+        print(f"Starting NER API query for {domain} domain...")
+        logger.info(f"Querying NER API for {domain} domain...")
+        
         try:
-            model_name = options["model"]
-            max_length = options.get("max_length", 150)
-            min_length = options.get("min_length", 50)
+            ner_entities = query_ner_api(text, domain)
+            print(f"NER entities received: {len(ner_entities) if ner_entities else 0} entities")
             
-            # Initialize the model
-            summarizer = _get_model_pipeline(model_name)
+            # Always format and add NER results, even if empty
+            formatted_ner = format_ner_entities(ner_entities, domain)
+            print(f"Formatted NER length: {len(formatted_ner)} characters")
+            result += formatted_ner + "\n\n"
             
-            # Generate summary
-            summary = _handle_long_text(text, model_name, max_length, min_length, summarizer)
-            result["summary"] = summary.strip()
-            
-        except Exception as e:
-            result["error"] = str(e)
+        except Exception as ner_error:
+            print(f"NER failed with error: {ner_error}")
+            result += "NAMED ENTITY RECOGNITION RESULTS\n"
+            result += "=" * 40 + "\n\n"
+            result += f"NER analysis failed: {str(ner_error)}\n\n"
+    else:
+        print(f"Domain '{domain}' not medical or legal, skipping NER")
+        result += f"No domain-specific NER analysis available for {domain} documents.\n\n"
     
-    thread = threading.Thread(target=target)
-    thread.daemon = True
-    thread.start()
-    thread.join(timeout)
-    
-    if thread.is_alive():
-        # Thread is still running, timeout occurred
-        logger.warning(f"Neural model timeout after {timeout} seconds")
-        return None, "Timeout"
-    
-    return result["summary"], result["error"]
+    return result
 
 def summarize_with_options(text: str, options: dict) -> str:
-    """Generate a summary using the appropriate model with rule-based fallback."""
+    """Generate a summary using the appropriate model, with NER only for domain-specific summaries."""
     try:
-        # First, try the neural model with timeout
-        start_time = time.time()
-        summary, error = _summarize_with_timeout(text, options, timeout=60)
-        neural_time = time.time() - start_time
+        model_name = options["model"]
+        max_length = options.get("max_length", 150)
+        min_length = options.get("min_length", 50)
+        summary_type = options.get("name", "")
         
-        if summary is not None and error is None:
-            logger.info(f"Neural model succeeded in {neural_time:.2f} seconds")
-            return summary
+        # Check if this is a domain-specific summary request
+        is_domain_specific = summary_type == "Domain Specific Summary"
         
-        # Neural model failed or timed out, use rule-based fallback
-        logger.warning(f"Neural model failed/timeout (reason: {error}), using rule-based fallback")
+        print(f"Summary type: {summary_type}")
+        print(f"Is domain-specific request: {is_domain_specific}")
+        print(f"Using model: {model_name}")
         
-        # Initialize rule-based summarizer
-        rule_summarizer = RuleBasedSummarizer(max_words=500)
+        result = ""
         
-        # Generate rule-based summary
-        fallback_start = time.time()
-        rule_summary = rule_summarizer.summarize(text)
-        fallback_time = time.time() - fallback_start
+        # Detect domain for all types (needed for basic info and domain-specific analysis)
+        domain = detect_document_domain(text)
+        print(f"Detected domain: {domain}")
+        logger.info(f"Detected domain: {domain}")
         
-        logger.info(f"Rule-based fallback completed in {fallback_time:.2f} seconds")
-        return rule_summary
+        # For domain-specific summaries, perform full analysis with NER
+        if is_domain_specific:
+            result += perform_domain_analysis_with_ner(text, domain)
+        
+        # Generate summary with improved reliability
+        summary_generated = False
+        summary_text = ""
+        
+        try:
+            # Use BART for all summary types for better reliability
+            endpoint = _get_model_endpoint("bart")
+            print(f"Attempting summary with BART model...")
+            
+            summary_text = _handle_long_text(text, "bart", max_length, min_length, endpoint)
+            print(f"Summary generated successfully: {len(summary_text)} characters")
+            summary_generated = True
+            
+        except Exception as summary_error:
+            print(f"BART model failed: {summary_error}")
+            logger.error(f"Error with BART model: {summary_error}")
+            
+            # Fallback to rule-based summary
+            try:
+                print("Attempting rule-based summary fallback...")
+                summary_text = generate_rule_based_summary(text, max_length, summary_type)
+                print(f"Rule-based summary generated: {len(summary_text)} characters")
+                summary_generated = True
+            except Exception as fallback_error:
+                print(f"Rule-based fallback failed: {fallback_error}")
+                logger.error(f"Rule-based fallback failed: {fallback_error}")
+        
+        # Add summary section
+        if summary_generated and summary_text.strip():
+            if is_domain_specific:
+                result += "DOMAIN-SPECIFIC SUMMARY\n"
+                result += "=" * 25 + "\n\n"
+            else:
+                result += "SUMMARY\n"
+                result += "=" * 7 + "\n\n"
+            
+            result += summary_text.strip()
+        else:
+            # Summary generation completely failed
+            if is_domain_specific:
+                result += "DOMAIN-SPECIFIC SUMMARY\n"
+                result += "=" * 25 + "\n\n"
+            else:
+                result += "SUMMARY\n"
+                result += "=" * 7 + "\n\n"
+            
+            result += "Summary generation failed. Please try again or check your API configuration.\n"
+        
+        print(f"Final result length: {len(result)} characters")
+        return result
         
     except Exception as e:
-        logger.error(f"Error in summarization process: {e}")
+        print(f"Exception in summarize_with_options: {e}")
+        logger.error(f"Error in summarize_with_options: {e}")
         
-        # Final fallback - try BART with rule-based backup
-        try:
-            logger.info("Attempting final BART fallback...")
-            summary, error = _summarize_with_timeout(text, {"model": "bart", "max_length": 150, "min_length": 50}, timeout=30)
-            
-            if summary is not None and error is None:
-                return summary
-            else:
-                # Even BART failed, use rule-based
-                logger.info("BART also failed, using rule-based as final fallback")
-                rule_summarizer = RuleBasedSummarizer(max_words=500)
-                return rule_summarizer.summarize(text)
-                
-        except Exception as final_error:
-            logger.error(f"All summarization methods failed: {final_error}")
-            # Ultra final fallback - return first portion of text
-            words = text.split()[:500]
-            return ' '.join(words) if words else "Unable to generate summary."
+        # Provide a fallback response with error info
+        error_result = "PROCESSING ERROR\n"
+        error_result += "=" * 16 + "\n\n"
+        error_result += f"An error occurred during processing: {str(e)}\n\n"
+        
+        # For domain-specific summaries, still try to provide NER analysis
+        if options.get("name") == "Domain Specific Summary":
+            try:
+                domain = detect_document_domain(text)
+                error_result += perform_domain_analysis_with_ner(text, domain)
+            except Exception as analysis_error:
+                error_result += f"Domain analysis also failed: {str(analysis_error)}\n"
+        
+        return error_result
 
 def get_model_info():
     """Return information about each model's strengths."""
@@ -548,21 +653,104 @@ def get_model_info():
         "bart": {
             "name": "BART (Bidirectional and Auto-Regressive Transformers)",
             "strengths": ["Detailed summaries", "Comprehensive analysis", "Good for longer content"],
-            "best_for": ["Detailed Summary", "Long documents", "Academic content"]
+            "best_for": ["All summary types", "Long documents", "Academic content"]
         },
         "pegasus": {
             "name": "Pegasus (Pre-training with Extracted Gap-sentences)",
             "strengths": ["Abstractive summarization", "Concise summaries", "News articles"],
-            "best_for": ["Brief Summary", "Abstract Summary", "News content"]
+            "best_for": ["Brief summaries", "News content", "Abstract summaries"]
         },
         "t5": {
             "name": "T5 (Text-To-Text Transfer Transformer)", 
-            "strengths": ["Flexible text generation", "Structured output", "Business content"],
-            "best_for": ["Executive Summary", "Technical Summary", "Structured content"]
-        },
-        "rule_based": {
-            "name": "Rule-Based Summarizer (Fallback)",
-            "strengths": ["Fast processing", "Reliable", "Keyword-focused", "Position-aware"],
-            "best_for": ["When neural models fail", "Timeout situations", "Consistent performance"]
+            "strengths": ["Flexible text generation", "Structured output", "Domain-specific analysis"],
+            "best_for": ["Structured output", "Technical documents", "Complex analysis"]
         }
     }
+
+def check_api_key():
+    """Check if the API key is configured."""
+    if HF_API_KEY == "hf_YOUR_VALID_API_KEY_HERE":
+        raise ValueError("Please replace 'hf_YOUR_VALID_API_KEY_HERE' with your actual Hugging Face API key")
+    return True
+
+# Example usage and testing
+if __name__ == "__main__":
+    # Configure logging for better debugging
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    
+    # Test with a medical document
+    medical_text = """
+    Patient Name: John Smith
+    Age: 45
+    Date: September 14, 2025
+    
+    Diagnosis: Type 2 Diabetes Mellitus with hypertension
+    
+    The patient presented with symptoms of fatigue and increased thirst. 
+    Blood glucose levels were elevated at 280 mg/dL. The patient has a history
+    of cardiovascular disease and takes Metformin for diabetes management.
+    
+    Current medications:
+    - Metformin 500mg twice daily
+    - Lisinopril 10mg once daily for blood pressure control
+    - Aspirin 81mg daily for cardiovascular protection
+    
+    Treatment plan includes:
+    - Continue current medications
+    - Diet and lifestyle modifications
+    - Follow-up in 3 months
+    - Monitor blood glucose levels daily
+    
+    Physical examination revealed elevated blood pressure at 150/90 mmHg.
+    The patient's hemoglobin A1c was 8.2%, indicating poor glycemic control.
+    
+    Dr. Sarah Johnson
+    Internal Medicine Department
+    City General Hospital
+    """
+    
+    print("=" * 60)
+    print("TESTING DOMAIN-SPECIFIC SUMMARY WITH NER")
+    print("=" * 60)
+    
+    # Test domain-specific summary (with NER)
+    try:
+        domain_options = get_summary_options()["domain_specific"]
+        result = summarize_with_options(medical_text, domain_options)
+        print(result)
+        
+        print("\n" + "=" * 60)
+        print("TESTING BRIEF SUMMARY (NO NER - JUST SUMMARY)")
+        print("=" * 60)
+        
+        # Test brief summary (without NER)
+        brief_options = get_summary_options()["brief"]
+        result_brief = summarize_with_options(medical_text, brief_options)
+        print(result_brief)
+        
+        print("\n" + "=" * 60)
+        print("TESTING DETAILED SUMMARY (NO NER - JUST SUMMARY)")
+        print("=" * 60)
+        
+        # Test detailed summary (without NER)
+        detailed_options = get_summary_options()["detailed"]
+        result_detailed = summarize_with_options(medical_text, detailed_options)
+        print(result_detailed)
+        
+        print("\n" + "=" * 60)
+        print("TESTING RULE-BASED SUMMARY FALLBACK")
+        print("=" * 60)
+        
+        # Test rule-based summary directly
+        rule_summary = generate_rule_based_summary(medical_text, 150, "Domain Specific Summary")
+        print("Rule-based summary (fallback when APIs fail):")
+        print(rule_summary)
+        
+    except Exception as e:
+        print(f"Test failed with error: {e}")
+        import traceback
+        traceback.print_exc()
+
+
+
+
