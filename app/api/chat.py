@@ -78,8 +78,7 @@ def extract_document_sources_from_langchain(source_documents):
         if filename:
             formatted_sources.append({
                 'title': filename,
-                'type': 'document',
-                'confidence': 0.8
+                'type': 'document'
             })
     
     logger.info(f"Successfully processed {len(formatted_sources)} document sources")
@@ -90,11 +89,36 @@ def extract_sources_from_structured_result(result):
     if 'sources' in result and result['sources']:
         # Use the actual sources identified by the LLM through structured output
         logger.info(f"Using structured citations: {len(result['sources'])} actual sources")
+        
+        # Display quotes in terminal if available
+        display_quotes_in_terminal(result['sources'])
+        
         return result['sources']
     else:
         # Fallback to extracting from source_documents
         logger.info("No structured sources found, falling back to document extraction")
         return extract_document_sources_from_langchain(result.get('source_documents', []))
+
+def display_quotes_in_terminal(sources):
+    """Display quoted sources in terminal for user visibility."""
+    if not sources:
+        return
+        
+    print("\n" + "=" * 80)
+    print("🎯 EXACT TEXT PORTIONS USED BY AI TO GENERATE THE ANSWER:")
+    print("=" * 80)
+    
+    for i, source in enumerate(sources, 1):
+        filename = source.get('title', 'Unknown Document')
+        quote = source.get('quote', 'No quote available')
+        
+        print(f"\n📄 SOURCE {i}: {filename}")
+        print(f"📝 EXACT TEXT USED:")
+        print(f'   "{quote}"')
+        print("-" * 60)
+    
+    print("\n💡 The AI used ONLY these specific text portions to generate its answer.")
+    print("=" * 80 + "\n")
 
 # Initialize chat service on module load
 def initialize_chat_service():
@@ -309,6 +333,11 @@ async def send_message(request: ChatMessageRequest):
             if formatted_sources:
                 source_names = [s.get('title', 'Unknown') for s in formatted_sources]
                 logger.info(f"Final sources to display: {source_names}")
+                
+                # Count sources with quotes for additional logging
+                quoted_sources = [s for s in formatted_sources if s.get('quote')]
+                if quoted_sources:
+                    logger.info(f"Sources with exact quotes: {len(quoted_sources)} out of {len(formatted_sources)}")
             else:
                 logger.warning("No sources extracted from result")
         

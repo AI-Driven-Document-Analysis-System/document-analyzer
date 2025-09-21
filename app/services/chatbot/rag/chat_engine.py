@@ -106,8 +106,7 @@ class LangChainChatEngine:
                         'metadata': doc.metadata,
                         'score': doc.metadata.get('score', 0),  # Extract relevance score if available
                         'title': doc.metadata.get('filename', 'Unknown Document'),
-                        'type': 'document',
-                        'confidence': 0.8
+                        'type': 'document'
                     })
                 print(f"DEBUG: Using fallback sources: {[s.get('title', 'Unknown') for s in sources]}")
 
@@ -200,8 +199,7 @@ class LangChainChatEngine:
                         'metadata': doc.metadata,
                         'score': doc.metadata.get('score', 0),  # Extract relevance score if available
                         'title': doc.metadata.get('filename', 'Unknown Document'),
-                        'type': 'document',
-                        'confidence': 0.8
+                        'type': 'document'
                     })
 
             # Send source documents event

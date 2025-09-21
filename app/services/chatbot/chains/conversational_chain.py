@@ -7,6 +7,8 @@ from typing import Any, Dict, List, Optional
 from ..rag.prompt_templates import PromptTemplates
 from ....core.langfuse_config import get_langfuse_callbacks, get_langfuse_config
 from ..schemas.citation_models import CitedAnswer, DocumentCitation
+import json
+import re
 
 class CustomConversationalChain:
     """
@@ -54,8 +56,8 @@ class CustomConversationalChain:
                 max_token_limit=1000  # Limit summary to 1000 tokens
             )
 
-        # Define custom prompt template for document analysis with source citations
-        # This prompt forces the LLM to specify which sources it actually used
+        # Define custom prompt template for document analysis with exact quotes
+        # This prompt forces the LLM to specify which sources it used AND provide exact quotes
         self.citation_prompt = PromptTemplate(
             template="""You are a helpful AI assistant that answers questions based on provided document sources.
 
@@ -67,9 +69,16 @@ Chat History:
 
 Question: {question}
 
-IMPORTANT: You must specify which Source IDs you actually used to answer the question. Only cite sources that directly contributed to your answer.
+IMPORTANT INSTRUCTIONS:
+1. Answer the question using ONLY the provided document sources
+2. For each source you use, provide a SHORT but COMPLETE quote (max 150 characters)
+3. Only cite sources that directly contributed to your answer
+4. Ensure quotes are COMPLETE sentences or phrases, not fragments
+5. Use the exact Source ID from the document sources above
+6. Keep quotes concise but meaningful - avoid truncated text
+7. If a concept spans multiple sentences, pick the most relevant complete sentence
 
-Answer the question using the provided sources and specify exactly which Source IDs you referenced.""",
+Answer the question and provide exact quotes from the sources you used.""",
             input_variables=["formatted_docs", "chat_history", "question"]
         )
         
@@ -132,14 +141,14 @@ Answer the question using the provided sources and specify exactly which Source 
     
     def _extract_cited_sources(self, cited_answer: CitedAnswer, original_docs: List[Document]) -> List[Dict]:
         """
-        Extract actual source information from LLM citations.
+        Extract actual source information from LLM citations with exact quotes.
         
         Args:
             cited_answer: Structured answer with citations
             original_docs: Original documents that were provided to LLM
             
         Returns:
-            List of formatted source information
+            List of formatted source information with quotes
         """
         sources = []
         
@@ -150,13 +159,39 @@ Answer the question using the provided sources and specify exactly which Source 
                 sources.append({
                     'title': doc.metadata.get('filename', 'Unknown Document'),
                     'type': 'document',
-                    'confidence': citation.confidence,
                     'document_id': doc.metadata.get('document_id'),
                     'chunk_index': doc.metadata.get('chunk_index'),
-                    'source_id': citation.source_id
+                    'source_id': citation.source_id,
+                    'quote': citation.quote,  # Add the exact quote
+                    'full_content': doc.page_content  # Add full content for verification
                 })
         
         return sources
+    
+    def _display_quoted_sources_in_terminal(self, sources: List[Dict]):
+        """
+        Display the quoted sources in terminal for debugging.
+        
+        Args:
+            sources: List of source information with quotes
+        """
+        if not sources:
+            print("\n🔍 No sources were cited by the LLM")
+            return
+            
+        print(f"\n📚 LLM CITED {len(sources)} SOURCE(S) WITH EXACT QUOTES:")
+        print("=" * 60)
+        
+        for i, source in enumerate(sources, 1):
+            filename = source.get('title', 'Unknown Document')
+            quote = source.get('quote', 'No quote provided')
+            chunk_index = source.get('chunk_index', 'N/A')
+            
+            print(f"\n📄 SOURCE {i}: {filename}")
+            print(f"   Chunk Index: {chunk_index}")
+            print(f"   📝 EXACT QUOTE USED:")
+            print(f"   \"{quote}\"")
+            print("-" * 40)
 
     async def arun_with_structured_citations(self, question: str, callbacks: Optional[List] = None) -> Dict[str, Any]:
         """
@@ -217,8 +252,46 @@ Answer the question using the provided sources and specify exactly which Source 
                     )
                 )
             
-            # Extract actual sources used
+            # Debug: Check if we got proper structured output
+            print(f"DEBUG: Structured LLM returned type: {type(cited_result)}")
+            
+            # Handle case where LLM returns string instead of structured output
+            if isinstance(cited_result, str):
+                print(f"DEBUG: LLM returned string instead of structured output, attempting JSON parse")
+                import json
+                try:
+                    parsed_result = json.loads(cited_result)
+                    # Convert to CitedAnswer object
+                    citations = []
+                    for cit in parsed_result.get('citations', []):
+                        citations.append(DocumentCitation(
+                            source_id=cit.get('source_id', 0),
+                            document_name=cit.get('document_name', 'Unknown'),
+                            quote=cit.get('quote', 'No quote available')
+                        ))
+                    
+                    cited_result = CitedAnswer(
+                        answer=parsed_result.get('answer', ''),
+                        citations=citations,
+                        has_sources=len(citations) > 0
+                    )
+                    print(f"DEBUG: Successfully parsed string to CitedAnswer with {len(citations)} citations")
+                except json.JSONDecodeError as je:
+                    print(f"DEBUG: Failed to parse JSON from string: {je}")
+                    raise ValueError("Invalid JSON in string response")
+            
+            # Validate that we have proper CitedAnswer object
+            if not hasattr(cited_result, 'citations'):
+                print(f"DEBUG: Invalid structured output, missing citations attribute")
+                raise ValueError("Invalid structured output format")
+            
+            print(f"DEBUG: Final cited_result has {len(cited_result.citations)} citations")
+            
+            # Extract actual sources used with quotes
             actual_sources = self._extract_cited_sources(cited_result, relevant_docs)
+            
+            # Display the quoted sources in terminal
+            self._display_quoted_sources_in_terminal(actual_sources)
             
             # Get only the documents that were actually cited
             cited_docs = []
@@ -226,7 +299,7 @@ Answer the question using the provided sources and specify exactly which Source 
                 if 0 <= citation.source_id < len(relevant_docs):
                     cited_docs.append(relevant_docs[citation.source_id])
             
-            print(f"DEBUG: LLM cited {len(cited_docs)} out of {len(relevant_docs)} available documents")
+            print(f"\n✅ DEBUG: LLM cited {len(cited_docs)} out of {len(relevant_docs)} available documents")
             
             # Update memory
             self.memory.save_context(
@@ -242,7 +315,25 @@ Answer the question using the provided sources and specify exactly which Source 
             }
             
         except Exception as e:
-            print(f"DEBUG: Structured citation failed: {e}, falling back to regular method")
+            print(f"DEBUG: Structured citation failed: {e}")
+            print(f"DEBUG: Error type: {type(e).__name__}")
+            
+            # Check if it's a function call validation error
+            error_str = str(e)
+            if "tool_use_failed" in error_str or "Failed to call a function" in error_str:
+                print("DEBUG: LLM generated invalid structured output format")
+                if "failed_generation" in error_str:
+                    # Try to extract the failed generation for debugging
+                    try:
+                        import re
+                        match = re.search(r"'failed_generation': '(.+?)'\}", error_str)
+                        if match:
+                            failed_gen = match.group(1)
+                            print(f"DEBUG: Failed generation preview: {failed_gen[:200]}...")
+                    except:
+                        pass
+            
+            print(f"DEBUG: Falling back to regular method")
             # Fallback to original method if structured output fails
             return await self.arun(question, callbacks)
 
