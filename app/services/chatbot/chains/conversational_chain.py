@@ -2,10 +2,11 @@ from langchain.chains import ConversationalRetrievalChain, RetrievalQAWithSource
 from langchain.chains.question_answering import load_qa_chain
 from langchain.memory import ConversationBufferWindowMemory, ConversationSummaryBufferMemory
 from langchain.prompts import PromptTemplate
-from langchain.schema import BaseRetriever
+from langchain.schema import BaseRetriever, Document
 from typing import Any, Dict, List, Optional
 from ..rag.prompt_templates import PromptTemplates
 from ....core.langfuse_config import get_langfuse_callbacks, get_langfuse_config
+from ..schemas.citation_models import CitedAnswer, DocumentCitation
 
 class CustomConversationalChain:
     """
@@ -28,6 +29,9 @@ class CustomConversationalChain:
         """
         self.llm = llm
         self.retriever = retriever
+        
+        # Create structured LLM for accurate source citations
+        self.structured_llm = llm.with_structured_output(CitedAnswer)
 
         # Initialize memory based on the specified type
         if memory_type == "window":
@@ -50,8 +54,26 @@ class CustomConversationalChain:
                 max_token_limit=1000  # Limit summary to 1000 tokens
             )
 
-        # Define custom prompt template for document analysis
-        # This prompt is specifically designed for document Q&A with context awareness
+        # Define custom prompt template for document analysis with source citations
+        # This prompt forces the LLM to specify which sources it actually used
+        self.citation_prompt = PromptTemplate(
+            template="""You are a helpful AI assistant that answers questions based on provided document sources.
+
+Document Sources:
+{formatted_docs}
+
+Chat History:
+{chat_history}
+
+Question: {question}
+
+IMPORTANT: You must specify which Source IDs you actually used to answer the question. Only cite sources that directly contributed to your answer.
+
+Answer the question using the provided sources and specify exactly which Source IDs you referenced.""",
+            input_variables=["formatted_docs", "chat_history", "question"]
+        )
+        
+        # Keep the original prompt for fallback
         self.custom_prompt = PromptTemplate(
             template=PromptTemplates.CONVERSATIONAL_TEMPLATE,
             input_variables=["context", "chat_history", "question"]
@@ -86,6 +108,143 @@ class CustomConversationalChain:
             combine_docs_chain_kwargs={"prompt": self.custom_prompt},  # Use custom prompt
             verbose=False  # Disable verbose logging to reduce terminal output
         )
+
+    def _format_docs_with_ids(self, docs: List[Document]) -> str:
+        """
+        Format documents with source IDs for structured citation.
+        
+        Args:
+            docs: List of LangChain Document objects
+            
+        Returns:
+            Formatted string with numbered sources
+        """
+        formatted = []
+        for i, doc in enumerate(docs):
+            filename = doc.metadata.get('filename', 'Unknown Document')
+            chunk_info = f"(Chunk {doc.metadata.get('chunk_index', 'N/A')})"
+            formatted.append(
+                f"Source ID: {i}\n"
+                f"Document: {filename} {chunk_info}\n"
+                f"Content: {doc.page_content}\n"
+            )
+        return "\n".join(formatted)
+    
+    def _extract_cited_sources(self, cited_answer: CitedAnswer, original_docs: List[Document]) -> List[Dict]:
+        """
+        Extract actual source information from LLM citations.
+        
+        Args:
+            cited_answer: Structured answer with citations
+            original_docs: Original documents that were provided to LLM
+            
+        Returns:
+            List of formatted source information
+        """
+        sources = []
+        
+        for citation in cited_answer.citations:
+            # Get the actual document that was cited
+            if 0 <= citation.source_id < len(original_docs):
+                doc = original_docs[citation.source_id]
+                sources.append({
+                    'title': doc.metadata.get('filename', 'Unknown Document'),
+                    'type': 'document',
+                    'confidence': citation.confidence,
+                    'document_id': doc.metadata.get('document_id'),
+                    'chunk_index': doc.metadata.get('chunk_index'),
+                    'source_id': citation.source_id
+                })
+        
+        return sources
+
+    async def arun_with_structured_citations(self, question: str, callbacks: Optional[List] = None) -> Dict[str, Any]:
+        """
+        Run the chain with structured citations to get actual sources used.
+        
+        This method uses structured output to force the LLM to specify exactly
+        which document chunks it used to generate the answer.
+        
+        Args:
+            question (str): The user's question to process
+            callbacks (Optional[List]): Optional list of callback handlers
+            
+        Returns:
+            Dict[str, Any]: Dictionary containing:
+                - answer: The generated response from the LLM
+                - source_documents: List of actual source documents used
+                - sources: Formatted source information
+                - chat_history: Current conversation history
+        """
+        all_callbacks = callbacks or []
+        
+        # Retrieve relevant documents
+        relevant_docs = self.retriever.get_relevant_documents(question)
+        print(f"DEBUG: Retrieved {len(relevant_docs)} documents for structured citation")
+        
+        if not relevant_docs:
+            # No documents available, use general knowledge
+            return {
+                "answer": "I don't have any relevant documents to answer this question.",
+                "source_documents": [],
+                "sources": [],
+                "chat_history": self.memory.chat_memory.messages
+            }
+        
+        # Format documents with IDs for citation
+        formatted_docs = self._format_docs_with_ids(relevant_docs)
+        
+        # Get chat history as string
+        chat_history = "\n".join([f"{msg.type}: {msg.content}" for msg in self.memory.chat_memory.messages[-4:]])
+        
+        try:
+            # Use structured LLM to get citations
+            if all_callbacks:
+                cited_result = await self.structured_llm.ainvoke(
+                    self.citation_prompt.format(
+                        formatted_docs=formatted_docs,
+                        chat_history=chat_history,
+                        question=question
+                    ),
+                    config={"callbacks": all_callbacks}
+                )
+            else:
+                cited_result = await self.structured_llm.ainvoke(
+                    self.citation_prompt.format(
+                        formatted_docs=formatted_docs,
+                        chat_history=chat_history,
+                        question=question
+                    )
+                )
+            
+            # Extract actual sources used
+            actual_sources = self._extract_cited_sources(cited_result, relevant_docs)
+            
+            # Get only the documents that were actually cited
+            cited_docs = []
+            for citation in cited_result.citations:
+                if 0 <= citation.source_id < len(relevant_docs):
+                    cited_docs.append(relevant_docs[citation.source_id])
+            
+            print(f"DEBUG: LLM cited {len(cited_docs)} out of {len(relevant_docs)} available documents")
+            
+            # Update memory
+            self.memory.save_context(
+                {"input": question},
+                {"answer": cited_result.answer}
+            )
+            
+            return {
+                "answer": cited_result.answer,
+                "source_documents": cited_docs,
+                "sources": actual_sources,
+                "chat_history": self.memory.chat_memory.messages
+            }
+            
+        except Exception as e:
+            print(f"DEBUG: Structured citation failed: {e}, falling back to regular method")
+            # Fallback to original method if structured output fails
+            return await self.arun(question, callbacks)
 
     async def arun(self, question: str, callbacks: Optional[List] = None) -> Dict[str, Any]:
         """

@@ -85,6 +85,17 @@ def extract_document_sources_from_langchain(source_documents):
     logger.info(f"Successfully processed {len(formatted_sources)} document sources")
     return formatted_sources
 
+def extract_sources_from_structured_result(result):
+    """Extract sources from structured citation result."""
+    if 'sources' in result and result['sources']:
+        # Use the actual sources identified by the LLM through structured output
+        logger.info(f"Using structured citations: {len(result['sources'])} actual sources")
+        return result['sources']
+    else:
+        # Fallback to extracting from source_documents
+        logger.info("No structured sources found, falling back to document extraction")
+        return extract_document_sources_from_langchain(result.get('source_documents', []))
+
 # Initialize chat service on module load
 def initialize_chat_service():
     """Initialize the chat service with configuration"""
@@ -288,20 +299,18 @@ async def send_message(request: ChatMessageRequest):
             ai_response = f"I apologize, but I'm currently unable to process your request due to a technical issue. Please try again later. Your message was: {request.message}"
             sources_data = []
         
-        # Extract and format sources from response using LangChain's built-in source tracking
+        # Extract and format sources using the new structured citation method
         formatted_sources = []
         if 'result' in locals() and result:
-            # Try to get source documents from LangChain result first
-            source_documents = result.get('source_documents', [])
+            # Use the new structured source extraction method
+            formatted_sources = extract_sources_from_structured_result(result)
             
-            # If no source_documents in result, fallback to sources_data
-            if not source_documents and 'sources_data' in locals() and sources_data:
-                logger.info("No source_documents in LangChain result, using fallback sources_data")
-                formatted_sources = extract_document_sources_from_langchain(sources_data)
-            elif source_documents:
-                formatted_sources = extract_document_sources_from_langchain(source_documents)
+            # Log the sources for debugging
+            if formatted_sources:
+                source_names = [s.get('title', 'Unknown') for s in formatted_sources]
+                logger.info(f"Final sources to display: {source_names}")
             else:
-                logger.warning("No sources available from either LangChain result or sources_data")
+                logger.warning("No sources extracted from result")
         
         # Store assistant message in database with sources
         assistant_message = message_repo.add(

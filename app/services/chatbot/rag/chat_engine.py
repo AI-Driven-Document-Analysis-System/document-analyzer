@@ -80,21 +80,36 @@ class LangChainChatEngine:
                 callbacks = getattr(self.chain.llm, 'callbacks', None)
                 result = await self.chain.arun_with_documents(query, enhanced_docs, callbacks=callbacks)
             else:
-                # Standard processing - pass callbacks from LLM
+                # Use structured citations for accurate source tracking
                 callbacks = getattr(self.chain.llm, 'callbacks', None)
-                result = await self.chain.arun(query, callbacks=callbacks)
+                try:
+                    result = await self.chain.arun_with_structured_citations(query, callbacks=callbacks)
+                    print(f"DEBUG: Using structured citations, got {len(result.get('sources', []))} actual sources")
+                except Exception as e:
+                    print(f"DEBUG: Structured citations failed: {e}, falling back to regular method")
+                    result = await self.chain.arun(query, callbacks=callbacks)
             
             # Got result from chain
             # Source documents processed
 
-            # Extract and format source documents for the response
-            sources = []
-            for doc in result["source_documents"]:
-                sources.append({
-                    'content': doc.page_content[:200] + "...",  # Truncate content for display
-                    'metadata': doc.metadata,
-                    'score': doc.metadata.get('score', 0)  # Extract relevance score if available
-                })
+            # Use the sources from structured citations if available, otherwise format documents
+            if 'sources' in result and result['sources']:
+                # Use the actual sources identified by the LLM
+                sources = result['sources']
+                print(f"DEBUG: Using LLM-identified sources: {[s.get('title', 'Unknown') for s in sources]}")
+            else:
+                # Fallback to formatting all retrieved documents
+                sources = []
+                for doc in result["source_documents"]:
+                    sources.append({
+                        'content': doc.page_content[:200] + "...",  # Truncate content for display
+                        'metadata': doc.metadata,
+                        'score': doc.metadata.get('score', 0),  # Extract relevance score if available
+                        'title': doc.metadata.get('filename', 'Unknown Document'),
+                        'type': 'document',
+                        'confidence': 0.8
+                    })
+                print(f"DEBUG: Using fallback sources: {[s.get('title', 'Unknown') for s in sources]}")
 
             # Format the complete response
             return {
@@ -142,10 +157,17 @@ class LangChainChatEngine:
             # This allows us to stream tokens while the full response is being generated
             callbacks = getattr(self.chain.llm, 'callbacks', [])
             all_callbacks = callbacks + [streaming_callback] if callbacks else [streaming_callback]
-            task = asyncio.create_task(
-                # streaming_callback.get_tokens() function gets "called back" every time the LLM generates a new token
-                self.chain.arun(query, callbacks=all_callbacks)
-            )
+            
+            # Try structured citations first, fallback to regular if needed
+            try:
+                task = asyncio.create_task(
+                    self.chain.arun_with_structured_citations(query, callbacks=all_callbacks)
+                )
+            except Exception as e:
+                print(f"DEBUG: Structured citations not available for streaming: {e}")
+                task = asyncio.create_task(
+                    self.chain.arun(query, callbacks=all_callbacks)
+                )
 
             # Send initial event to indicate processing has started
             yield {
@@ -165,14 +187,22 @@ class LangChainChatEngine:
             # Wait for the complete result to get source documents
             result = await task
 
-            # Extract and format source documents
-            sources = []
-            for doc in result["source_documents"]:
-                sources.append({
-                    'content': doc.page_content[:200] + "...",  # Truncate content for display
-                    'metadata': doc.metadata,
-                    'score': doc.metadata.get('score', 0)  # Extract relevance score if available
-                })
+            # Use the sources from structured citations if available, otherwise format documents
+            if 'sources' in result and result['sources']:
+                # Use the actual sources identified by the LLM
+                sources = result['sources']
+            else:
+                # Fallback to formatting all retrieved documents
+                sources = []
+                for doc in result["source_documents"]:
+                    sources.append({
+                        'content': doc.page_content[:200] + "...",  # Truncate content for display
+                        'metadata': doc.metadata,
+                        'score': doc.metadata.get('score', 0),  # Extract relevance score if available
+                        'title': doc.metadata.get('filename', 'Unknown Document'),
+                        'type': 'document',
+                        'confidence': 0.8
+                    })
 
             # Send source documents event
             yield {
