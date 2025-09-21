@@ -4,8 +4,9 @@ import type React from "react"
 import { useState, useRef, useEffect } from "react"
 import { chatService, type ChatMessage as ServiceChatMessage } from "../../services/chatService"
 import type { Message, ExpandedSections, ChatHistory } from './types'
-import { initialMessages, sampleDocuments } from './data/sampleData'
+import { initialMessages } from './data/sampleData'
 import { useDocumentManagement } from './hooks/useDocumentManagement'
+import { useDocuments } from './hooks/useDocuments'
 import { ChatMessage } from './components/ChatMessage'
 import { TypingIndicator } from './components/TypingIndicator'
 import { ChatInput } from './components/ChatInput'
@@ -269,6 +270,14 @@ export function RAGChatbot() {
     removeDocument,
     clearAllDocuments
   } = useDocumentManagement()
+
+  // Fetch documents from API
+  const {
+    documents,
+    isLoading: documentsLoading,
+    error: documentsError,
+    refetch: refetchDocuments
+  } = useDocuments()
 
   const toggleSection = (section: keyof ExpandedSections) => {
     setExpandedSections(prev => ({
@@ -617,20 +626,22 @@ export function RAGChatbot() {
           selectedMessageSources={selectedMessageSources}
           chatHistory={chatHistory}
           selectedDocuments={selectedDocuments}
-          documents={sampleDocuments}
+          documents={documents}
           onShowDocumentModal={() => setShowDocumentModal(true)}
           onRemoveDocument={removeDocument}
           onNewChat={handleNewChat}
           onChatHistoryClick={handleChatHistoryClick}
           onDeleteChat={handleDeleteChat}
           selectedChatId={conversationId || undefined}
+          documentsLoading={documentsLoading}
+          documentsError={documentsError}
         />
       </div>
       
       <DocumentModal 
         showModal={showDocumentModal}
         onClose={() => setShowDocumentModal(false)}
-        documents={sampleDocuments}
+        documents={documents}
         selectedDocuments={selectedDocuments}
         documentFilter={documentFilter}
         setDocumentFilter={setDocumentFilter}
@@ -642,6 +653,8 @@ export function RAGChatbot() {
         setSortSize={setSortSize}
         onToggleDocumentSelection={toggleDocumentSelection}
         onClearAllDocuments={clearAllDocuments}
+        isLoading={documentsLoading}
+        error={documentsError}
       />
 
       {/* Delete Confirmation Modal */}
