@@ -85,7 +85,7 @@ Answer:""",
         formatted = []
         for i, doc in enumerate(docs):
             filename = doc.metadata.get('filename', f'Document_{i}')
-            content = doc.page_content[:2000]  # Limit content length
+            content = doc.page_content
             formatted.append(f"Source ID: {i}\nDocument: {filename}\nContent: {content}\n")
         return "\n".join(formatted)
     
@@ -119,17 +119,12 @@ Answer:""",
             }
     
     def _is_valid_quote(self, quote: str) -> bool:
-        """Validate quote quality."""
-        if not quote or quote == 'No quote available' or len(quote.strip()) < 10:
+        """Validate quote quality - very permissive."""
+        if not quote or quote == 'No quote available':
             return False
         
-        # Check for excessive fragmentation
-        if quote.count('-') > 2:
-            return False
-        
-        # Check for incomplete words
-        words = quote.strip().split()
-        if words and (words[-1].endswith('-') or len(words[-1]) < 2):
+        # Only reject if extremely short
+        if len(quote.strip()) < 5:
             return False
         
         return True
