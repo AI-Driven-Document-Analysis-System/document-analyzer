@@ -58,6 +58,69 @@ export function RAGChatbot() {
     // TODO: Send feedback to backend for analytics
   }
 
+  // Handle answer regeneration with different search methods
+  const handleRegenerateAnswer = async (messageId: string, method: 'rephrase' | 'multiple_queries') => {
+    console.log('Regenerating answer:', { messageId, method })
+    
+    // Find the message to regenerate
+    const messageIndex = messages.findIndex(msg => msg.id === messageId)
+    if (messageIndex === -1) return
+    
+    // Find the user message that prompted this assistant response
+    let userMessage: Message | null = null
+    for (let i = messageIndex - 1; i >= 0; i--) {
+      if (messages[i].type === 'user') {
+        userMessage = messages[i]
+        break
+      }
+    }
+    
+    if (!userMessage) return
+    
+    // Remove the assistant message we're regenerating
+    const updatedMessages = messages.slice(0, messageIndex)
+    setMessages(updatedMessages)
+    setIsTyping(true)
+    
+    try {
+      // Send message with the specified search method
+      const response = await chatService.sendMessage(userMessage.content, conversationId || undefined, method)
+      
+      // Create new assistant message with regenerated content
+      const newAssistantMessage: Message = {
+        id: Date.now().toString(),
+        type: "assistant",
+        content: response.response,
+        timestamp: new Date(),
+        sources: response.sources || [],
+      }
+      
+      setMessages(prev => [...prev, newAssistantMessage])
+      
+      // Update selected message sources for sidebar
+      if (response.sources && response.sources.length > 0) {
+        setSelectedMessageSources(response.sources)
+        setExpandedSections(prev => ({ ...prev, sources: true }))
+      }
+      
+    } catch (error) {
+      console.error('Error regenerating answer:', error)
+      
+      // Show error message to user
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        type: "assistant",
+        content: "I apologize, but I encountered an error while regenerating the answer. Please try again.",
+        timestamp: new Date(),
+        sources: [],
+      }
+      
+      setMessages(prev => [...prev, errorMessage])
+    } finally {
+      setIsTyping(false)
+    }
+  }
+
 
 
   // Initialize user ID and load user-specific data
@@ -525,6 +588,7 @@ export function RAGChatbot() {
                         onSourcesClick={handleSourcesClick}
                         onFeedback={handleFeedback}
                         onRephrasedQueryClick={() => {}}
+                        onRegenerateAnswer={handleRegenerateAnswer}
                       />
                     </div>
                   ))}

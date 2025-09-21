@@ -76,13 +76,9 @@ class LangChainChatEngine:
                 # Get enhanced search results
                 enhanced_docs = await self.enhanced_search.search(query, search_mode, k=5)
                 
-                # Create a custom chain result with enhanced documents
-                # Instead of overriding retriever, we'll modify the chain's behavior
+                # Use enhanced documents directly with the chain
                 callbacks = getattr(self.chain.llm, 'callbacks', None)
-                result = await self.chain.arun(query, callbacks=callbacks)
-                
-                # Replace the source documents with enhanced search results
-                result["source_documents"] = enhanced_docs
+                result = await self.chain.arun_with_documents(query, enhanced_docs, callbacks=callbacks)
             else:
                 # Standard processing - pass callbacks from LLM
                 callbacks = getattr(self.chain.llm, 'callbacks', None)

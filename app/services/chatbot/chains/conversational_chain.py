@@ -1,4 +1,5 @@
 from langchain.chains import ConversationalRetrievalChain, RetrievalQAWithSourcesChain
+from langchain.chains.question_answering import load_qa_chain
 from langchain.memory import ConversationBufferWindowMemory, ConversationSummaryBufferMemory
 from langchain.prompts import PromptTemplate
 from langchain.schema import BaseRetriever
@@ -70,7 +71,7 @@ class CustomConversationalChain:
             chain_type="stuff",
             retriever=self.retriever,
             return_source_documents=True,
-            verbose=True,
+            verbose=False,
             chain_type_kwargs={
                 "document_prompt": document_prompt
             }
@@ -83,7 +84,7 @@ class CustomConversationalChain:
             memory=self.memory,
             return_source_documents=True,  # Include source documents in response
             combine_docs_chain_kwargs={"prompt": self.custom_prompt},  # Use custom prompt
-            verbose=True  # Enable verbose logging for debugging
+            verbose=False  # Disable verbose logging to reduce terminal output
         )
 
     async def arun(self, question: str, callbacks: Optional[List] = None) -> Dict[str, Any]:
@@ -286,3 +287,64 @@ class CustomConversationalChain:
             List[Any]: List of conversation messages stored in memory
         """
         return self.memory.chat_memory.messages
+
+    async def arun_with_documents(self, question: str, documents: List, callbacks: Optional[List] = None) -> Dict[str, Any]:
+        """
+        Asynchronously run the conversational chain with pre-retrieved documents.
+        
+        This method is used when enhanced search has already retrieved specific documents
+        and we want to use those documents directly instead of the retriever.
+        
+        Args:
+            question (str): The user's question to process
+            documents (List): Pre-retrieved documents to use for context
+            callbacks (Optional[List]): Optional list of callback handlers
+            
+        Returns:
+            Dict[str, Any]: Dictionary containing:
+                - answer: The generated response from the LLM
+                - source_documents: List of source documents used for the response
+                - chat_history: Current conversation history from memory
+        """
+        # Use callbacks as-is (Langfuse callbacks already merged in chat service)
+        all_callbacks = callbacks or []
+        
+        # Create a simple QA chain that works directly with documents
+        qa_chain = load_qa_chain(
+            llm=self.llm,
+            chain_type="stuff",
+            verbose=False
+        )
+        
+        try:
+            if all_callbacks:
+                result = await qa_chain.ainvoke(
+                    {"input_documents": documents, "question": question},
+                    config={"callbacks": all_callbacks}
+                )
+            else:
+                result = await qa_chain.ainvoke(
+                    {"input_documents": documents, "question": question}
+                )
+            
+            output_text = result.get("output_text", "")
+            source_documents = documents  # Use the enhanced documents as sources
+            
+        except Exception as e:
+            print(f"Error in arun_with_documents: {e}")
+            # Fallback to regular arun if there's an issue
+            return await self.arun(question, callbacks)
+        
+        # Update memory with the conversation
+        self.memory.save_context(
+            {"input": question},
+            {"answer": output_text}
+        )
+
+        # Format the response with all relevant information
+        return {
+            "answer": output_text,
+            "source_documents": source_documents,
+            "sources": "",
+            "chat_history": self.memory.chat_memory.messages
+        }
