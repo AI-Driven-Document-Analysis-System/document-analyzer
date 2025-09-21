@@ -85,39 +85,43 @@ def extract_document_sources_from_langchain(source_documents):
     return formatted_sources
 
 def extract_sources_from_structured_result(result):
-    """Extract sources from structured citation result."""
+    """Extract sources from universal citation result with quotes."""
     if 'sources' in result and result['sources']:
-        # Use the actual sources identified by the LLM through structured output
-        logger.info(f"Using structured citations: {len(result['sources'])} actual sources")
-        
-        # Display quotes in terminal if available
-        display_quotes_in_terminal(result['sources'])
-        
+        # Use the actual sources identified by the LLM through universal citations
+        # These already contain quotes from the UniversalCitationChain
         return result['sources']
     else:
-        # Fallback to extracting from source_documents
-        logger.info("No structured sources found, falling back to document extraction")
-        return extract_document_sources_from_langchain(result.get('source_documents', []))
+        # Fallback to source documents if no structured sources
+        source_documents = result.get('source_documents', [])
+        return extract_document_sources_from_langchain(source_documents)
 
-def display_quotes_in_terminal(sources):
-    """Display quoted sources in terminal for user visibility."""
+def display_sources_in_terminal(sources):
+    """Display sources in terminal - works with ANY source format."""
     if not sources:
+        print("\n🔍 No sources found")
         return
         
     print("\n" + "=" * 80)
-    print("🎯 EXACT TEXT PORTIONS USED BY AI TO GENERATE THE ANSWER:")
+    print("📚 SOURCES USED:")
     print("=" * 80)
     
     for i, source in enumerate(sources, 1):
-        filename = source.get('title', 'Unknown Document')
-        quote = source.get('quote', 'No quote available')
+        # Handle different source formats
+        if isinstance(source, str):
+            filename = source
+            quote = "Source document referenced"
+        elif isinstance(source, dict):
+            filename = source.get('title', source.get('filename', 'Unknown Document'))
+            quote = source.get('quote', 'Referenced by AI')
+        else:
+            filename = str(source)
+            quote = "Source referenced"
         
         print(f"\n📄 SOURCE {i}: {filename}")
-        print(f"📝 EXACT TEXT USED:")
+        print(f"📝 TEXT USED:")
         print(f'   "{quote}"')
         print("-" * 60)
     
-    print("\n💡 The AI used ONLY these specific text portions to generate its answer.")
     print("=" * 80 + "\n")
 
 # Initialize chat service on module load
@@ -329,6 +333,9 @@ async def send_message(request: ChatMessageRequest):
             # Use the new structured source extraction method
             formatted_sources = extract_sources_from_structured_result(result)
             
+            # Display sources in terminal (bulletproof method)
+            display_sources_in_terminal(formatted_sources)
+            
             # Log the sources for debugging
             if formatted_sources:
                 source_names = [s.get('title', 'Unknown') for s in formatted_sources]
@@ -338,10 +345,11 @@ async def send_message(request: ChatMessageRequest):
                 quoted_sources = [s for s in formatted_sources if s.get('quote')]
                 if quoted_sources:
                     logger.info(f"Sources with exact quotes: {len(quoted_sources)} out of {len(formatted_sources)}")
+                    logger.info(f"Saving quotes to database for conversation {conversation_id}")
             else:
                 logger.warning("No sources extracted from result")
         
-        # Store assistant message in database with sources
+        # Store assistant message in database with sources (including quotes)
         assistant_message = message_repo.add(
             conversation_id=UUID(conversation_id),
             role="assistant", 
@@ -351,7 +359,7 @@ async def send_message(request: ChatMessageRequest):
                 "needs_summarization": needs_summarization,
                 "message_pairs": message_pairs,
                 "context_window_usage": context_window_usage,
-                "sources": formatted_sources  # Store sources in metadata
+                "sources": formatted_sources  # Store sources in metadata (now includes quotes)
             }
         )
         

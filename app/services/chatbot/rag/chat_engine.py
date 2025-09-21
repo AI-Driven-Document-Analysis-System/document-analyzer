@@ -1,5 +1,5 @@
 from langchain.schema import HumanMessage, AIMessage
-from ..chains.conversational_chain import CustomConversationalChain
+from ..chains.universal_citation_chain import UniversalCitationChain
 from ..callbacks.streaming_callback import AsyncStreamingCallbackHandler
 from ..search.enhanced_search import EnhancedSearchEngine
 from typing import Dict, Any, Optional, AsyncGenerator
@@ -23,19 +23,25 @@ class LangChainChatEngine:
     and provides a unified interface for both web and streaming applications.
     """
     
-    def __init__(self, conversational_chain: CustomConversationalChain):
+    def __init__(self, llm, retriever, memory_type: str = "default"):
         """
         Args:
-            conversational_chain (CustomConversationalChain): The conversational chain
-                                                           that handles the core RAG processing
+          llm: The LLM to use for the conversational chain
+          retriever: The retriever to use for the conversational chain
+          memory_type: The type of memory to use for the conversational chain (default: "default")
         """
-        self.chain = conversational_chain
+        # Create universal citation chain with memory
+        self.chain = UniversalCitationChain(
+            llm=llm,
+            retriever=retriever,
+            memory_type=memory_type
+        )
         # Store active conversations for potential future use
         self.conversations = {}
         # Initialize enhanced search engine
         self.enhanced_search = EnhancedSearchEngine(
-            retriever=conversational_chain.retriever,
-            llm=conversational_chain.llm
+            retriever=retriever,
+            llm=llm
         )
 
     async def process_query(self, query: str, conversation_id: Optional[str] = None,
@@ -92,13 +98,13 @@ class LangChainChatEngine:
             # Got result from chain
             # Source documents processed
 
-            # Use the sources from structured citations if available, otherwise format documents
+            # Use the sources from universal citations (these contain quotes)
             if 'sources' in result and result['sources']:
-                # Use the actual sources identified by the LLM
+                # Use the actual sources identified by the LLM with quotes
                 sources = result['sources']
-                print(f"DEBUG: Using LLM-identified sources: {[s.get('title', 'Unknown') for s in sources]}")
+                print(f"DEBUG: Using universal citation sources with quotes: {[s.get('title', 'Unknown') for s in sources]}")
             else:
-                # Fallback to formatting all retrieved documents
+                # Fallback to formatting all retrieved documents (no quotes)
                 sources = []
                 for doc in result["source_documents"]:
                     sources.append({
@@ -108,7 +114,7 @@ class LangChainChatEngine:
                         'title': doc.metadata.get('filename', 'Unknown Document'),
                         'type': 'document'
                     })
-                print(f"DEBUG: Using fallback sources: {[s.get('title', 'Unknown') for s in sources]}")
+                print(f"DEBUG: Using fallback sources (no quotes): {[s.get('title', 'Unknown') for s in sources]}")
 
             # Format the complete response
             return {

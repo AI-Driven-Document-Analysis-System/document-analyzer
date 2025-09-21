@@ -1,9 +1,58 @@
 import type { ExpandedSections } from '../../types'
+import { useState } from 'react'
 
 interface SourcesSectionProps {
   expandedSections: ExpandedSections
   toggleSection: (section: keyof ExpandedSections) => void
   selectedMessageSources: any[]
+}
+
+// Component to handle quote display with expand/collapse
+function QuoteDisplay({ quote }: { quote: string }) {
+  const [isExpanded, setIsExpanded] = useState(false)
+  const CHARACTER_LIMIT = 150
+  
+  const shouldTruncate = quote.length > CHARACTER_LIMIT
+  const displayText = shouldTruncate && !isExpanded 
+    ? quote.substring(0, CHARACTER_LIMIT) + '...'
+    : quote
+
+  return (
+    <div style={{ 
+      padding: '6px 8px', 
+      backgroundColor: '#1f2937', 
+      borderRadius: '4px', 
+      borderLeft: '3px solid #60a5fa',
+      marginTop: '4px'
+    }}>
+      <p style={{ 
+        fontSize: '12px', 
+        color: '#d1d5db', 
+        margin: 0, 
+        fontWeight: '500',
+        lineHeight: '1.4'
+      }}>
+        "{displayText}"
+      </p>
+      {shouldTruncate && (
+        <button
+          onClick={() => setIsExpanded(!isExpanded)}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#60a5fa',
+            fontSize: '10px',
+            cursor: 'pointer',
+            padding: '2px 0',
+            marginTop: '4px',
+            textDecoration: 'underline'
+          }}
+        >
+          {isExpanded ? 'See less' : 'See more'}
+        </button>
+      )}
+    </div>
+  )
 }
 
 export function SourcesSection({ expandedSections, toggleSection, selectedMessageSources }: SourcesSectionProps) {
@@ -30,8 +79,8 @@ export function SourcesSection({ expandedSections, toggleSection, selectedMessag
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {selectedMessageSources.length > 0 ? (
               selectedMessageSources.map((source, index) => (
-                <div key={index} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 12px', backgroundColor: '#374151', borderRadius: '6px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                <div key={index} style={{ padding: '8px 12px', backgroundColor: '#374151', borderRadius: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: source.quote ? '8px' : '0' }}>
                     <i className={
                       source.title.toLowerCase().includes('.pdf') ? 'fas fa-file-pdf' : 
                       source.title.toLowerCase().includes('.xlsx') ? 'fas fa-file-excel' : 
@@ -47,7 +96,7 @@ export function SourcesSection({ expandedSections, toggleSection, selectedMessag
                       <p style={{ fontSize: '10px', color: '#d1d5db', margin: 0 }}>{source.type}</p>
                     </div>
                   </div>
-                  <span style={{ fontSize: '10px', backgroundColor: '#10b981', color: 'white', padding: '2px 6px', borderRadius: '10px' }}>{source.confidence}%</span>
+                  {source.quote && <QuoteDisplay quote={source.quote} />}
                 </div>
               ))
             ) : (
