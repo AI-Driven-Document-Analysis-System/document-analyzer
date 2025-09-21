@@ -89,8 +89,13 @@ export function RAGChatbot() {
     setIsTyping(true)
     
     try {
-      // Send message with the specified search method
-      const response = await chatService.sendMessage(userMessage.content, conversationId || undefined, method)
+      // Send message with the specified search method and selected documents
+      const response = await chatService.sendMessage(
+        userMessage.content, 
+        conversationId || undefined, 
+        method,
+        selectedDocuments.length > 0 ? selectedDocuments : undefined
+      )
       
       // Create new assistant message with regenerated content
       const newAssistantMessage: Message = {
@@ -337,8 +342,19 @@ export function RAGChatbot() {
     setIsTyping(true)
 
     try {
-      // Send message to backend
-      const response = await chatService.sendMessage(currentMessage, conversationId || undefined, searchMode)
+      // Send message to backend with selected documents for Knowledge Base mode
+      console.log('🔍 FRONTEND: Sending message with selected documents:', {
+        selectedDocuments: selectedDocuments,
+        selectedDocumentsLength: selectedDocuments.length,
+        selectedDocumentTypes: selectedDocuments.map(id => typeof id)
+      })
+      
+      const response = await chatService.sendMessage(
+        currentMessage, 
+        conversationId || undefined, 
+        searchMode,
+        selectedDocuments.length > 0 ? selectedDocuments : undefined
+      )
 
       // Update conversation ID if this is a new conversation
       if (!conversationId && response.conversation_id) {
@@ -403,6 +419,9 @@ export function RAGChatbot() {
       setConversationId(newConversation?.conversation_id || null)
       setInputValue("")
       setSelectedMessageSources([])
+      
+      // Clear selected documents in Knowledge Base
+      clearAllDocuments()
       
       // Clear user-specific localStorage
       if (typeof window !== 'undefined' && currentUserId) {

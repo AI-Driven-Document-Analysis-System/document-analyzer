@@ -112,11 +112,29 @@ Answer:""",
             return result
         except:
             print(f"DEBUG: JSON parsing failed, using fallback")
-            # Return simple structure
-            return {
-                "answer": "I found information in the documents but couldn't format the response properly.",
-                "citations": []
-            }
+            print(f"DEBUG: Raw response text: {response_text[:500]}...")
+            
+            # Check if the response indicates no relevant information
+            if any(phrase in response_text.lower() for phrase in [
+                "no information", "not mentioned", "doesn't contain", "not found", 
+                "cannot find", "no details", "not discussed", "not available",
+                "couldn't find any information", "i couldn't find", "no relevant information",
+                "documents seem to be focused on", "documents don't contain",
+                "do not mention", "does not mention", "don't mention", "doesn't mention",
+                "no mention of", "there is no mention", "but there is no mention",
+                "documents do not", "provided documents do not", "the documents do not"
+            ]):
+                print(f"DEBUG: Detected 'no information' response")
+                return {
+                    "answer": "I couldn't find information about your question in the selected documents. The documents may not contain the specific details you're looking for, or you may need to select different documents that are more relevant to your query.",
+                    "citations": []
+                }
+            else:
+                print(f"DEBUG: Using technical error fallback")
+                return {
+                    "answer": "I found information in the documents but encountered a technical issue while formatting the response. Please try rephrasing your question or contact support if this continues.",
+                    "citations": []
+                }
     
     def _is_valid_quote(self, quote: str) -> bool:
         """Validate quote quality - very permissive."""
@@ -249,6 +267,22 @@ Answer:""",
                 # Parse JSON response
                 parsed_result = self._extract_json_from_response(response_text)
                 print(f"DEBUG: JSON parsing successful")
+                
+                # Check if the answer indicates no relevant information
+                answer = parsed_result.get('answer', '').lower()
+                if any(phrase in answer for phrase in [
+                    "no information", "not mentioned", "doesn't contain", "not found", 
+                    "cannot find", "no details", "not discussed", "not available",
+                    "based on the provided documents, there is no information"
+                ]):
+                    print(f"DEBUG: LLM indicates no relevant information found")
+                    return {
+                        "answer": "I couldn't find information about your question in the selected documents. The documents may not contain the specific details you're looking for, or you may need to select different documents that are more relevant to your query.",
+                        "source_documents": [],
+                        "sources": [],
+                        "chat_history": self.memory.chat_memory.messages
+                    }
+                    
             except Exception as json_error:
                 print(f"DEBUG: JSON parsing failed: {json_error}")
                 raise json_error

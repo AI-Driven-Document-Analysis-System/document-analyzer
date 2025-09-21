@@ -38,31 +38,40 @@ class ChatService {
   private baseUrl = 'http://localhost:8000/api';
   private currentUserId: string | null = null;
 
-  async sendMessage(message: string, conversationId?: string, searchMode: string = 'standard'): Promise<ChatResponse> {
+  async sendMessage(message: string, conversationId?: string, searchMode: string = 'standard', selectedDocumentIds?: number[]): Promise<ChatResponse> {
     try {
       const userId = await this.getCurrentUserId();
       if (!userId) {
         throw new Error('User not authenticated');
       }
 
+      const requestBody = {
+        message,
+        conversation_id: conversationId,
+        user_id: userId,
+        memory_type: 'window',
+        search_mode: searchMode,
+        selected_document_ids: selectedDocumentIds ? selectedDocumentIds.map(id => String(id)) : null,
+        llm_config: {
+          provider: 'groq',
+          model: 'llama-3.1-8b-instant',
+          temperature: 0.7,
+          streaming: false
+        }
+      };
+
+      console.log('🔍 CHAT SERVICE: Sending request to backend:', {
+        selected_document_ids: requestBody.selected_document_ids,
+        originalIds: selectedDocumentIds,
+        originalIdTypes: selectedDocumentIds ? selectedDocumentIds.map(id => typeof id) : null
+      });
+
       const response = await fetch(`${this.baseUrl}/chat/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          message,
-          conversation_id: conversationId,
-          user_id: userId,
-          memory_type: 'window',
-          search_mode: searchMode,
-          llm_config: {
-            provider: 'groq',
-            model: 'llama-3.1-8b-instant',
-            temperature: 0.7,
-            streaming: false
-          }
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
