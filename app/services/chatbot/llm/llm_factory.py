@@ -7,6 +7,7 @@ from langchain_community.llms import LlamaCpp
 from langchain.callbacks.manager import CallbackManager
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from typing import Optional, List, Any
+from ....core.langfuse_config import get_langfuse_callbacks
 
 
 
@@ -54,8 +55,8 @@ class LLMFactory:
                 streaming=True
             )
         """
-        # Set up callback manager if streaming is enabled and callbacks are provided
-        if streaming and callbacks:
+        # Set up callback manager if callbacks are available
+        if callbacks:
             callback_manager = CallbackManager(callbacks)
         else:
             callback_manager = None
@@ -67,7 +68,7 @@ class LLMFactory:
                 model_name=model,
                 temperature=temperature,
                 streaming=streaming,
-                callback_manager=callback_manager
+                callbacks=callbacks
             )
         # Use OpenAI for other models (completion-based interface)
         else:
@@ -76,7 +77,7 @@ class LLMFactory:
                 model_name=model,
                 temperature=temperature,
                 streaming=streaming,
-                callback_manager=callback_manager
+                callbacks=callbacks
             )
 
     @staticmethod
@@ -114,8 +115,8 @@ class LLMFactory:
                 streaming=False
             )
         """
-        # Set up callback manager if streaming is enabled and callbacks are provided
-        if streaming and callbacks:
+        # Set up callback manager if callbacks are available
+        if callbacks:
             callback_manager = CallbackManager(callbacks)
         else:
             callback_manager = None
@@ -126,7 +127,7 @@ class LLMFactory:
             google_api_key=api_key,
             model=model,
             temperature=temperature,
-            callback_manager=callback_manager
+            callbacks=callbacks
         )
 
     @staticmethod
@@ -146,18 +147,12 @@ class LLMFactory:
         Returns:
             ChatGroq: Configured instance for Groq-hosted models
         """
-        # Set up callback manager if streaming is enabled and callbacks are provided
-        if streaming and callbacks:
-            callback_manager = CallbackManager(callbacks)
-        else:
-            callback_manager = None
-
         return ChatGroq(
             groq_api_key=api_key,
             model_name=model,
             temperature=temperature,
             streaming=streaming,
-            callback_manager=callback_manager,
+            callbacks=callbacks,
         )
 
     @staticmethod
@@ -189,18 +184,17 @@ class LLMFactory:
                 streaming=True
             )
         """
-        # Set up callback manager if streaming is enabled and callbacks are provided
-        if streaming and callbacks:
+        # Set up callback manager if callbacks are available
+        if callbacks:
             callback_manager = CallbackManager(callbacks)
         else:
             callback_manager = None
 
-        # Create and return LlamaCpp instance with specified configuration
         return LlamaCpp(
             model_path=model_path,
             temperature=temperature,
             max_tokens=max_tokens,
             streaming=streaming,
-            callback_manager=callback_manager,
-            verbose=True  # Enable verbose output for debugging
+            callbacks=callbacks,
+            verbose=True
         )

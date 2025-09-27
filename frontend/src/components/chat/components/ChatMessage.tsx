@@ -7,9 +7,10 @@ interface ChatMessageProps {
   onSourcesClick: (sources: any[]) => void
   onFeedback: (messageId: string, feedback: 'thumbs_up' | 'thumbs_down', reason?: string) => void
   onRephrasedQueryClick?: (query: string) => void
+  onRegenerateAnswer?: (messageId: string, method: 'rephrase' | 'multiple_queries') => void
 }
 
-export function ChatMessage({ message, onSourcesClick, onFeedback, onRephrasedQueryClick }: ChatMessageProps) {
+export function ChatMessage({ message, onSourcesClick, onFeedback, onRephrasedQueryClick, onRegenerateAnswer }: ChatMessageProps) {
   const [isCopied, setIsCopied] = useState(false)
   const [showFeedbackDropdown, setShowFeedbackDropdown] = useState(false)
   const feedbackDropdownRef = useRef<HTMLDivElement>(null)
@@ -132,6 +133,7 @@ export function ChatMessage({ message, onSourcesClick, onFeedback, onRephrasedQu
                   <div
                     onClick={() => {
                       onFeedback?.(message.id || '', 'thumbs_down', 'not_relevant')
+                      onRegenerateAnswer?.(message.id || '', 'rephrase')
                       setShowFeedbackDropdown(false)
                     }}
                     style={{
@@ -152,6 +154,7 @@ export function ChatMessage({ message, onSourcesClick, onFeedback, onRephrasedQu
                   <div
                     onClick={() => {
                       onFeedback?.(message.id || '', 'thumbs_down', 'not_factually_correct')
+                      onRegenerateAnswer?.(message.id || '', 'multiple_queries')
                       setShowFeedbackDropdown(false)
                     }}
                     style={{
@@ -173,6 +176,7 @@ export function ChatMessage({ message, onSourcesClick, onFeedback, onRephrasedQu
                   <div
                     onClick={() => {
                       onFeedback?.(message.id || '', 'thumbs_down', 'incomplete_response')
+                      onRegenerateAnswer?.(message.id || '', 'multiple_queries')
                       setShowFeedbackDropdown(false)
                     }}
                     style={{
@@ -194,6 +198,7 @@ export function ChatMessage({ message, onSourcesClick, onFeedback, onRephrasedQu
                   <div
                     onClick={() => {
                       onFeedback?.(message.id || '', 'thumbs_down', 'missing_info')
+                      onRegenerateAnswer?.(message.id || '', 'multiple_queries')
                       setShowFeedbackDropdown(false)
                     }}
                     style={{
@@ -215,6 +220,7 @@ export function ChatMessage({ message, onSourcesClick, onFeedback, onRephrasedQu
                   <div
                     onClick={() => {
                       onFeedback?.(message.id || '', 'thumbs_down', 'too_general')
+                      onRegenerateAnswer?.(message.id || '', 'multiple_queries')
                       setShowFeedbackDropdown(false)
                     }}
                     style={{
@@ -236,6 +242,7 @@ export function ChatMessage({ message, onSourcesClick, onFeedback, onRephrasedQu
                   <div
                     onClick={() => {
                       onFeedback?.(message.id || '', 'thumbs_down', 'complex_topic')
+                      onRegenerateAnswer?.(message.id || '', 'multiple_queries')
                       setShowFeedbackDropdown(false)
                     }}
                     style={{

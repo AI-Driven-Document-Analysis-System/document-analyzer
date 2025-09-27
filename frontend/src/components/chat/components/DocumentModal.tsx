@@ -16,6 +16,8 @@ interface DocumentModalProps {
   setSortSize: (sort: string) => void
   onToggleDocumentSelection: (docId: number) => void
   onClearAllDocuments: () => void
+  isLoading?: boolean
+  error?: string | null
 }
 
 export function DocumentModal({
@@ -32,7 +34,9 @@ export function DocumentModal({
   sortSize,
   setSortSize,
   onToggleDocumentSelection,
-  onClearAllDocuments
+  onClearAllDocuments,
+  isLoading = false,
+  error = null
 }: DocumentModalProps) {
   if (!showModal) return null
 
@@ -153,7 +157,7 @@ export function DocumentModal({
               </div>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-              {['all', 'pdf', 'doc', 'xls', 'ppt'].map(type => (
+              {['all', 'pdf', 'img', 'txt'].map(type => (
                 <div 
                   key={type}
                   onClick={() => setDocumentFilter(type)}
@@ -206,7 +210,49 @@ export function DocumentModal({
             gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
             gap: '16px'
           }}>
-            {filteredDocuments.length === 0 ? (
+            {isLoading ? (
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                gridColumn: '1 / -1', 
+                padding: '40px',
+                color: '#6b7280'
+              }}>
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  border: '3px solid #e5e7eb',
+                  borderTop: '3px solid #3b82f6',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                  marginBottom: '16px'
+                }}></div>
+                <p style={{ margin: 0, fontSize: '14px' }}>Loading documents...</p>
+                <style jsx>{`
+                  @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                  }
+                `}</style>
+              </div>
+            ) : error ? (
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                gridColumn: '1 / -1', 
+                padding: '40px',
+                color: '#ef4444',
+                textAlign: 'center'
+              }}>
+                <i className="fas fa-exclamation-triangle" style={{ fontSize: '24px', marginBottom: '12px' }}></i>
+                <p style={{ margin: '0 0 8px 0', fontSize: '14px', fontWeight: '500' }}>Failed to load documents</p>
+                <p style={{ margin: 0, fontSize: '12px', color: '#6b7280' }}>{error}</p>
+              </div>
+            ) : filteredDocuments.length === 0 ? (
               <p style={{ color: '#6b7280', textAlign: 'center', gridColumn: '1 / -1', padding: '16px' }}>No documents found</p>
             ) : (
               filteredDocuments.map(doc => {

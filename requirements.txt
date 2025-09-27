@@ -57,11 +57,13 @@ langchain>=0.3.0
 langchain-community>=0.3.0
 langchain-google-genai>=2.0.0
 langchain-groq>=0.1.0
+langfuse>=2.0.0
 websockets==11.0.3
 google-generativeai
 huggingface-hub==0.34.3
 tokenizers==0.21.4
 tf-keras==2.15.0
+pyspellchecker==0.7.2
 
 # Testing
 pytest==7.4.3

@@ -60,12 +60,6 @@
 #         print(f"❌ Error during startup: {e}")
 #         sys.exit(1)
 
-# if __name__ == "__main__":
-#     main()
-
-
-
-
 #!/usr/bin/env python3
 """
 Startup script for DocAnalyzer backend
@@ -74,6 +68,10 @@ import os
 import sys
 import logging
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load environment variables first
+load_dotenv()
 
 # Add the app directory to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'app'))

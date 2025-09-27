@@ -17,6 +17,8 @@ interface SidebarProps {
   onChatHistoryClick: (chatId: string) => void
   onDeleteChat: (chatId: string) => void
   selectedChatId?: string
+  documentsLoading?: boolean
+  documentsError?: string | null
 }
 
 export function Sidebar({
@@ -31,7 +33,9 @@ export function Sidebar({
   onNewChat,
   onChatHistoryClick,
   onDeleteChat,
-  selectedChatId
+  selectedChatId,
+  documentsLoading = false,
+  documentsError = null
 }: SidebarProps) {
   return (
     <div 
@@ -74,6 +78,8 @@ export function Sidebar({
           documents={documents}
           onShowDocumentModal={onShowDocumentModal}
           onRemoveDocument={onRemoveDocument}
+          documentsLoading={documentsLoading}
+          documentsError={documentsError}
         />
       </div>
     </div>
