@@ -13,10 +13,11 @@ import { ChatInput } from './components/ChatInput'
 import { Sidebar } from './components/sidebar/Sidebar'
 import { DocumentModal } from './components/DocumentModal'
 import { NewChatConfirmModal } from './components/NewChatConfirmModal'
+import { ThemeProvider, useTheme } from './contexts/ThemeContext'
 
 const API_BASE_URL = "http://localhost:8000"
 
-export function RAGChatbot() {
+function RAGChatbotContent() {
   // State for current user ID
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   
@@ -597,12 +598,43 @@ export function RAGChatbot() {
     setPendingDocumentModal(false)
   }
 
+  const { isDarkMode, toggleDarkMode } = useTheme()
+
   return (
-    <div className="bg-gray-50" style={{ height: '100vh', overflow: 'hidden' }}>
+    <div className={isDarkMode ? "bg-gray-900" : "bg-gray-50"} style={{ height: '100vh', overflow: 'hidden' }}>
       <div className="flex" style={{ height: '100vh', overflow: 'hidden', flexDirection: 'row' }}>
         {/* Main Chat Area */}
-        <div style={{ flex: '1 1 0%', minWidth: '0', display: 'flex', flexDirection: 'column', backgroundColor: '#f8fafc' }}>
-          <div className="flex-1 flex flex-col bg-white" style={{ position: 'relative', height: 'calc(100vh - 60px)' }}>
+        <div style={{ flex: '1 1 0%', minWidth: '0', display: 'flex', flexDirection: 'column', backgroundColor: isDarkMode ? '#1a202c' : '#f8fafc' }}>
+          <div className={`flex-1 flex flex-col`} style={{ position: 'relative', height: 'calc(100vh - 60px)', backgroundColor: isDarkMode ? '#2d3748' : 'white' }}>
+            {/* Dark Mode Toggle */}
+            <div style={{
+              position: 'absolute',
+              top: '16px',
+              right: '16px',
+              zIndex: 100
+            }}>
+              <button
+                onClick={toggleDarkMode}
+                style={{
+                  padding: '8px',
+                  borderRadius: '8px',
+                  border: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
+                  backgroundColor: isDarkMode ? '#374151' : '#f9fafb',
+                  color: isDarkMode ? '#f9fafb' : '#374151',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = isDarkMode ? '#4b5563' : '#f3f4f6'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = isDarkMode ? '#374151' : '#f9fafb'
+                }}
+              >
+                <i className={`fas ${isDarkMode ? 'fa-sun' : 'fa-moon'}`}></i>
+              </button>
+            </div>
             <div 
               ref={chatContainerRef}
               data-chat-messages="true"
@@ -635,12 +667,12 @@ export function RAGChatbot() {
                   alignItems: 'center', 
                   justifyContent: 'center', 
                   height: '200px',
-                  color: '#6b7280'
+                  color: isDarkMode ? '#9ca3af' : '#6b7280'
                 }}>
                   <div style={{
                     width: '40px',
                     height: '40px',
-                    border: '3px solid #e5e7eb',
+                    border: `3px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
                     borderTop: '3px solid #3b82f6',
                     borderRadius: '50%',
                     animation: 'spin 1s linear infinite',
@@ -666,6 +698,7 @@ export function RAGChatbot() {
                         onFeedback={handleFeedback}
                         onRephrasedQueryClick={() => {}}
                         onRegenerateAnswer={handleRegenerateAnswer}
+                        isDarkMode={isDarkMode}
                       />
                     </div>
                   ))}
@@ -686,6 +719,7 @@ export function RAGChatbot() {
               setSearchMode={setSearchMode}
               selectedModel={selectedModel}
               setSelectedModel={setSelectedModel}
+              isDarkMode={isDarkMode}
             />
           </div>
         </div>
@@ -748,7 +782,7 @@ export function RAGChatbot() {
           zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: 'white',
+            backgroundColor: isDarkMode ? '#1f2937' : 'white',
             borderRadius: '8px',
             padding: '24px',
             maxWidth: '400px',
@@ -760,14 +794,14 @@ export function RAGChatbot() {
                 margin: '0 0 8px 0', 
                 fontSize: '18px', 
                 fontWeight: '600', 
-                color: '#1f2937' 
+                color: isDarkMode ? '#f9fafb' : '#1f2937' 
               }}>
                 Delete Conversation
               </h3>
               <p style={{ 
                 margin: 0, 
                 fontSize: '14px', 
-                color: '#6b7280',
+                color: isDarkMode ? '#9ca3af' : '#6b7280',
                 lineHeight: '1.5'
               }}>
                 Are you sure you want to delete "{chatToDelete?.title}"? This action cannot be undone.
@@ -783,20 +817,20 @@ export function RAGChatbot() {
                 onClick={cancelDeleteChat}
                 style={{
                   padding: '8px 16px',
-                  border: '1px solid #d1d5db',
+                  border: `1px solid ${isDarkMode ? '#374151' : '#d1d5db'}`,
                   borderRadius: '6px',
-                  backgroundColor: 'white',
-                  color: '#374151',
+                  backgroundColor: isDarkMode ? '#374151' : 'white',
+                  color: isDarkMode ? '#f9fafb' : '#374151',
                   fontSize: '14px',
                   fontWeight: '500',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f9fafb'
+                  e.currentTarget.style.backgroundColor = isDarkMode ? '#4b5563' : '#f9fafb'
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'white'
+                  e.currentTarget.style.backgroundColor = isDarkMode ? '#374151' : 'white'
                 }}
               >
                 Cancel
@@ -828,5 +862,13 @@ export function RAGChatbot() {
         </div>
       )}
     </div>
+  )
+}
+
+export function RAGChatbot() {
+  return (
+    <ThemeProvider>
+      <RAGChatbotContent />
+    </ThemeProvider>
   )
 }

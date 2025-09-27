@@ -8,6 +8,7 @@ import rehypeRaw from 'rehype-raw'
 interface MarkdownRendererProps {
   content: string
   className?: string
+  isDarkMode?: boolean
 }
 
 interface CodeBlockProps {
@@ -16,7 +17,7 @@ interface CodeBlockProps {
   children: React.ReactNode
 }
 
-export function MarkdownRenderer({ content, className = '' }: MarkdownRendererProps) {
+export function MarkdownRenderer({ content, className = '', isDarkMode = false }: MarkdownRendererProps) {
   const [copiedBlocks, setCopiedBlocks] = useState<Set<string>>(new Set())
 
   const copyToClipboard = async (text: string, blockId: string) => {
@@ -104,12 +105,12 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
     return (
       <code
         style={{
-          backgroundColor: '#f1f5f9',
+          backgroundColor: isDarkMode ? '#4a5568' : '#f1f5f9',
           padding: '2px 6px',
           borderRadius: '4px',
           fontSize: '0.9em',
           fontFamily: 'Monaco, Consolas, "Courier New", monospace',
-          color: '#e53e3e'
+          color: isDarkMode ? '#f56565' : '#e53e3e'
         }}
         {...props}
       >
@@ -131,8 +132,8 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
               fontWeight: '700',
               marginBottom: '16px',
               marginTop: '24px',
-              color: '#1f2937',
-              borderBottom: '2px solid #e5e7eb',
+              color: isDarkMode ? '#f7fafc' : '#1f2937',
+              borderBottom: `2px solid ${isDarkMode ? '#4a5568' : '#e5e7eb'}`,
               paddingBottom: '8px'
             }}>
               {children}
@@ -144,7 +145,7 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
               fontWeight: '600',
               marginBottom: '12px',
               marginTop: '20px',
-              color: '#1f2937'
+              color: isDarkMode ? '#f7fafc' : '#1f2937'
             }}>
               {children}
             </h2>
@@ -155,7 +156,7 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
               fontWeight: '600',
               marginBottom: '10px',
               marginTop: '16px',
-              color: '#374151'
+              color: isDarkMode ? '#f7fafc' : '#374151'
             }}>
               {children}
             </h3>
@@ -164,7 +165,7 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
             <p style={{
               marginBottom: '12px',
               lineHeight: '1.6',
-              color: '#374151'
+              color: isDarkMode ? '#f7fafc' : '#374151'
             }}>
               {children}
             </p>
@@ -191,7 +192,7 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
             <li style={{
               marginBottom: '4px',
               lineHeight: '1.5',
-              color: '#374151'
+              color: isDarkMode ? '#f7fafc' : '#374151'
             }}>
               {children}
             </li>
@@ -214,7 +215,7 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
           strong: ({ children }) => (
             <strong style={{
               fontWeight: '600',
-              color: '#1f2937'
+              color: isDarkMode ? '#f7fafc' : '#1f2937'
             }}>
               {children}
             </strong>
@@ -222,7 +223,7 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
           em: ({ children }) => (
             <em style={{
               fontStyle: 'italic',
-              color: '#4b5563'
+              color: isDarkMode ? '#cbd5e0' : '#4b5563'
             }}>
               {children}
             </em>
