@@ -52,15 +52,17 @@ class UniversalCitationChain:
         
         # Create simple citation prompt that actually works
         self.citation_prompt = PromptTemplate(
-            template="""Answer the question using the provided documents and return a JSON response.
+            template="""Answer using documents. Return JSON with MARKDOWN-FORMATTED answer.
 
 Documents:
 {formatted_docs}
 
 Question: {question}
 
-Return ONLY a JSON object like this:
-{{"answer": "your answer", "citations": [{{"source_id": 0, "document_name": "doc.pdf", "quote": "short quote"}}]}}""",
+Use ### headings, **bold**, - bullets, `backticks` in your answer.
+
+JSON format:
+{{"answer": "### Topic\\n\\n**Key** points:\\n\\n- **Point 1**: Details", "citations": [{{"source_id": 0, "document_name": "doc.pdf", "quote": "quote"}}]}}""",
             input_variables=["formatted_docs", "chat_history", "question"]
         )
         
@@ -75,6 +77,8 @@ Chat History:
 {chat_history}
 
 Question: {question}
+
+**IMPORTANT**: Format your answer with ### headings, **bold** terms, - bullet points, and `backticks` for technical terms.
 
 Answer:""",
             input_variables=["context", "chat_history", "question"]
