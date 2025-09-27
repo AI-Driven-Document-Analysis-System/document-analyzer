@@ -1,6 +1,5 @@
 from langchain_community.llms import OpenAI
 from langchain_community.chat_models import ChatOpenAI
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
 from typing import Any, List, Optional, Dict
 from langchain_community.llms import LlamaCpp
@@ -8,6 +7,13 @@ from langchain.callbacks.manager import CallbackManager
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from typing import Optional, List, Any
 from ....core.langfuse_config import get_langfuse_callbacks
+
+# Optional imports
+try:
+    from langchain_google_genai import ChatGoogleGenerativeAI
+    GEMINI_AVAILABLE = True
+except ImportError:
+    GEMINI_AVAILABLE = False
 
 
 
@@ -121,6 +127,10 @@ class LLMFactory:
         else:
             callback_manager = None
 
+        # Check if Gemini is available
+        if not GEMINI_AVAILABLE:
+            raise ImportError("langchain_google_genai is not installed. Install it with: pip install langchain-google-genai")
+        
         # Use ChatGoogleGenerativeAI for all Gemini models
         # This is the correct integration for the new Google Generative AI API
         return ChatGoogleGenerativeAI(
@@ -156,8 +166,47 @@ class LLMFactory:
         )
 
     @staticmethod
+    def create_deepseek_llm(api_key: str, model: str = "deepseek-chat",
+                           temperature: float = 0.7, streaming: bool = False,
+                           callbacks: Optional[List[Any]] = None) -> Any:
+        """
+        Create a DeepSeek chat model instance using OpenAI-compatible API.
+        
+        DeepSeek provides an OpenAI-compatible API, so we can use the ChatOpenAI class
+        with a custom base_url pointing to DeepSeek's API endpoint.
+        
+        Args:
+            api_key (str): DeepSeek API key for authentication
+            model (str): Model name (e.g., "deepseek-chat", "deepseek-coder")
+            temperature (float): Controls randomness in responses (0.0 = deterministic, 1.0 = very random)
+            streaming (bool): Whether to enable streaming responses
+            callbacks (Optional[List[Any]]): List of callback handlers for monitoring and logging
+            
+        Returns:
+            ChatOpenAI: Configured instance for DeepSeek models using OpenAI-compatible interface
+            
+        Example:
+            # Create a streaming DeepSeek model
+            llm = LLMFactory.create_deepseek_llm(
+                api_key="your-deepseek-api-key",
+                model="deepseek-chat",
+                temperature=0.7,
+                streaming=True
+            )
+        """
+        return ChatOpenAI(
+            openai_api_key=api_key,
+            model_name=model,
+            temperature=temperature,
+            streaming=streaming,
+            callbacks=callbacks,
+            openai_api_base="https://api.deepseek.com/v1",  # DeepSeek API endpoint
+            max_tokens=4000  # DeepSeek models support up to 4K tokens
+        )
+
+    @staticmethod
     def create_llama_llm(model_path: str, temperature: float = 0.7,
-                         max_tokens: int = 1000, streaming: bool = False,
+                         max_tokens: int = 2000, streaming: bool = False,
                          callbacks: Optional[List[Any]] = None) -> LlamaCpp:
         """
         Create a local Llama Language Model instance using LlamaCpp.
@@ -180,7 +229,7 @@ class LLMFactory:
             llm = LLMFactory.create_llama_llm(
                 model_path="/path/to/llama-2-7b.gguf",
                 temperature=0.7,
-                max_tokens=1000,
+                max_tokens=2000,
                 streaming=True
             )
         """

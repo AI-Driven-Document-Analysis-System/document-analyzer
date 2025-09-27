@@ -107,7 +107,7 @@ class ChatbotService:
 
         Args:
             llm_config: Configuration for the language model:
-                - provider: 'openai', 'gemini', 'groq', or 'llama'
+                - provider: 'openai', 'gemini', 'groq', 'deepseek', or 'llama'
                 - api_key: API key for external providers
                 - model: Model name
                 - temperature: Generation temperature
@@ -124,8 +124,9 @@ class ChatbotService:
         cache_key = f"{user_id}_{llm_config.get('provider')}_{llm_config.get('model')}_{memory_type}"
 
         # Return existing engine if available
-        if cache_key in self._chat_engines:
-            return self._chat_engines[cache_key]
+        # TEMPORARILY DISABLED FOR PROVIDER SWITCHING
+        # if cache_key in self._chat_engines:
+        #     return self._chat_engines[cache_key]
 
         try:
             # Create LLM based on provider
@@ -301,6 +302,20 @@ class ChatbotService:
             self.logger.error(f"Failed to get system stats: {str(e)}")
             return {"error": str(e), "initialized": self._initialized}
 
+    def clear_cache(self) -> None:
+        """
+        Clear all cached chat engines.
+        
+        This is useful when switching providers or when you want to force
+        recreation of LLM instances with new configurations.
+        """
+        try:
+            self.logger.info("Clearing chat engine cache...")
+            self._chat_engines.clear()
+            self.logger.info(f"Cleared {len(self._chat_engines)} cached chat engines")
+        except Exception as e:
+            self.logger.error(f"Error clearing cache: {str(e)}")
+
     def cleanup(self) -> None:
         """
         Clean up resources and connections.
@@ -353,8 +368,6 @@ class ChatbotService:
         elif provider == 'gemini':
             return LLMFactory.create_gemini_llm(
                 api_key=llm_config['api_key'],
-                model=llm_config.get('model', 'gemini-1.5-flash'),
-                temperature=llm_config.get('temperature', 0.7),
                 streaming=llm_config.get('streaming', False),
                 callbacks=llm_config.get('callbacks')
             )
@@ -366,11 +379,19 @@ class ChatbotService:
                 streaming=llm_config.get('streaming', False),
                 callbacks=llm_config.get('callbacks')
             )
+        elif provider == 'deepseek':
+            return LLMFactory.create_deepseek_llm(
+                api_key=llm_config['api_key'],
+                model=llm_config.get('model', 'deepseek-chat'),
+                temperature=llm_config.get('temperature', 0.7),
+                streaming=llm_config.get('streaming', False),
+                callbacks=llm_config.get('callbacks')
+            )
         elif provider == 'llama':
             return LLMFactory.create_llama_llm(
                 model_path=llm_config['model_path'],
                 temperature=llm_config.get('temperature', 0.7),
-                max_tokens=llm_config.get('max_tokens', 1000),
+                max_tokens=llm_config.get('max_tokens', 2000),
                 streaming=llm_config.get('streaming', False),
                 callbacks=llm_config.get('callbacks')
             )

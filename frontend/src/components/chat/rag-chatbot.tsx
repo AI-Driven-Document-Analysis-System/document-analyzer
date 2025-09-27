@@ -20,7 +20,6 @@ export function RAGChatbot() {
   // State for current user ID
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   
-  // Load messages from localStorage or use initial messages (user-specific)
   const [messages, setMessages] = useState<Message[]>(() => {
     // Don't load from localStorage on initial render - wait for user ID
     return initialMessages
@@ -29,6 +28,11 @@ export function RAGChatbot() {
   const [inputValue, setInputValue] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   const [searchMode, setSearchMode] = useState<'standard' | 'rephrase' | 'multiple_queries'>('standard')
+  const [selectedModel, setSelectedModel] = useState<{ provider: string, model: string, name: string }>({
+    provider: 'groq',
+    model: 'llama-3.1-8b-instant',
+    name: 'Groq Llama 3.1 8B'
+  })
   
   // Load conversation ID from localStorage (user-specific)
   const [conversationId, setConversationId] = useState<string | null>(null)
@@ -94,7 +98,8 @@ export function RAGChatbot() {
         userMessage.content, 
         conversationId || undefined, 
         method,
-        selectedDocuments.length > 0 ? selectedDocuments : undefined
+        selectedDocuments.length > 0 ? selectedDocuments : undefined,
+        selectedModel
       )
       
       // Create new assistant message with regenerated content
@@ -346,20 +351,17 @@ export function RAGChatbot() {
       console.log('🔍 FRONTEND: Sending message with selected documents:', {
         selectedDocuments: selectedDocuments,
         selectedDocumentsLength: selectedDocuments.length,
-        selectedDocumentTypes: selectedDocuments.map(id => typeof id)
+        selectedDocumentTypes: selectedDocuments.map(id => typeof id),
+        selectedModel: selectedModel
       })
       
       const response = await chatService.sendMessage(
         currentMessage, 
         conversationId || undefined, 
         searchMode,
-        selectedDocuments.length > 0 ? selectedDocuments : undefined
+        selectedDocuments.length > 0 ? selectedDocuments : undefined,
+        selectedModel
       )
-
-      // Update conversation ID if this is a new conversation
-      if (!conversationId && response.conversation_id) {
-        setConversationId(response.conversation_id)
-      }
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -682,6 +684,8 @@ export function RAGChatbot() {
               onKeyPress={handleKeyPress}
               searchMode={searchMode}
               setSearchMode={setSearchMode}
+              selectedModel={selectedModel}
+              setSelectedModel={setSelectedModel}
             />
           </div>
         </div>

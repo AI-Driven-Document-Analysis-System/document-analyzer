@@ -38,7 +38,13 @@ class ChatService {
   private baseUrl = 'http://localhost:8000/api';
   private currentUserId: string | null = null;
 
-  async sendMessage(message: string, conversationId?: string, searchMode: string = 'standard', selectedDocumentIds?: number[]): Promise<ChatResponse> {
+  async sendMessage(
+    message: string, 
+    conversationId?: string, 
+    searchMode: 'standard' | 'rephrase' | 'multiple_queries' = 'standard',
+    selectedDocumentIds?: number[],
+    selectedModel?: { provider: string; model: string; name: string }
+  ): Promise<ChatResponse> {
     try {
       const userId = await this.getCurrentUserId();
       if (!userId) {
@@ -52,12 +58,12 @@ class ChatService {
         memory_type: 'window',
         search_mode: searchMode,
         selected_document_ids: selectedDocumentIds ? selectedDocumentIds.map(id => String(id)) : null,
-        llm_config: {
-          provider: 'groq',
-          model: 'llama-3.1-8b-instant',
+        llm_config: selectedModel ? {
+          provider: selectedModel.provider,
+          model: selectedModel.model,
           temperature: 0.7,
           streaming: false
-        }
+        } : null  // Let backend use environment configuration if no model selected
       };
 
       console.log('🔍 CHAT SERVICE: Sending request to backend:', {

@@ -9,17 +9,30 @@ interface ChatInputProps {
   onKeyPress: (e: React.KeyboardEvent) => void
   searchMode: 'standard' | 'rephrase' | 'multiple_queries'
   setSearchMode: (mode: 'standard' | 'rephrase' | 'multiple_queries') => void
+  selectedModel: { provider: string; model: string; name: string }
+  setSelectedModel: (model: { provider: string; model: string; name: string }) => void
 }
 
-export function ChatInput({ inputValue, setInputValue, onSendMessage, isTyping, onKeyPress, searchMode, setSearchMode }: ChatInputProps) {
+export function ChatInput({ inputValue, setInputValue, onSendMessage, isTyping, onKeyPress, searchMode, setSearchMode, selectedModel, setSelectedModel }: ChatInputProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false)
+  const [isModelDropdownOpen, setIsModelDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const modelDropdownRef = useRef<HTMLDivElement>(null)
 
-  // Close dropdown when clicking outside
+  // Available models
+  const availableModels = [
+    { provider: 'groq', model: 'llama-3.1-8b-instant', name: 'Groq Llama 3.1 8B' },
+    { provider: 'deepseek', model: 'deepseek-chat', name: 'DeepSeek Chat' }
+  ]
+
+  // Close dropdowns when clicking outside
   useEffect(() => {
     const handleGlobalClick = (event: MouseEvent) => {
       if (isDropdownOpen && dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false)
+      }
+      if (isModelDropdownOpen && modelDropdownRef.current && !modelDropdownRef.current.contains(event.target as Node)) {
+        setIsModelDropdownOpen(false)
       }
     }
 
@@ -28,7 +41,7 @@ export function ChatInput({ inputValue, setInputValue, onSendMessage, isTyping, 
     return () => {
       document.removeEventListener('mousedown', handleGlobalClick)
     }
-  }, [isDropdownOpen])
+  }, [isDropdownOpen, isModelDropdownOpen])
   return (
     <div style={{ 
       position: 'absolute', 
@@ -186,6 +199,111 @@ export function ChatInput({ inputValue, setInputValue, onSendMessage, isTyping, 
           e.target.style.boxShadow = 'none'
         }}
       />
+      
+      {/* Model Selector */}
+      <div style={{ position: 'relative' }} ref={modelDropdownRef}>
+        <button
+          onClick={() => setIsModelDropdownOpen(!isModelDropdownOpen)}
+          style={{
+            padding: '8px 12px',
+            border: '1px solid #d1d5db',
+            borderRadius: '20px',
+            backgroundColor: 'white',
+            cursor: 'pointer',
+            fontSize: '12px',
+            color: '#374151',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            transition: 'all 0.2s ease',
+            flexShrink: 0,
+            maxWidth: '140px'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = '#f9fafb'
+            e.currentTarget.style.borderColor = '#9ca3af'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'white'
+            e.currentTarget.style.borderColor = '#d1d5db'
+          }}
+        >
+          <span style={{ 
+            width: '8px', 
+            height: '8px', 
+            borderRadius: '50%', 
+            backgroundColor: selectedModel.provider === 'groq' ? '#10b981' : selectedModel.provider === 'deepseek' ? '#3b82f6' : selectedModel.provider === 'openai' ? '#f59e0b' : '#8b5cf6',
+            flexShrink: 0
+          }}></span>
+          <span style={{ 
+            overflow: 'hidden', 
+            textOverflow: 'ellipsis', 
+            whiteSpace: 'nowrap' 
+          }}>
+            {selectedModel.name}
+          </span>
+          <i className="fas fa-chevron-down" style={{ fontSize: '10px', marginLeft: 'auto' }}></i>
+        </button>
+
+        {/* Model Dropdown */}
+        {isModelDropdownOpen && (
+          <div style={{
+            position: 'absolute',
+            bottom: '100%',
+            right: '0',
+            marginBottom: '8px',
+            backgroundColor: 'white',
+            border: '1px solid #e5e7eb',
+            borderRadius: '8px',
+            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+            zIndex: 1000,
+            minWidth: '250px',
+            maxHeight: '300px',
+            overflowY: 'auto'
+          }}>
+            {availableModels.map((model, index) => (
+              <div
+                key={`${model.provider}-${model.model}`}
+                onClick={() => {
+                  setSelectedModel(model)
+                  setIsModelDropdownOpen(false)
+                }}
+                style={{
+                  padding: '12px 16px',
+                  cursor: 'pointer',
+                  fontSize: '13px',
+                  color: '#374151',
+                  backgroundColor: selectedModel.provider === model.provider && selectedModel.model === model.model ? '#f3f4f6' : 'transparent',
+                  borderTop: index > 0 ? '1px solid #f3f4f6' : 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = selectedModel.provider === model.provider && selectedModel.model === model.model ? '#f3f4f6' : 'transparent'}
+              >
+                <span style={{ 
+                  width: '10px', 
+                  height: '10px', 
+                  borderRadius: '50%', 
+                  backgroundColor: model.provider === 'groq' ? '#10b981' : model.provider === 'deepseek' ? '#3b82f6' : model.provider === 'openai' ? '#f59e0b' : '#8b5cf6',
+                  flexShrink: 0
+                }}></span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: '500', marginBottom: '2px' }}>{model.name}</div>
+                  <div style={{ fontSize: '11px', color: '#6b7280' }}>
+                    {model.provider.toUpperCase()} • {model.model}
+                  </div>
+                </div>
+                {selectedModel.provider === model.provider && selectedModel.model === model.model && (
+                  <i className="fas fa-check" style={{ fontSize: '12px', color: '#10b981' }}></i>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <button 
         onClick={onSendMessage} 
         disabled={!inputValue.trim() || isTyping}

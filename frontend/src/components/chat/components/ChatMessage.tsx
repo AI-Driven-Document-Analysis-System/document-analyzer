@@ -1,6 +1,7 @@
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import type { Message } from '../types'
+import { MarkdownRenderer } from './MarkdownRenderer'
 
 interface ChatMessageProps {
   message: Message
@@ -55,7 +56,9 @@ export function ChatMessage({ message, onSourcesClick, onFeedback, onRephrasedQu
         </div>
         <div className="max-w-[80%]">
           <div className="p-4 rounded-lg" style={{ backgroundColor: '#f3f4f6', color: '#111827' }}>
-            <p className="text-sm leading-relaxed">{message.content}</p>
+            <div className="text-sm leading-relaxed">
+              <MarkdownRenderer content={message.content} />
+            </div>
           </div>
           {message.sources && message.sources.length > 0 && (
             <div style={{ marginTop: '12px' }}>
