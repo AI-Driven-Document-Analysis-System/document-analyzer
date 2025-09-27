@@ -12,6 +12,7 @@ import { TypingIndicator } from './components/TypingIndicator'
 import { ChatInput } from './components/ChatInput'
 import { Sidebar } from './components/sidebar/Sidebar'
 import { DocumentModal } from './components/DocumentModal'
+import { NewChatConfirmModal } from './components/NewChatConfirmModal'
 
 const API_BASE_URL = "http://localhost:8000"
 
@@ -52,6 +53,10 @@ export function RAGChatbot() {
   // New chat loading state
   const [isCreatingNewChat, setIsCreatingNewChat] = useState(false)
 
+  // New chat confirmation modal state
+  const [showNewChatConfirm, setShowNewChatConfirm] = useState(false)
+  const [pendingDocumentModal, setPendingDocumentModal] = useState(false)
+
   // Handle feedback from messages
   const handleFeedback = async (messageId: string, feedback: 'thumbs_up' | 'thumbs_down', reason?: string) => {
     console.log('Feedback received:', { messageId, feedback, reason })
@@ -84,8 +89,13 @@ export function RAGChatbot() {
     setIsTyping(true)
     
     try {
-      // Send message with the specified search method
-      const response = await chatService.sendMessage(userMessage.content, conversationId || undefined, method)
+      // Send message with the specified search method and selected documents
+      const response = await chatService.sendMessage(
+        userMessage.content, 
+        conversationId || undefined, 
+        method,
+        selectedDocuments.length > 0 ? selectedDocuments : undefined
+      )
       
       // Create new assistant message with regenerated content
       const newAssistantMessage: Message = {
@@ -332,8 +342,19 @@ export function RAGChatbot() {
     setIsTyping(true)
 
     try {
-      // Send message to backend
-      const response = await chatService.sendMessage(currentMessage, conversationId || undefined, searchMode)
+      // Send message to backend with selected documents for Knowledge Base mode
+      console.log('🔍 FRONTEND: Sending message with selected documents:', {
+        selectedDocuments: selectedDocuments,
+        selectedDocumentsLength: selectedDocuments.length,
+        selectedDocumentTypes: selectedDocuments.map(id => typeof id)
+      })
+      
+      const response = await chatService.sendMessage(
+        currentMessage, 
+        conversationId || undefined, 
+        searchMode,
+        selectedDocuments.length > 0 ? selectedDocuments : undefined
+      )
 
       // Update conversation ID if this is a new conversation
       if (!conversationId && response.conversation_id) {
@@ -399,6 +420,9 @@ export function RAGChatbot() {
       setInputValue("")
       setSelectedMessageSources([])
       
+      // Clear selected documents in Knowledge Base
+      clearAllDocuments()
+      
       // Clear user-specific localStorage
       if (typeof window !== 'undefined' && currentUserId) {
         localStorage.removeItem(`rag-chatbot-messages-${currentUserId}`)
@@ -411,6 +435,12 @@ export function RAGChatbot() {
         setSelectedMessageSources(latestAssistantMessage.sources)
         setExpandedSections(prev => ({ ...prev, sources: true }))
       }
+
+      // If this was triggered by document modal request, open it
+      if (pendingDocumentModal) {
+        setPendingDocumentModal(false)
+        setShowDocumentModal(true)
+      }
     } catch (error) {
       console.error('Error creating new chat:', error)
       // Fallback to local reset if backend fails
@@ -422,6 +452,12 @@ export function RAGChatbot() {
       if (typeof window !== 'undefined' && currentUserId) {
         localStorage.removeItem(`rag-chatbot-messages-${currentUserId}`)
         localStorage.removeItem(`rag-chatbot-conversation-id-${currentUserId}`)
+      }
+
+      // If this was triggered by document modal request, open it anyway
+      if (pendingDocumentModal) {
+        setPendingDocumentModal(false)
+        setShowDocumentModal(true)
       }
     } finally {
       setIsCreatingNewChat(false)
@@ -529,6 +565,36 @@ export function RAGChatbot() {
     setChatToDelete(null)
   }
 
+  // Check if current chat is new (only has initial assistant message)
+  const isNewChat = () => {
+    // A new chat has only the initial assistant message or no messages
+    const userMessages = messages.filter(msg => msg.type === 'user')
+    return userMessages.length === 0
+  }
+
+  // Handle document modal with new chat check
+  const handleShowDocumentModal = () => {
+    if (isNewChat()) {
+      // It's a new chat, allow document selection
+      setShowDocumentModal(true)
+    } else {
+      // There are existing messages, show confirmation modal
+      setShowNewChatConfirm(true)
+    }
+  }
+
+  // Handle new chat confirmation
+  const handleNewChatConfirm = async () => {
+    setShowNewChatConfirm(false)
+    setPendingDocumentModal(true)
+    await handleNewChat()
+  }
+
+  const handleNewChatCancel = () => {
+    setShowNewChatConfirm(false)
+    setPendingDocumentModal(false)
+  }
+
   return (
     <div className="bg-gray-50" style={{ height: '100vh', overflow: 'hidden' }}>
       <div className="flex" style={{ height: '100vh', overflow: 'hidden', flexDirection: 'row' }}>
@@ -627,7 +693,7 @@ export function RAGChatbot() {
           chatHistory={chatHistory}
           selectedDocuments={selectedDocuments}
           documents={documents}
-          onShowDocumentModal={() => setShowDocumentModal(true)}
+          onShowDocumentModal={handleShowDocumentModal}
           onRemoveDocument={removeDocument}
           onNewChat={handleNewChat}
           onChatHistoryClick={handleChatHistoryClick}
@@ -655,6 +721,12 @@ export function RAGChatbot() {
         onClearAllDocuments={clearAllDocuments}
         isLoading={documentsLoading}
         error={documentsError}
+      />
+
+      <NewChatConfirmModal 
+        showModal={showNewChatConfirm}
+        onClose={handleNewChatCancel}
+        onConfirm={handleNewChatConfirm}
       />
 
       {/* Delete Confirmation Modal */}

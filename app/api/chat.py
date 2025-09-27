@@ -293,7 +293,8 @@ async def send_message(request: ChatMessageRequest):
                     query=preprocessed_query,  # Use preprocessed query for better retrieval
                     conversation_id=conversation_id,
                     user_id=request.user_id,
-                    search_mode=request.search_mode.value
+                    search_mode=request.search_mode.value,
+                    selected_document_ids=request.selected_document_ids
                 )
                 ai_response = result['response']
                 sources_data = result.get('sources', [])
@@ -315,7 +316,8 @@ async def send_message(request: ChatMessageRequest):
                     query=preprocessed_query,  # Use preprocessed query for better retrieval
                     conversation_id=conversation_id,
                     user_id=request.user_id,
-                    search_mode=request.search_mode.value
+                    search_mode=request.search_mode.value,
+                    selected_document_ids=request.selected_document_ids
                 )
                 ai_response = result['response']
                 sources_data = result.get('sources', [])

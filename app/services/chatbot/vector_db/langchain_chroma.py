@@ -88,6 +88,125 @@ class LangChainChromaStore:
         """
         return self.vectorstore.similarity_search_with_score(query, k=k, filter=filter)
 
+    def similarity_search_by_documents(self, query: str, document_ids: List[str], k: int = 4) -> List[Document]:
+        """
+        Perform similarity search filtered by specific document IDs.
+        
+        This method filters chunks to only those belonging to the specified documents
+        before performing semantic search, which is more efficient than searching
+        the entire vector DB and then filtering.
+        
+        Args:
+            query (str): The query text to search for similar documents
+            document_ids (List[str]): List of document IDs to filter by
+            k (int): Number of most similar documents to return (default: 4)
+            
+        Returns:
+            List[Document]: List of LangChain Document objects from specified documents
+        """
+        if not document_ids:
+            # If no document IDs specified, fall back to regular search
+            return self.similarity_search(query, k=k)
+        
+        print(f"\n🔍 VECTOR DB FILTERING:")
+        print(f"Query: '{query}'")
+        print(f"Document IDs to filter by: {document_ids}")
+        print(f"Document ID types: {[type(doc_id) for doc_id in document_ids]}")
+        
+        # Create filter for document IDs
+        # ChromaDB supports filtering with $in operator for multiple values
+        filter_dict = {
+            "document_id": {"$in": document_ids}
+        }
+        
+        print(f"ChromaDB filter: {filter_dict}")
+        
+        results = self.vectorstore.similarity_search(query, k=k, filter=filter_dict)
+        
+        print(f"Filtered search returned {len(results)} results")
+        if results:
+            print("✅ FILTERED RESULTS:")
+            for i, doc in enumerate(results):
+                doc_id = doc.metadata.get('document_id', 'MISSING')
+                filename = doc.metadata.get('filename', 'MISSING')
+                source = doc.metadata.get('source', 'MISSING')
+                print(f"  {i+1}. Document ID: {doc_id} (type: {type(doc_id)}) - File: {filename} - Source: {source}")
+                print(f"      Full metadata: {doc.metadata}")
+                print(f"      Content preview: {doc.page_content[:100]}...")
+                
+            # Check if any results match our expected document ID
+            expected_ids = set(document_ids)
+            actual_ids = set(doc.metadata.get('document_id', 'MISSING') for doc in results)
+            print(f"\n🔍 ID COMPARISON:")
+            print(f"Expected document IDs: {expected_ids}")
+            print(f"Actual document IDs in results: {actual_ids}")
+            print(f"Match: {expected_ids.intersection(actual_ids)}")
+            print(f"Mismatch: {expected_ids - actual_ids}")
+        else:
+            print("❌ NO RESULTS FOUND - This indicates the filter is not working!")
+            
+            # Let's try a regular search to see what document IDs exist
+            print("\n🔍 DEBUG: Trying regular search to see available document IDs...")
+            regular_results = self.vectorstore.similarity_search(query, k=k)
+            print(f"Regular search returned {len(regular_results)} results")
+            if regular_results:
+                print("Available document IDs in vector DB:")
+                seen_ids = set()
+                for doc in regular_results:
+                    doc_id = doc.metadata.get('document_id', 'MISSING')
+                    filename = doc.metadata.get('filename', 'MISSING')
+                    source = doc.metadata.get('source', 'MISSING')
+                    print(f"  - Full metadata: {doc.metadata}")
+                    if doc_id not in seen_ids:
+                        seen_ids.add(doc_id)
+                        print(f"  - Document ID: {doc_id} (type: {type(doc_id)}) - File: {filename} - Source: {source}")
+                        
+            # Let's also try different filter approaches
+            print("\n🔍 DEBUG: Trying alternative filter approaches...")
+            
+            # Try with different metadata field names
+            alternative_filters = [
+                {"doc_id": {"$in": document_ids}},
+                {"id": {"$in": document_ids}},
+                {"source": {"$in": [f"{doc_id}.pdf" for doc_id in document_ids]}},
+            ]
+            
+            for i, alt_filter in enumerate(alternative_filters):
+                print(f"Trying alternative filter {i+1}: {alt_filter}")
+                try:
+                    alt_results = self.vectorstore.similarity_search(query, k=k, filter=alt_filter)
+                    print(f"Alternative filter {i+1} returned {len(alt_results)} results")
+                    if alt_results:
+                        print("✅ This filter worked!")
+                        break
+                except Exception as e:
+                    print(f"Alternative filter {i+1} failed: {e}")
+        
+        return results
+
+    def similarity_search_by_documents_with_score(self, query: str, document_ids: List[str], k: int = 4) -> List[tuple]:
+        """
+        Perform similarity search filtered by specific document IDs with scores.
+        
+        Args:
+            query (str): The query text to search for similar documents
+            document_ids (List[str]): List of document IDs to filter by
+            k (int): Number of most similar documents to return (default: 4)
+            
+        Returns:
+            List[tuple]: List of tuples containing (Document, score) pairs from specified documents
+        """
+        if not document_ids:
+            # If no document IDs specified, fall back to regular search
+            return self.similarity_search_with_score(query, k=k)
+        
+        # Create filter for document IDs
+        filter_dict = {
+            "document_id": {"$in": document_ids}
+        }
+        
+        return self.vectorstore.similarity_search_with_score(query, k=k, filter=filter_dict)
+
     def as_retriever(self, search_type: str = "similarity", search_kwargs: Dict = None):
         """
         Convert the vector store to a LangChain retriever for use in chains.

@@ -242,6 +242,79 @@ class EnhancedSearchEngine:
         self.retriever = retriever
         self.query_rephraser = QueryRephraser(llm)
         self.multiple_queries_generator = MultipleQueriesGenerator(llm)
+        self.document_ids = None  # For document filtering
+    
+    def set_document_filter(self, document_ids: Optional[List[str]]):
+        """
+        Set document IDs to filter search results.
+        
+        Args:
+            document_ids: List of document IDs to search within, or None for no filtering
+        """
+        self.document_ids = document_ids
+        logger.info(f"Enhanced search engine document filter set to: {document_ids}")
+    
+    def _get_filtered_documents(self, query: str, k: int = 5) -> List[Document]:
+        """
+        Get documents with optional document ID filtering.
+        
+        Args:
+            query: Search query
+            k: Number of documents to retrieve
+            
+        Returns:
+            List of documents, filtered by document IDs if specified
+        """
+        print(f"\n🔍 _get_filtered_documents called:")
+        print(f"  - document_ids: {self.document_ids}")
+        print(f"  - retriever type: {type(self.retriever)}")
+        print(f"  - retriever has vectorstore: {hasattr(self.retriever, 'vectorstore')}")
+        
+        if self.document_ids:
+            print(f"  - Document IDs specified: {self.document_ids}")
+            
+            if hasattr(self.retriever, 'vectorstore'):
+                vectorstore = self.retriever.vectorstore
+                print(f"  - Vectorstore type: {type(vectorstore)}")
+                print(f"  - Vectorstore has similarity_search_by_documents: {hasattr(vectorstore, 'similarity_search_by_documents')}")
+                
+                if hasattr(vectorstore, 'similarity_search_by_documents'):
+                    print(f"  ✅ Using document-filtered search!")
+                    logger.info(f"Using document-filtered search for {len(self.document_ids)} documents")
+                    return vectorstore.similarity_search_by_documents(query, self.document_ids, k)
+                else:
+                    print(f"  ❌ Vectorstore doesn't have similarity_search_by_documents method")
+                    print(f"  🔧 Trying manual ChromaDB filtering...")
+                    
+                    # Manual filtering using ChromaDB filter syntax
+                    filter_dict = {"document_id": {"$in": self.document_ids}}
+                    print(f"  - Using filter: {filter_dict}")
+                    
+                    try:
+                        filtered_results = vectorstore.similarity_search(query, k=k, filter=filter_dict)
+                        print(f"  ✅ Manual filtering returned {len(filtered_results)} results")
+                        
+                        if filtered_results:
+                            print("  📋 Filtered results:")
+                            for i, doc in enumerate(filtered_results):
+                                doc_id = doc.metadata.get('document_id', 'MISSING')
+                                filename = doc.metadata.get('filename', 'MISSING')
+                                print(f"    {i+1}. Document ID: {doc_id} - File: {filename}")
+                        else:
+                            print("  ❌ No results from manual filtering - document IDs don't match!")
+                            
+                        return filtered_results
+                    except Exception as e:
+                        print(f"  ❌ Manual filtering failed: {e}")
+            else:
+                print(f"  ❌ Retriever doesn't have vectorstore attribute")
+        else:
+            print(f"  - No document IDs specified")
+        
+        # Fall back to regular retriever
+        print(f"  🔄 Falling back to regular retriever")
+        documents = self.retriever.get_relevant_documents(query)
+        return documents[:k]
     
     async def search_standard(self, query: str, k: int = 5) -> List[Document]:
         """
@@ -257,9 +330,11 @@ class EnhancedSearchEngine:
         try:
             logger.info(f"[STANDARD] Using standard search for query: '{query}'")
             print(f"[STANDARD] Direct query search")
-            documents = self.retriever.get_relevant_documents(query)
-            logger.info(f"[STANDARD] Search returned {len(documents[:k])} documents")
-            return documents[:k]
+            if self.document_ids:
+                print(f"[STANDARD] Filtering by {len(self.document_ids)} selected documents")
+            documents = self._get_filtered_documents(query, k)
+            logger.info(f"[STANDARD] Search returned {len(documents)} documents")
+            return documents
         except Exception as e:
             logger.error(f"Error in standard search: {e}")
             return []
@@ -285,7 +360,9 @@ class EnhancedSearchEngine:
             print(f"Rephrased: '{rephrased_query}'")
             
             # Search with rephrased query
-            documents = self.retriever.get_relevant_documents(rephrased_query)
+            if self.document_ids:
+                print(f"[REPHRASE] Filtering by {len(self.document_ids)} selected documents")
+            documents = self._get_filtered_documents(rephrased_query, k)
             
             # Add metadata to indicate this was from a rephrased query
             for doc in documents:
@@ -294,8 +371,8 @@ class EnhancedSearchEngine:
                     doc.metadata['rephrased_query'] = rephrased_query
                     doc.metadata['search_mode'] = 'rephrase'
             
-            logger.info(f"[REPHRASE] Search returned {len(documents[:k])} documents")
-            return documents[:k]
+            logger.info(f"[REPHRASE] Search returned {len(documents)} documents")
+            return documents
             
         except Exception as e:
             logger.error(f"Error in rephrase search: {e}")
@@ -331,7 +408,9 @@ class EnhancedSearchEngine:
             for i, sub_query in enumerate(queries):
                 try:
                     print(f"Searching with sub-query {i+1}: '{sub_query}'")
-                    documents = self.retriever.get_relevant_documents(sub_query)
+                    if self.document_ids:
+                        print(f"[MULTIPLE] Filtering by {len(self.document_ids)} selected documents")
+                    documents = self._get_filtered_documents(sub_query, k)
                     
                     # Add metadata and deduplicate
                     for doc in documents:

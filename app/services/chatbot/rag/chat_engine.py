@@ -2,7 +2,7 @@ from langchain.schema import HumanMessage, AIMessage
 from ..chains.universal_citation_chain import UniversalCitationChain
 from ..callbacks.streaming_callback import AsyncStreamingCallbackHandler
 from ..search.enhanced_search import EnhancedSearchEngine
-from typing import Dict, Any, Optional, AsyncGenerator
+from typing import Dict, Any, Optional, AsyncGenerator, List
 import uuid
 import json
 import asyncio
@@ -45,7 +45,8 @@ class LangChainChatEngine:
         )
 
     async def process_query(self, query: str, conversation_id: Optional[str] = None,
-                            user_id: Optional[str] = None, search_mode: str = "standard") -> Dict[str, Any]:
+                            user_id: Optional[str] = None, search_mode: str = "standard", 
+                            selected_document_ids: Optional[List[str]] = None) -> Dict[str, Any]:
         """
         Process a query and return a complete response with sources.
         
@@ -59,6 +60,7 @@ class LangChainChatEngine:
                                            If not provided, a new UUID will be generated
             user_id (Optional[str]): User identifier for tracking (currently unused)
             search_mode (str): Search mode ('standard', 'rephrase', 'multiple_queries')
+            selected_document_ids (Optional[List[str]]): Document IDs to search within (Knowledge Base mode)
             
         Returns:
             Dict[str, Any]: Dictionary containing:
@@ -75,18 +77,39 @@ class LangChainChatEngine:
             conversation_id = str(uuid.uuid4())
 
         try:
+            # Set document filter for Knowledge Base mode
+            if selected_document_ids:
+                print(f"\n🔍 KNOWLEDGE BASE MODE: Searching within {len(selected_document_ids)} selected documents")
+                print(f"Selected document IDs: {selected_document_ids}")
+                print(f"Document ID types: {[type(doc_id) for doc_id in selected_document_ids]}")
+                self.enhanced_search.set_document_filter(selected_document_ids)
+            else:
+                print(f"\n🔍 FULL DATABASE MODE: Searching all documents")
+                self.enhanced_search.set_document_filter(None)
+            
             # Processing query with search mode
             
-            # Use enhanced search based on search mode
-            if search_mode != "standard":
-                # Get enhanced search results
+            # Use enhanced search based on search mode OR if documents are selected
+            if search_mode != "standard" or selected_document_ids:
+                # Get enhanced search results (with document filtering if specified)
                 enhanced_docs = await self.enhanced_search.search(query, search_mode, k=5)
+                
+                print(f"🔍 USING ENHANCED SEARCH: Retrieved {len(enhanced_docs)} documents")
+                if enhanced_docs:
+                    print("Enhanced search results (showing chunk metadata):")
+                    for i, doc in enumerate(enhanced_docs):
+                        doc_id = doc.metadata.get('document_id', 'MISSING')
+                        filename = doc.metadata.get('filename', 'MISSING')
+                        print(f"  {i+1}. CHUNK METADATA: {doc.metadata}")
+                        print(f"      Document ID in metadata: {doc_id} - File: {filename}")
+                        print(f"      Content preview: {doc.page_content[:100]}...")
                 
                 # Use enhanced documents directly with the chain
                 callbacks = getattr(self.chain.llm, 'callbacks', None)
                 result = await self.chain.arun_with_documents(query, enhanced_docs, callbacks=callbacks)
             else:
-                # Use structured citations for accurate source tracking
+                # Use structured citations for accurate source tracking (only when no documents selected)
+                print("🔍 USING REGULAR RETRIEVER: No document filtering")
                 callbacks = getattr(self.chain.llm, 'callbacks', None)
                 try:
                     result = await self.chain.arun_with_structured_citations(query, callbacks=callbacks)

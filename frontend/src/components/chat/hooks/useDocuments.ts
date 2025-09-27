@@ -21,6 +21,8 @@ export const useDocuments = () => {
           
           // Debug logging to see what's happening
           console.log('Document processing:', {
+            id: doc.id,
+            idType: typeof doc.id,
             filename: doc.original_filename,
             mimeType: doc.content_type,
             detectedType: detectedType
