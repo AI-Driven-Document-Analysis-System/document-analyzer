@@ -78,12 +78,51 @@ def extract_document_sources_from_langchain(source_documents):
         if filename:
             formatted_sources.append({
                 'title': filename,
-                'type': 'document',
-                'confidence': 0.8
+                'type': 'document'
             })
     
     logger.info(f"Successfully processed {len(formatted_sources)} document sources")
     return formatted_sources
+
+def extract_sources_from_structured_result(result):
+    """Extract sources from universal citation result with quotes."""
+    if 'sources' in result and result['sources']:
+        # Use the actual sources identified by the LLM through universal citations
+        # These already contain quotes from the UniversalCitationChain
+        return result['sources']
+    else:
+        # Fallback to source documents if no structured sources
+        source_documents = result.get('source_documents', [])
+        return extract_document_sources_from_langchain(source_documents)
+
+def display_sources_in_terminal(sources):
+    """Display sources in terminal - works with ANY source format."""
+    if not sources:
+        print("\n🔍 No sources found")
+        return
+        
+    print("\n" + "=" * 80)
+    print("📚 SOURCES USED:")
+    print("=" * 80)
+    
+    for i, source in enumerate(sources, 1):
+        # Handle different source formats
+        if isinstance(source, str):
+            filename = source
+            quote = "Source document referenced"
+        elif isinstance(source, dict):
+            filename = source.get('title', source.get('filename', 'Unknown Document'))
+            quote = source.get('quote', 'Referenced by AI')
+        else:
+            filename = str(source)
+            quote = "Source referenced"
+        
+        print(f"\n📄 SOURCE {i}: {filename}")
+        print(f"📝 TEXT USED:")
+        print(f'   "{quote}"')
+        print("-" * 60)
+    
+    print("=" * 80 + "\n")
 
 # Initialize chat service on module load
 def initialize_chat_service():
@@ -254,7 +293,8 @@ async def send_message(request: ChatMessageRequest):
                     query=preprocessed_query,  # Use preprocessed query for better retrieval
                     conversation_id=conversation_id,
                     user_id=request.user_id,
-                    search_mode=request.search_mode.value
+                    search_mode=request.search_mode.value,
+                    selected_document_ids=request.selected_document_ids
                 )
                 ai_response = result['response']
                 sources_data = result.get('sources', [])
@@ -276,7 +316,8 @@ async def send_message(request: ChatMessageRequest):
                     query=preprocessed_query,  # Use preprocessed query for better retrieval
                     conversation_id=conversation_id,
                     user_id=request.user_id,
-                    search_mode=request.search_mode.value
+                    search_mode=request.search_mode.value,
+                    selected_document_ids=request.selected_document_ids
                 )
                 ai_response = result['response']
                 sources_data = result.get('sources', [])
@@ -288,22 +329,29 @@ async def send_message(request: ChatMessageRequest):
             ai_response = f"I apologize, but I'm currently unable to process your request due to a technical issue. Please try again later. Your message was: {request.message}"
             sources_data = []
         
-        # Extract and format sources from response using LangChain's built-in source tracking
+        # Extract and format sources using the new structured citation method
         formatted_sources = []
         if 'result' in locals() and result:
-            # Try to get source documents from LangChain result first
-            source_documents = result.get('source_documents', [])
+            # Use the new structured source extraction method
+            formatted_sources = extract_sources_from_structured_result(result)
             
-            # If no source_documents in result, fallback to sources_data
-            if not source_documents and 'sources_data' in locals() and sources_data:
-                logger.info("No source_documents in LangChain result, using fallback sources_data")
-                formatted_sources = extract_document_sources_from_langchain(sources_data)
-            elif source_documents:
-                formatted_sources = extract_document_sources_from_langchain(source_documents)
+            # Display sources in terminal (bulletproof method)
+            display_sources_in_terminal(formatted_sources)
+            
+            # Log the sources for debugging
+            if formatted_sources:
+                source_names = [s.get('title', 'Unknown') for s in formatted_sources]
+                logger.info(f"Final sources to display: {source_names}")
+                
+                # Count sources with quotes for additional logging
+                quoted_sources = [s for s in formatted_sources if s.get('quote')]
+                if quoted_sources:
+                    logger.info(f"Sources with exact quotes: {len(quoted_sources)} out of {len(formatted_sources)}")
+                    logger.info(f"Saving quotes to database for conversation {conversation_id}")
             else:
-                logger.warning("No sources available from either LangChain result or sources_data")
+                logger.warning("No sources extracted from result")
         
-        # Store assistant message in database with sources
+        # Store assistant message in database with sources (including quotes)
         assistant_message = message_repo.add(
             conversation_id=UUID(conversation_id),
             role="assistant", 
@@ -313,7 +361,7 @@ async def send_message(request: ChatMessageRequest):
                 "needs_summarization": needs_summarization,
                 "message_pairs": message_pairs,
                 "context_window_usage": context_window_usage,
-                "sources": formatted_sources  # Store sources in metadata
+                "sources": formatted_sources  # Store sources in metadata (now includes quotes)
             }
         )
         

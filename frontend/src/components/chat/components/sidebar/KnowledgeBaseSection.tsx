@@ -8,6 +8,8 @@ interface KnowledgeBaseSectionProps {
   documents: Document[]
   onShowDocumentModal: () => void
   onRemoveDocument: (docId: number) => void
+  documentsLoading?: boolean
+  documentsError?: string | null
 }
 
 export function KnowledgeBaseSection({ 
@@ -16,7 +18,9 @@ export function KnowledgeBaseSection({
   selectedDocuments, 
   documents, 
   onShowDocumentModal, 
-  onRemoveDocument 
+  onRemoveDocument,
+  documentsLoading = false,
+  documentsError = null
 }: KnowledgeBaseSectionProps) {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -57,7 +61,45 @@ export function KnowledgeBaseSection({
             </button>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px' }}>
-            {selectedDocuments.length === 0 ? (
+            {documentsLoading ? (
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                padding: '20px',
+                color: '#9ca3af'
+              }}>
+                <div style={{
+                  width: '20px',
+                  height: '20px',
+                  border: '2px solid #4b5563',
+                  borderTop: '2px solid #60a5fa',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                  marginBottom: '8px'
+                }}></div>
+                <p style={{ fontSize: '12px', margin: 0 }}>Loading documents...</p>
+                <style jsx>{`
+                  @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                  }
+                `}</style>
+              </div>
+            ) : documentsError ? (
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                padding: '20px',
+                color: '#ef4444',
+                textAlign: 'center'
+              }}>
+                <i className="fas fa-exclamation-triangle" style={{ fontSize: '16px', marginBottom: '8px' }}></i>
+                <p style={{ fontSize: '12px', margin: '0 0 4px 0', fontWeight: '500' }}>Failed to load</p>
+                <p style={{ fontSize: '10px', margin: 0, color: '#9ca3af' }}>{documentsError}</p>
+              </div>
+            ) : selectedDocuments.length === 0 ? (
               <p style={{ fontSize: '12px', color: '#9ca3af', width: '100%', textAlign: 'center' }}>No documents selected</p>
             ) : (
               selectedDocuments.map(docId => {

@@ -750,12 +750,13 @@
   cursor: pointer;
   padding: 0.25rem;
   border-radius: 4px;
-  color: #64748b;
+  color: #d1d5db;
   font-size: 1rem;
 }
 
 .logout-button:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: #4b5563;
+  color: white;
 }
 
 /* Responsive Design */
@@ -819,8 +820,8 @@ body {
 /* Sidebar Styles */
 .sidebar {
   width: 280px;
-  background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
-  border-right: 1px solid #e2e8f0;
+  background: #1f2937;
+  border-right: 1px solid #4b5563;
   transition: transform 0.3s ease;
   position: fixed;
   height: 100vh;
@@ -834,7 +835,7 @@ body {
 
 .sidebar-header {
   padding: 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #4b5563;
 }
 
 .sidebar-logo {
@@ -858,10 +859,7 @@ body {
 .sidebar-logo-text {
   font-size: 1.25rem;
   font-weight: bold;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: white;
 }
 
 .sidebar-nav {
@@ -878,7 +876,7 @@ body {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #64748b;
+  color: #d1d5db;
 }
 
 .nav-item {
@@ -893,7 +891,7 @@ body {
   gap: 0.75rem;
   padding: 0.75rem 1rem;
   text-decoration: none;
-  color: #475569;
+  color: #d1d5db;
   transition: all 0.2s ease;
   cursor: pointer;
   border: none;
@@ -903,12 +901,12 @@ body {
 }
 
 .nav-link:hover {
-  background: linear-gradient(135deg, #dbeafe 0%, #e9d5ff 100%);
-  color: #1e293b;
+  background: #374151;
+  color: white;
 }
 
 .nav-link.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  background: #60a5fa;
   color: white;
 }
 
@@ -919,7 +917,7 @@ body {
 
 .sidebar-footer {
   padding: 1rem 1.5rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid #4b5563;
   margin-top: auto;
 }
 
@@ -928,7 +926,7 @@ body {
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem;
-  background: linear-gradient(135deg, #dbeafe 0%, #e9d5ff 100%);
+  background: #374151;
   border-radius: 8px;
 }
 
@@ -936,7 +934,7 @@ body {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #3b82f6;
+  background: #60a5fa;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -956,11 +954,12 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: white;
 }
 
 .user-email {
   font-size: 0.75rem;
-  color: #64748b;
+  color: #d1d5db;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
