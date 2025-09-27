@@ -6,7 +6,7 @@ import logging
 import os
 import asyncio
 from datetime import datetime
-from .api import auth, summarization, documents, chat, analytics  # Add analytics import
+from .api import auth, summarization, documents, chat, analytics, document_selections  # Add document_selections import
 from .core.database import db_manager
 from .db.init_db import create_tables
 from .api import profile
@@ -48,7 +48,7 @@ app.add_middleware(
 # Add trusted host middleware
 app.add_middleware(
     TrustedHostMiddleware,
-    allowed_hosts=["localhost", "127.0.0.1", "*.localhost"]
+    allowed_hosts=["localhost", "127.0.0.1", "*.localhost", "127.0.0.1:3000"]
 )
 
 # Include routers (FIXED - removed duplicates, added documents)
@@ -58,6 +58,7 @@ app.include_router(documents.router, prefix="/api")  # Add this line
 app.include_router(chat.router, prefix="/api")  # Add chat router
 app.include_router(analytics.router, prefix="/api")  # Add analytics router
 app.include_router(profile.router, prefix="/api")
+app.include_router(document_selections.router, prefix="/api")  # Add document selections router
 
 
 @app.get("/")
