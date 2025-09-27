@@ -89,7 +89,7 @@ class Settings(BaseSettings):
 	DEFAULT_LLM_PROVIDER: str = Field("groq", description="Default LLM provider")
 	DEFAULT_LLM_MODEL: str = Field("llama-3.1-8b-instant", description="Default LLM model")
 	DEFAULT_TEMPERATURE: float = Field(0.7, description="Default LLM temperature")
-	DEFAULT_MAX_TOKENS: int = Field(2000, description="Default max tokens")
+	DEFAULT_MAX_TOKENS: int = Field(4000, description="Default max tokens")
 	
 	# DeepSeek specific settings
 	DEEPSEEK_MODEL: str = Field("deepseek-chat", description="DeepSeek model name")

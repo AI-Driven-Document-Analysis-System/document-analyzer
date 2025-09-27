@@ -61,8 +61,8 @@ Question: {question}
 
 Use ### headings, **bold**, - bullets, `backticks` in your answer.
 
-JSON format:
-{{"answer": "### Topic\\n\\n**Key** points:\\n\\n- **Point 1**: Details", "citations": [{{"source_id": 0, "document_name": "doc.pdf", "quote": "quote"}}]}}""",
+Return ONLY valid JSON (no markdown code blocks, no extra text):
+{{"answer": "### Topic\\n\\n**Key points:**\\n\\n- **Point 1**: Details\\n- **Point 2**: More info", "citations": [{{"source_id": 0, "document_name": "doc.pdf", "quote": "quote"}}]}}""",
             input_variables=["formatted_docs", "chat_history", "question"]
         )
         
@@ -102,8 +102,10 @@ Answer:""",
         # Clean response aggressively
         clean_text = response_text.strip('\n\r\t "')
         
-        # Remove markdown
-        clean_text = re.sub(r'```json|```', '', clean_text).strip()
+        # Remove markdown code blocks more thoroughly
+        clean_text = re.sub(r'```json\s*', '', clean_text)
+        clean_text = re.sub(r'```\s*$', '', clean_text)
+        clean_text = clean_text.strip()
         
         # If it starts with just "answer", wrap it in braces
         if clean_text.startswith('"answer"'):
@@ -116,7 +118,20 @@ Answer:""",
             return result
         except:
             print(f"DEBUG: JSON parsing failed, using fallback")
-            print(f"DEBUG: Raw response text: {response_text[:500]}...")
+            
+            # Groq-specific fallback (free API has truncation issues)
+            is_groq = 'groq' in str(type(self.llm)).lower() or 'ChatGroq' in str(type(self.llm))
+            if is_groq:
+                print(f"DEBUG: Groq detected - extracting answer without citations")
+                # Extract answer from malformed JSON (handle both flat and nested structures)
+                answer_match = re.search(r'"answer":\s*"([^"]*(?:\\.[^"]*)*)"', response_text, re.DOTALL)
+                if not answer_match:
+                    # Try nested structure: "answer": { "content here" }
+                    answer_match = re.search(r'"answer":\s*\{\s*"([^"]*(?:\\.[^"]*)*)"', response_text, re.DOTALL)
+                if answer_match:
+                    answer = answer_match.group(1).replace('\\n', '\n').replace('\\"', '"')
+                    print(f"DEBUG: Successfully extracted answer from Groq response")
+                    return {"answer": answer, "citations": []}
             
             # Check if the response indicates no relevant information
             if any(phrase in response_text.lower() for phrase in [
