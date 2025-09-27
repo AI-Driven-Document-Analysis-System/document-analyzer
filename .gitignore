@@ -57,3 +57,6 @@ poppler.zip
 
 # Test files
 test_aws_creds.py
+node_modules/.bin/loose-envify
+*.cmd
+/node_modules
