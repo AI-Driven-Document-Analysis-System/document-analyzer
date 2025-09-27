@@ -42,7 +42,7 @@ class ChatService {
     message: string, 
     conversationId?: string, 
     searchMode: 'standard' | 'rephrase' | 'multiple_queries' = 'standard',
-    selectedDocumentIds?: number[],
+    selectedDocumentIds?: string[],
     selectedModel?: { provider: string; model: string; name: string }
   ): Promise<ChatResponse> {
     try {
@@ -57,7 +57,7 @@ class ChatService {
         user_id: userId,
         memory_type: 'window',
         search_mode: searchMode,
-        selected_document_ids: selectedDocumentIds ? selectedDocumentIds.map(id => String(id)) : null,
+        selected_document_ids: selectedDocumentIds || null,
         llm_config: selectedModel ? {
           provider: selectedModel.provider,
           model: selectedModel.model,

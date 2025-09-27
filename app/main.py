@@ -6,7 +6,7 @@ import logging
 import os
 import asyncio
 from datetime import datetime
-from .api import auth, summarization, documents, chat, analytics, document_selections  # Add document_selections import
+from .api import auth, summarization, documents, chat, analytics, document_selections, chat_streaming  # Add chat_streaming import
 from .core.database import db_manager
 from .db.init_db import create_tables
 from .api import profile
@@ -59,6 +59,7 @@ app.include_router(chat.router, prefix="/api")  # Add chat router
 app.include_router(analytics.router, prefix="/api")  # Add analytics router
 app.include_router(profile.router, prefix="/api")
 app.include_router(document_selections.router, prefix="/api")  # Add document selections router
+app.include_router(chat_streaming.router, prefix="/api")  # Add streaming chat router
 
 
 @app.get("/")

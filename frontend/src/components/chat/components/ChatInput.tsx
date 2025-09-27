@@ -9,7 +9,7 @@ interface ChatInputProps {
   onKeyPress: (e: React.KeyboardEvent) => void
   searchMode: 'standard' | 'rephrase' | 'multiple_queries'
   setSearchMode: (mode: 'standard' | 'rephrase' | 'multiple_queries') => void
-  selectedModel: { provider: string; model: string; name: string }
+  selectedModel?: { provider: string; model: string; name: string }
   setSelectedModel: (model: { provider: string; model: string; name: string }) => void
   isDarkMode?: boolean
 }
@@ -195,7 +195,7 @@ export function ChatInput({ inputValue, setInputValue, onSendMessage, isTyping, 
                 width: '6px', 
                 height: '6px', 
                 borderRadius: '50%', 
-                backgroundColor: selectedModel.provider === 'groq' ? '#10b981' : '#3b82f6',
+                backgroundColor: selectedModel?.provider === 'groq' ? '#10b981' : '#3b82f6',
                 flexShrink: 0
               }}></span>
               <span style={{ 
@@ -204,7 +204,7 @@ export function ChatInput({ inputValue, setInputValue, onSendMessage, isTyping, 
                 whiteSpace: 'nowrap',
                 flex: 1
               }}>
-                {selectedModel.provider === 'groq' ? 'Groq' : 'DeepSeek'}
+                {selectedModel?.provider === 'groq' ? 'Groq' : selectedModel?.provider === 'deepseek' ? 'DeepSeek' : 'Default'}
               </span>
             </button>
 
@@ -234,14 +234,14 @@ export function ChatInput({ inputValue, setInputValue, onSendMessage, isTyping, 
                       cursor: 'pointer',
                       fontSize: '12px',
                       color: isDarkMode ? '#f9fafb' : '#374151',
-                      backgroundColor: selectedModel.provider === model.provider ? (isDarkMode ? '#4b5563' : '#f3f4f6') : 'transparent',
+                      backgroundColor: selectedModel?.provider === model.provider ? (isDarkMode ? '#4b5563' : '#f3f4f6') : 'transparent',
                       borderTop: index > 0 ? `1px solid ${isDarkMode ? '#4b5563' : '#e5e7eb'}` : 'none',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px'
                     }}
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isDarkMode ? '#4b5563' : '#f9fafb'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = selectedModel.provider === model.provider ? (isDarkMode ? '#4b5563' : '#f3f4f6') : 'transparent'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = selectedModel?.provider === model.provider ? (isDarkMode ? '#4b5563' : '#f3f4f6') : 'transparent'}
                   >
                     <span style={{ 
                       width: '8px', 
@@ -256,7 +256,7 @@ export function ChatInput({ inputValue, setInputValue, onSendMessage, isTyping, 
                         {model.provider === 'groq' ? 'Fast responses, free tier' : 'High quality, reliable'}
                       </div>
                     </div>
-                    {selectedModel.provider === model.provider && (
+                    {selectedModel?.provider === model.provider && (
                       <i className="fas fa-check" style={{ fontSize: '10px', color: '#10b981' }}></i>
                     )}
                   </div>

@@ -57,12 +57,28 @@ class UniversalCitationChain:
 Documents:
 {formatted_docs}
 
+Chat History: {chat_history}
 Question: {question}
 
 Use ### headings, **bold**, - bullets, `backticks` in your answer.
 
 Return ONLY valid JSON (no markdown code blocks, no extra text):
 {{"answer": "### Topic\\n\\n**Key points:**\\n\\n- **Point 1**: Details\\n- **Point 2**: More info", "citations": [{{"source_id": 0, "document_name": "doc.pdf", "quote": "quote"}}]}}""",
+            input_variables=["formatted_docs", "chat_history", "question"]
+        )
+        
+        # Create streaming prompt that returns clean markdown (no JSON)
+        self.streaming_prompt = PromptTemplate(
+            template="""Answer the question using the provided documents. Format your response in clean markdown.
+
+Documents:
+{formatted_docs}
+
+Chat History: {chat_history}
+Question: {question}
+
+Use ### headings, **bold text**, - bullet points, and `code` formatting in your response.
+Provide a comprehensive answer based on the documents. Do not include JSON formatting - just return clean markdown text.""",
             input_variables=["formatted_docs", "chat_history", "question"]
         )
         
@@ -413,16 +429,16 @@ Answer:""",
         relevant_docs = self.retriever.get_relevant_documents(question)
         
         # Create QA chain
-        qa_chain = load_qa_chain(llm=self.llm, chain_type="stuff", verbose=False)
+        self.qa_chain = load_qa_chain(self.llm, chain_type="stuff", prompt=self.fallback_prompt, memory=self.memory)
         
         try:
             if all_callbacks:
-                result = await qa_chain.ainvoke(
+                result = await self.qa_chain.ainvoke(
                     {"input_documents": relevant_docs, "question": question},
                     config={"callbacks": all_callbacks}
                 )
             else:
-                result = await qa_chain.ainvoke({"input_documents": relevant_docs, "question": question})
+                result = await self.qa_chain.ainvoke({"input_documents": relevant_docs, "question": question})
             
             output_text = result.get("output_text", "")
             
@@ -431,56 +447,46 @@ Answer:""",
             
             return {
                 "answer": output_text,
-                "source_documents": relevant_docs,
-                "sources": [],
-                "chat_history": self.memory.chat_memory.messages
+                "source_documents": relevant_docs
             }
             
         except Exception as e:
-            print(f"ERROR: Regular QA failed: {e}")
+            print(f"ERROR in arun: {e}")
             return {
-                "answer": "I'm sorry, I encountered an error processing your question.",
-                "source_documents": [],
-                "sources": [],
-                "chat_history": self.memory.chat_memory.messages
+                "answer": f"I apologize, but I encountered an error processing your question: {str(e)}",
+                "source_documents": []
             }
     
-    async def _arun_fallback(self, question: str, documents: List, callbacks: Optional[List] = None) -> Dict[str, Any]:
-        """Fallback QA with pre-retrieved documents."""
+    async def arun_streaming(self, question: str, callbacks: Optional[List] = None) -> str:
+        """Streaming QA that returns clean markdown (no JSON)."""
         all_callbacks = callbacks or []
         
-        qa_chain = load_qa_chain(llm=self.llm, chain_type="stuff", verbose=False)
+        # Retrieve documents
+        relevant_docs = self.retriever.get_relevant_documents(question)
+        
+        # Create streaming QA chain with clean markdown prompt
+        streaming_chain = load_qa_chain(self.llm, chain_type="stuff", prompt=self.streaming_prompt, memory=self.memory)
         
         try:
             if all_callbacks:
-                result = await qa_chain.ainvoke(
-                    {"input_documents": documents, "question": question},
+                result = await streaming_chain.ainvoke(
+                    {"input_documents": relevant_docs, "question": question},
                     config={"callbacks": all_callbacks}
                 )
             else:
-                result = await qa_chain.ainvoke({"input_documents": documents, "question": question})
+                result = await streaming_chain.ainvoke({"input_documents": relevant_docs, "question": question})
             
             output_text = result.get("output_text", "")
             
             # Update memory
             self.memory.save_context({"input": question}, {"answer": output_text})
             
-            return {
-                "answer": output_text,
-                "source_documents": documents,
-                "sources": [],
-                "chat_history": self.memory.chat_memory.messages
-            }
+            return output_text
             
         except Exception as e:
-            print(f"ERROR: Fallback QA failed: {e}")
-            return {
-                "answer": "I'm sorry, I encountered an error processing your question.",
-                "source_documents": [],
-                "sources": [],
-                "chat_history": self.memory.chat_memory.messages
-            }
-    
+            print(f"ERROR in arun_streaming: {e}")
+            return f"I apologize, but I encountered an error processing your question: {str(e)}"
+
     def get_memory(self) -> List[Any]:
         """Get conversation memory."""
         return self.memory.chat_memory.messages

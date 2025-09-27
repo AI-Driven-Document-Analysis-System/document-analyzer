@@ -126,8 +126,12 @@ class AsyncStreamingCallbackHandler(BaseCallbackHandler):
         """
         # Store the token for complete response reconstruction
         self.tokens.append(token)
-        # Add token to the async queue for streaming
-        asyncio.create_task(self.token_queue.put(token))
+        # Add token to the async queue for streaming - use put_nowait to avoid event loop issues
+        try:
+            self.token_queue.put_nowait(token)
+        except Exception as e:
+            # If queue is full or other error, just store in tokens list
+            pass
 
     def on_llm_end(self, response: LLMResult, **kwargs: Any) -> None:
         """
@@ -141,8 +145,12 @@ class AsyncStreamingCallbackHandler(BaseCallbackHandler):
             response (LLMResult): The complete LLM response object
             **kwargs: Additional keyword arguments from LangChain
         """
-        # Signal end of token generation by adding None to the queue
-        asyncio.create_task(self.token_queue.put(None))
+        # Signal end of token generation by adding None to the queue - use put_nowait to avoid event loop issues
+        try:
+            self.token_queue.put_nowait(None)
+        except Exception as e:
+            # If queue is full or other error, tokens list will still be available
+            pass
 
     async def get_tokens(self):
         """

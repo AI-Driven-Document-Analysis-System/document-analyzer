@@ -2,7 +2,8 @@
 
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
-import { chatService, type ChatMessage as ServiceChatMessage } from "../../services/chatService"
+import { chatService, type ChatMessage as ServiceChatMessage } from '../../services/chatService'
+import { streamingChatService } from '../../services/streamingChatService'
 import type { Message, ExpandedSections, ChatHistory } from './types'
 import { initialMessages } from './data/sampleData'
 import { useDocumentManagement } from './hooks/useDocumentManagement'
@@ -21,20 +22,13 @@ function RAGChatbotContent() {
   // State for current user ID
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   
-  const [messages, setMessages] = useState<Message[]>(() => {
-    // Don't load from localStorage on initial render - wait for user ID
-    return initialMessages
-  })
+  const [messages, setMessages] = useState<Message[]>([])
   
   const [inputValue, setInputValue] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   const [searchMode, setSearchMode] = useState<'standard' | 'rephrase' | 'multiple_queries'>('standard')
-  const [selectedModel, setSelectedModel] = useState<{ provider: string, model: string, name: string }>({
-    provider: 'groq',
-    model: 'llama-3.1-8b-instant',
-    name: 'Groq Llama 3.1 8B'
-  })
-  
+  const [selectedModel, setSelectedModel] = useState<{ provider: string; model: string; name: string } | undefined>(undefined)
+  const [useStreaming, setUseStreaming] = useState(true) // Enable streaming by default
   // Load conversation ID from localStorage (user-specific)
   const [conversationId, setConversationId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -94,31 +88,68 @@ function RAGChatbotContent() {
     setIsTyping(true)
     
     try {
-      // Send message with the specified search method and selected documents
-      const response = await chatService.sendMessage(
-        userMessage.content, 
-        conversationId || undefined, 
-        method,
-        selectedDocuments.length > 0 ? selectedDocuments : undefined,
-        selectedModel
-      )
-      
-      // Create new assistant message with regenerated content
+      // Create placeholder message for streaming regeneration
+      const assistantMessageId = Date.now().toString()
       const newAssistantMessage: Message = {
-        id: Date.now().toString(),
+        id: assistantMessageId,
         type: "assistant",
-        content: response.response,
+        content: "",
         timestamp: new Date(),
-        sources: response.sources || [],
+        sources: [],
       }
       
+      // Add empty assistant message that will be updated in real-time
       setMessages(prev => [...prev, newAssistantMessage])
       
-      // Update selected message sources for sidebar
-      if (response.sources && response.sources.length > 0) {
-        setSelectedMessageSources(response.sources)
-        setExpandedSections(prev => ({ ...prev, sources: true }))
-      }
+      // Use streaming service for real-time regeneration
+      await streamingChatService.sendStreamingMessage(
+        userMessage.content,
+        conversationId || undefined,
+        method,
+        selectedDocuments.length > 0 ? selectedDocuments : undefined,
+        selectedModel,
+        {
+          onToken: (token) => {
+            // Update the assistant message content in real-time
+            setMessages((prev) => 
+              prev.map(msg => 
+                msg.id === assistantMessageId 
+                  ? { ...msg, content: msg.content + token }
+                  : msg
+              )
+            )
+          },
+          onSources: (sources) => {
+            // Update sources when received
+            setMessages((prev) => 
+              prev.map(msg => 
+                msg.id === assistantMessageId 
+                  ? { ...msg, sources: sources }
+                  : msg
+              )
+            )
+            // Update sidebar sources
+            setSelectedMessageSources(sources)
+            setExpandedSections(prev => ({ ...prev, sources: true }))
+          },
+          onComplete: (response) => {
+            console.log('✅ Regeneration completed')
+            setIsTyping(false)
+          },
+          onError: (error) => {
+            console.error('❌ Regeneration error:', error)
+            setIsTyping(false)
+            // Update message with error
+            setMessages((prev) => 
+              prev.map(msg => 
+                msg.id === assistantMessageId 
+                  ? { ...msg, content: `Error: ${error}` }
+                  : msg
+              )
+            )
+          }
+        }
+      )
       
     } catch (error) {
       console.error('Error regenerating answer:', error)
@@ -356,29 +387,79 @@ function RAGChatbotContent() {
         selectedModel: selectedModel
       })
       
-      const response = await chatService.sendMessage(
-        currentMessage, 
-        conversationId || undefined, 
-        searchMode,
-        selectedDocuments.length > 0 ? selectedDocuments : undefined,
-        selectedModel
-      )
-
+      // Create placeholder message for streaming
+      const assistantMessageId = (Date.now() + 1).toString()
       const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: assistantMessageId,
         type: "assistant",
-        content: response.response,
+        content: "",
         timestamp: new Date(),
-        sources: response.sources || [],
+        sources: [],
       }
 
+      // Add empty assistant message that will be updated in real-time
       setMessages((prev) => [...prev, assistantMessage])
 
-      // Update selected message sources for sidebar
-      if (response.sources && response.sources.length > 0) {
-        setSelectedMessageSources(response.sources)
-        setExpandedSections(prev => ({ ...prev, sources: true }))
-      }
+      // Use streaming service for real-time responses
+      await streamingChatService.sendStreamingMessage(
+        currentMessage,
+        conversationId || undefined,
+        searchMode,
+        selectedDocuments.length > 0 ? selectedDocuments : undefined,
+        selectedModel,
+        {
+          onStart: () => {
+            console.log('🚀 Streaming started')
+          },
+          onToken: (token) => {
+            // Update the assistant message content in real-time
+            setMessages((prev) => 
+              prev.map(msg => 
+                msg.id === assistantMessageId 
+                  ? { ...msg, content: msg.content + token }
+                  : msg
+              )
+            )
+          },
+          onSources: (sources) => {
+            // Update sources when received
+            console.log('📚 STREAMING: Updating message sources:', sources.length, sources)
+            setMessages((prev) => 
+              prev.map(msg => 
+                msg.id === assistantMessageId 
+                  ? { ...msg, sources: sources }
+                  : msg
+              )
+            )
+            // Update sidebar sources
+            setSelectedMessageSources(sources)
+            setExpandedSections(prev => ({ ...prev, sources: true }))
+          },
+          onComplete: (response) => {
+            console.log('✅ Streaming completed')
+            setIsTyping(false) // Stop typing indicator
+            // Update conversation ID if needed
+            if (response.conversation_id && response.conversation_id !== conversationId) {
+              setConversationId(response.conversation_id)
+              if (currentUserId) {
+                localStorage.setItem(`rag-chatbot-conversation-id-${currentUserId}`, response.conversation_id)
+              }
+            }
+          },
+          onError: (error) => {
+            console.error('❌ Streaming error:', error)
+            setIsTyping(false) // Stop typing indicator
+            // Update message with error
+            setMessages((prev) => 
+              prev.map(msg => 
+                msg.id === assistantMessageId 
+                  ? { ...msg, content: `Error: ${error}` }
+                  : msg
+              )
+            )
+          }
+        }
+      )
 
     } catch (error) {
       console.error('Error sending message:', error)
