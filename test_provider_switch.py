@@ -116,7 +116,7 @@ def main():
     print("\n" + "=" * 50)
     print("✅ Test completed!")
     print("\nTo switch providers, update your .env file:")
-    print("   LLM_PROVIDER=deepseek  # or groq, openai, gemini")
+    print("   LLM_PROVIDER=deepseek  # or groq")
     print("   DEEPSEEK_API_KEY=your_actual_api_key")
 
 

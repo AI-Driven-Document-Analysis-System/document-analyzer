@@ -107,7 +107,7 @@ class ChatbotService:
 
         Args:
             llm_config: Configuration for the language model:
-                - provider: 'openai', 'gemini', 'groq', 'deepseek', or 'llama'
+                - provider: 'groq', 'deepseek', or 'llama'
                 - api_key: API key for external providers
                 - model: Model name
                 - temperature: Generation temperature
@@ -346,7 +346,7 @@ class ChatbotService:
 
     def _create_llm(self, llm_config: Dict[str, Any]):
         """Create LLM instance based on configuration."""
-        provider = llm_config.get('provider', 'openai').lower()
+        provider = llm_config.get('provider', 'groq').lower()
         
         # Always add Langfuse callbacks to the config
         langfuse_callbacks = get_langfuse_callbacks()
@@ -357,21 +357,7 @@ class ChatbotService:
         llm_config['callbacks'] = all_callbacks
         
 
-        if provider == 'openai':
-            return LLMFactory.create_openai_llm(
-                api_key=llm_config['api_key'],
-                model=llm_config.get('model', 'gpt-3.5-turbo'),
-                temperature=llm_config.get('temperature', 0.7),
-                streaming=llm_config.get('streaming', False),
-                callbacks=llm_config.get('callbacks')
-            )
-        elif provider == 'gemini':
-            return LLMFactory.create_gemini_llm(
-                api_key=llm_config['api_key'],
-                streaming=llm_config.get('streaming', False),
-                callbacks=llm_config.get('callbacks')
-            )
-        elif provider == 'groq':
+        if provider == 'groq':
             return LLMFactory.create_groq_llm(
                 api_key=llm_config['api_key'],
                 model=llm_config.get('model', 'llama-3.1-8b-instant'),

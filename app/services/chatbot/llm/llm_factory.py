@@ -1,5 +1,4 @@
-from langchain_community.llms import OpenAI
-from langchain_community.chat_models import ChatOpenAI
+# Removed OpenAI imports - only using Groq and DeepSeek
 from langchain_groq import ChatGroq
 from typing import Any, List, Optional, Dict
 from langchain_community.llms import LlamaCpp
@@ -8,12 +7,12 @@ from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from typing import Optional, List, Any
 from ....core.langfuse_config import get_langfuse_callbacks
 
-# Optional imports
+# Import ChatOpenAI for DeepSeek (uses OpenAI-compatible API)
 try:
-    from langchain_google_genai import ChatGoogleGenerativeAI
-    GEMINI_AVAILABLE = True
+    from langchain_community.chat_models import ChatOpenAI
+    OPENAI_COMPATIBLE_AVAILABLE = True
 except ImportError:
-    GEMINI_AVAILABLE = False
+    OPENAI_COMPATIBLE_AVAILABLE = False
 
 
 
@@ -24,121 +23,15 @@ class LLMFactory:
     Factory class for creating Language Model instances.
     
     This class provides static methods to create different types of LLMs:
-    - OpenAI models (both chat and completion models)
+    - Groq models (fast inference)
+    - DeepSeek models (OpenAI-compatible API)
     - Local Llama models using LlamaCpp
     
     The factory handles configuration differences between model types and provides
     a unified interface for LLM creation.
     """
     
-    @staticmethod
-    def create_openai_llm(api_key: str, model: str = "gpt-3.5-turbo",
-                          temperature: float = 0.7, streaming: bool = False,
-                          callbacks: Optional[List[Any]] = None) -> Any:
-        """
-        Create an OpenAI Language Model instance.
-        
-        This method creates either a ChatOpenAI or OpenAI instance depending on the
-        model name. Chat models (starting with "gpt-") use ChatOpenAI, while other
-        models use the standard OpenAI completion interface.
-        
-        Args:
-            api_key (str): OpenAI API key for authentication
-            model (str): Model name (e.g., "gpt-3.5-turbo", "gpt-4", "text-davinci-003")
-            temperature (float): Controls randomness in responses (0.0 = deterministic, 1.0 = very random)
-            streaming (bool): Whether to enable streaming responses
-            callbacks (Optional[List[Any]]): List of callback handlers for monitoring and logging
-            
-        Returns:
-            Any: Either ChatOpenAI or OpenAI instance configured with the specified parameters
-            
-        Example:
-            # Create a streaming GPT-3.5-turbo model
-            llm = LLMFactory.create_openai_llm(
-                api_key="your-api-key",
-                model="gpt-3.5-turbo",
-                temperature=0.7,
-                streaming=True
-            )
-        """
-        # Set up callback manager if callbacks are available
-        if callbacks:
-            callback_manager = CallbackManager(callbacks)
-        else:
-            callback_manager = None
-
-        # Use ChatOpenAI for GPT models (chat-based interface)
-        if model.startswith("gpt-"):
-            return ChatOpenAI(
-                openai_api_key=api_key,
-                model_name=model,
-                temperature=temperature,
-                streaming=streaming,
-                callbacks=callbacks
-            )
-        # Use OpenAI for other models (completion-based interface)
-        else:
-            return OpenAI(
-                openai_api_key=api_key,
-                model_name=model,
-                temperature=temperature,
-                streaming=streaming,
-                callbacks=callbacks
-            )
-
-    @staticmethod
-    def create_gemini_llm(api_key: str, model: str = "gemini-1.5-flash",
-                          temperature: float = 0.7, streaming: bool = False,
-                          callbacks: Optional[List[Any]] = None) -> Any:
-        """
-        This method creates a ChatGoogleGenerativeAI instance for Google's Generative AI models.
-        This is the correct integration for the new Google Generative AI API (Gemini models).
-        
-        Args:
-            api_key (str): Google AI API key for authentication
-            model (str): Model name (e.g., "gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.0-pro")
-            temperature (float): Controls randomness in responses (0.0 = deterministic, 1.0 = very random)
-            streaming (bool): Whether to enable streaming responses
-            callbacks (Optional[List[Any]]): List of callback handlers for monitoring and logging
-            
-        Returns:
-            ChatGoogleGenerativeAI: Configured instance for Google Generative AI models
-            
-        Example:
-            # Create a streaming Gemini model
-            llm = LLMFactory.create_gemini_llm(
-                api_key="your-google-api-key",
-                model="gemini-1.5-flash",
-                temperature=0.7,
-                streaming=True
-            )
-            
-            # Create a non-streaming Gemini model
-            llm = LLMFactory.create_gemini_llm(
-                api_key="your-google-api-key",
-                model="gemini-1.5-pro",
-                temperature=0.5,
-                streaming=False
-            )
-        """
-        # Set up callback manager if callbacks are available
-        if callbacks:
-            callback_manager = CallbackManager(callbacks)
-        else:
-            callback_manager = None
-
-        # Check if Gemini is available
-        if not GEMINI_AVAILABLE:
-            raise ImportError("langchain_google_genai is not installed. Install it with: pip install langchain-google-genai")
-        
-        # Use ChatGoogleGenerativeAI for all Gemini models
-        # This is the correct integration for the new Google Generative AI API
-        return ChatGoogleGenerativeAI(
-            google_api_key=api_key,
-            model=model,
-            temperature=temperature,
-            callbacks=callbacks
-        )
+    # Removed OpenAI and Gemini methods - only keeping Groq and DeepSeek
 
     @staticmethod
     def create_groq_llm(api_key: str, model: str = "llama-3.1-8b-instant",

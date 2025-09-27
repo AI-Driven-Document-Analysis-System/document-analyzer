@@ -41,7 +41,7 @@ def test_provider_config():
     
     service = get_llm_provider_service()
     
-    for provider in ["groq", "deepseek", "openai", "gemini"]:
+    for provider in ["groq", "deepseek"]:
         try:
             config = service.get_provider_config(provider)
             print(f"\n{provider.upper()} Configuration:")
@@ -151,7 +151,7 @@ def display_usage_examples():
     
     examples = [
         "# Set environment variable to switch providers:",
-        "export LLM_PROVIDER=deepseek  # or groq, openai, gemini",
+        "export LLM_PROVIDER=deepseek  # or groq",
         "",
         "# In your Python code:",
         "from app.services.llm_provider_service import create_default_llm",

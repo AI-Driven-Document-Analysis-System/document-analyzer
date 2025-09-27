@@ -29,7 +29,7 @@ class LLMProviderService:
         Get the currently active LLM provider from configuration.
         
         Returns:
-            str: The active provider name (groq, deepseek, openai, gemini)
+            str: The active provider name (groq, deepseek)
         """
         return self.settings.LLM_PROVIDER.lower()
     
@@ -73,30 +73,10 @@ class LLMProviderService:
                 "max_tokens": self.settings.DEEPSEEK_MAX_TOKENS
             }
             
-        elif provider == "openai":
-            if not self.settings.OPENAI_API_KEY:
-                raise ValueError("OPENAI_API_KEY is required but not set in environment")
-            return {
-                "provider": "openai",
-                "api_key": self.settings.OPENAI_API_KEY,
-                "model": "gpt-3.5-turbo",
-                "temperature": self.settings.DEFAULT_TEMPERATURE,
-                "max_tokens": self.settings.DEFAULT_MAX_TOKENS
-            }
-            
-        elif provider == "gemini":
-            if not self.settings.GEMINI_API_KEY:
-                raise ValueError("GEMINI_API_KEY is required but not set in environment")
-            return {
-                "provider": "gemini",
-                "api_key": self.settings.GEMINI_API_KEY,
-                "model": "gemini-1.5-flash",
-                "temperature": self.settings.DEFAULT_TEMPERATURE,
-                "max_tokens": self.settings.DEFAULT_MAX_TOKENS
-            }
+        # Removed OpenAI and Gemini configurations
             
         else:
-            raise ValueError(f"Unsupported provider: {provider}. Supported providers: groq, deepseek, openai, gemini")
+            raise ValueError(f"Unsupported provider: {provider}. Supported providers: groq, deepseek")
     
     def create_llm(self, provider: Optional[str] = None, **override_params) -> Any:
         """
@@ -145,23 +125,7 @@ class LLMProviderService:
                     callbacks=config.get("callbacks")
                 )
                 
-            elif provider_name == "openai":
-                return LLMFactory.create_openai_llm(
-                    api_key=config["api_key"],
-                    model=config["model"],
-                    temperature=config["temperature"],
-                    streaming=config.get("streaming", False),
-                    callbacks=config.get("callbacks")
-                )
-                
-            elif provider_name == "gemini":
-                return LLMFactory.create_gemini_llm(
-                    api_key=config["api_key"],
-                    model=config["model"],
-                    temperature=config["temperature"],
-                    streaming=config.get("streaming", False),
-                    callbacks=config.get("callbacks")
-                )
+            # Removed OpenAI and Gemini LLM creation
                 
         except Exception as e:
             self.logger.error(f"Failed to create LLM for provider {provider_name}: {str(e)}")
@@ -176,9 +140,7 @@ class LLMProviderService:
         """
         return {
             "groq": bool(self.settings.GROQ_API_KEY),
-            "deepseek": bool(self.settings.DEEPSEEK_API_KEY),
-            "openai": bool(self.settings.OPENAI_API_KEY),
-            "gemini": bool(self.settings.GEMINI_API_KEY)
+            "deepseek": bool(self.settings.DEEPSEEK_API_KEY)
         }
     
     def validate_provider_setup(self, provider: Optional[str] = None) -> bool:
