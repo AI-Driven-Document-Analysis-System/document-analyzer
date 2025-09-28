@@ -70,7 +70,7 @@ class RAGEndpointTester:
             "conversation_id": f"test-conversation-{int(time.time())}",
             "llm_config": {
                 "provider": "groq",  # Use Groq API
-                "model": "llama3-8b-8192",  # Groq model
+                "model": "llama-3.1-8b-instant",  # Groq model
                 "temperature": 0.3,
                 "streaming": False
             }

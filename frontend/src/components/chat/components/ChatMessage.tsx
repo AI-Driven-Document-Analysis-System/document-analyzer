@@ -1,6 +1,7 @@
 import type React from "react"
 import { useState, useEffect, useRef } from "react"
 import type { Message } from '../types'
+import { MarkdownRenderer } from './MarkdownRenderer'
 
 interface ChatMessageProps {
   message: Message
@@ -8,9 +9,10 @@ interface ChatMessageProps {
   onFeedback: (messageId: string, feedback: 'thumbs_up' | 'thumbs_down', reason?: string) => void
   onRephrasedQueryClick?: (query: string) => void
   onRegenerateAnswer?: (messageId: string, method: 'rephrase' | 'multiple_queries') => void
+  isDarkMode?: boolean
 }
 
-export function ChatMessage({ message, onSourcesClick, onFeedback, onRephrasedQueryClick, onRegenerateAnswer }: ChatMessageProps) {
+export function ChatMessage({ message, onSourcesClick, onFeedback, onRephrasedQueryClick, onRegenerateAnswer, isDarkMode = false }: ChatMessageProps) {
   const [isCopied, setIsCopied] = useState(false)
   const [showFeedbackDropdown, setShowFeedbackDropdown] = useState(false)
   const feedbackDropdownRef = useRef<HTMLDivElement>(null)
@@ -54,23 +56,25 @@ export function ChatMessage({ message, onSourcesClick, onFeedback, onRephrasedQu
           <i className="fas fa-robot" style={{ fontSize: '16px' }}></i>
         </div>
         <div className="max-w-[80%]">
-          <div className="p-4 rounded-lg" style={{ backgroundColor: '#f3f4f6', color: '#111827' }}>
-            <p className="text-sm leading-relaxed">{message.content}</p>
+          <div className="p-4 rounded-lg" style={{ backgroundColor: isDarkMode ? '#4a5568' : '#f3f4f6', color: isDarkMode ? '#f7fafc' : '#111827', border: isDarkMode ? '1px solid #718096' : 'none' }}>
+            <div className="text-sm leading-relaxed">
+              <MarkdownRenderer content={message.content} isDarkMode={isDarkMode} />
+            </div>
           </div>
           {message.sources && message.sources.length > 0 && (
             <div style={{ marginTop: '12px' }}>
-              <p style={{ fontSize: '12px', color: '#6b7280', fontWeight: '500', margin: '0 0 8px 0' }}>Sources:</p>
+              <p style={{ fontSize: '12px', color: isDarkMode ? '#9ca3af' : '#6b7280', fontWeight: '500', margin: '0 0 8px 0' }}>Sources:</p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {message.sources.map((source, index) => (
                   <div key={index} style={{ 
                     display: 'inline-flex',
                     alignItems: 'center',
-                    backgroundColor: '#f1f5f9',
-                    border: '1px solid #e2e8f0',
+                    backgroundColor: isDarkMode ? '#4a5568' : '#f1f5f9',
+                    border: `1px solid ${isDarkMode ? '#718096' : '#e2e8f0'}`,
                     borderRadius: '16px',
                     padding: '4px 8px',
                     fontSize: '10px',
-                    color: '#475569',
+                    color: isDarkMode ? '#f7fafc' : '#475569',
                     cursor: 'pointer'
                   }}>
                     <span style={{ fontWeight: '500' }}>{source.title}</span>
@@ -84,14 +88,14 @@ export function ChatMessage({ message, onSourcesClick, onFeedback, onRephrasedQu
               onClick={() => onFeedback?.(message.id || '', 'thumbs_up')}
               style={{ 
                 padding: '6px 8px', 
-                border: '1px solid #e5e7eb', 
+                border: `1px solid ${isDarkMode ? '#718096' : '#e5e7eb'}`, 
                 borderRadius: '6px', 
                 backgroundColor: 'transparent',
-                color: '#6b7280',
+                color: isDarkMode ? '#9ca3af' : '#6b7280',
                 cursor: 'pointer',
                 fontSize: '12px'
               }} 
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'} 
+              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isDarkMode ? '#4a5568' : '#f9fafb'} 
               onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
             >
               <i className="far fa-thumbs-up"></i>
@@ -101,15 +105,15 @@ export function ChatMessage({ message, onSourcesClick, onFeedback, onRephrasedQu
                 onClick={() => setShowFeedbackDropdown(!showFeedbackDropdown)}
                 style={{ 
                   padding: '6px 8px', 
-                  border: '1px solid #e5e7eb', 
+                  border: `1px solid ${isDarkMode ? '#718096' : '#e5e7eb'}`, 
                   borderRadius: '6px', 
-                  backgroundColor: showFeedbackDropdown ? '#f3f4f6' : 'transparent',
-                  color: '#6b7280',
+                  backgroundColor: showFeedbackDropdown ? (isDarkMode ? '#4a5568' : '#f3f4f6') : 'transparent',
+                  color: isDarkMode ? '#9ca3af' : '#6b7280',
                   cursor: 'pointer',
                   fontSize: '12px'
                 }} 
                 onMouseEnter={(e) => {
-                  if (!showFeedbackDropdown) e.currentTarget.style.backgroundColor = '#f9fafb'
+                  if (!showFeedbackDropdown) e.currentTarget.style.backgroundColor = isDarkMode ? '#4a5568' : '#f9fafb'
                 }} 
                 onMouseLeave={(e) => {
                   if (!showFeedbackDropdown) e.currentTarget.style.backgroundColor = 'transparent'
@@ -296,16 +300,16 @@ export function ChatMessage({ message, onSourcesClick, onFeedback, onRephrasedQu
               }}
               style={{ 
                 padding: '6px 8px', 
-                border: `1px solid ${isCopied ? '#3b82f6' : '#e5e7eb'}`, 
+                border: `1px solid ${isCopied ? '#3b82f6' : (isDarkMode ? '#718096' : '#e5e7eb')}`, 
                 borderRadius: '6px', 
                 backgroundColor: isCopied ? '#3b82f6' : 'transparent',
-                color: isCopied ? 'white' : '#6b7280',
+                color: isCopied ? 'white' : (isDarkMode ? '#9ca3af' : '#6b7280'),
                 cursor: 'pointer',
                 fontSize: '12px',
                 transition: 'all 0.3s ease'
               }} 
               onMouseEnter={(e) => {
-                if (!isCopied) e.currentTarget.style.backgroundColor = '#f9fafb'
+                if (!isCopied) e.currentTarget.style.backgroundColor = isDarkMode ? '#4a5568' : '#f9fafb'
               }} 
               onMouseLeave={(e) => {
                 if (!isCopied) e.currentTarget.style.backgroundColor = 'transparent'

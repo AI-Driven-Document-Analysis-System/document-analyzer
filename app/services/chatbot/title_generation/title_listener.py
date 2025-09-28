@@ -53,8 +53,8 @@ class TitleGenerationListener:
             
             logger.info(f"Received title generation request for conversation {conversation_id}")
             
-            # Generate title with Groq API
-            title = await self.title_generator.generate_title_with_llm(message)
+            # Generate title with Groq API (synchronous call)
+            title = self.title_generator.generate_title_with_llm(message)
             
             if title and title != "New Chat":
                 # Update conversation title in database
