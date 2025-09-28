@@ -33,6 +33,11 @@ export function ChatMessage({ message, onSourcesClick, onFeedback, onRephrasedQu
   }, [showFeedbackDropdown])
   
   if (message.type === "assistant") {
+    // Hide empty assistant messages during streaming
+    if (!message.content || message.content.trim() === '') {
+      return null;
+    }
+    
     return (
       <div 
         style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', marginBottom: '16px', cursor: 'pointer' }}
@@ -127,10 +132,10 @@ export function ChatMessage({ message, onSourcesClick, onFeedback, onRephrasedQu
                   bottom: '100%',
                   right: '0',
                   marginBottom: '4px',
-                  backgroundColor: 'white',
-                  border: '1px solid #d1d5db',
+                  backgroundColor: isDarkMode ? '#374151' : 'white',
+                  border: `1px solid ${isDarkMode ? '#4b5563' : '#d1d5db'}`,
                   borderRadius: '8px',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                  boxShadow: isDarkMode ? '0 4px 6px -1px rgba(0, 0, 0, 0.3)' : '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                   zIndex: 1000,
                   minWidth: '280px'
                 }}>
@@ -144,14 +149,14 @@ export function ChatMessage({ message, onSourcesClick, onFeedback, onRephrasedQu
                       padding: '8px 12px',
                       cursor: 'pointer',
                       fontSize: '12px',
-                      color: '#374151',
+                      color: isDarkMode ? '#f7fafc' : '#374151',
                       backgroundColor: 'transparent'
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isDarkMode ? '#4a5568' : '#f9fafb'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
                     <div style={{ fontWeight: '500', marginBottom: '2px' }}>Answer wasn't relevant</div>
-                    <div style={{ fontSize: '10px', color: '#6b7280', lineHeight: '1.2' }}>
+                    <div style={{ fontSize: '10px', color: isDarkMode ? '#9ca3af' : '#6b7280', lineHeight: '1.2' }}>
                       Try Rephrase for better relevance
                     </div>
                   </div>
@@ -165,15 +170,15 @@ export function ChatMessage({ message, onSourcesClick, onFeedback, onRephrasedQu
                       padding: '8px 12px',
                       cursor: 'pointer',
                       fontSize: '12px',
-                      color: '#374151',
+                      color: isDarkMode ? '#f7fafc' : '#374151',
                       backgroundColor: 'transparent',
-                      borderTop: '1px solid #e5e7eb'
+                      borderTop: `1px solid ${isDarkMode ? '#4b5563' : '#e5e7eb'}`
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isDarkMode ? '#4a5568' : '#f9fafb'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
                     <div style={{ fontWeight: '500', marginBottom: '2px' }}>Not factually correct</div>
-                    <div style={{ fontSize: '10px', color: '#6b7280', lineHeight: '1.2' }}>
+                    <div style={{ fontSize: '10px', color: isDarkMode ? '#9ca3af' : '#6b7280', lineHeight: '1.2' }}>
                       Try Multiple queries for verified facts
                     </div>
                   </div>
@@ -187,15 +192,15 @@ export function ChatMessage({ message, onSourcesClick, onFeedback, onRephrasedQu
                       padding: '8px 12px',
                       cursor: 'pointer',
                       fontSize: '12px',
-                      color: '#374151',
+                      color: isDarkMode ? '#f7fafc' : '#374151',
                       backgroundColor: 'transparent',
-                      borderTop: '1px solid #e5e7eb'
+                      borderTop: `1px solid ${isDarkMode ? '#4b5563' : '#e5e7eb'}`
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isDarkMode ? '#4a5568' : '#f9fafb'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
                     <div style={{ fontWeight: '500', marginBottom: '2px' }}>Incomplete response</div>
-                    <div style={{ fontSize: '10px', color: '#6b7280', lineHeight: '1.2' }}>
+                    <div style={{ fontSize: '10px', color: isDarkMode ? '#9ca3af' : '#6b7280', lineHeight: '1.2' }}>
                       Try Multiple queries for comprehensive coverage
                     </div>
                   </div>
@@ -209,15 +214,15 @@ export function ChatMessage({ message, onSourcesClick, onFeedback, onRephrasedQu
                       padding: '8px 12px',
                       cursor: 'pointer',
                       fontSize: '12px',
-                      color: '#374151',
+                      color: isDarkMode ? '#f7fafc' : '#374151',
                       backgroundColor: 'transparent',
-                      borderTop: '1px solid #e5e7eb'
+                      borderTop: `1px solid ${isDarkMode ? '#4b5563' : '#e5e7eb'}`
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isDarkMode ? '#4a5568' : '#f9fafb'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
                     <div style={{ fontWeight: '500', marginBottom: '2px' }}>Missing important information</div>
-                    <div style={{ fontSize: '10px', color: '#6b7280', lineHeight: '1.2' }}>
+                    <div style={{ fontSize: '10px', color: isDarkMode ? '#9ca3af' : '#6b7280', lineHeight: '1.2' }}>
                       Try Multiple queries for complete details
                     </div>
                   </div>
@@ -231,15 +236,15 @@ export function ChatMessage({ message, onSourcesClick, onFeedback, onRephrasedQu
                       padding: '8px 12px',
                       cursor: 'pointer',
                       fontSize: '12px',
-                      color: '#374151',
+                      color: isDarkMode ? '#f7fafc' : '#374151',
                       backgroundColor: 'transparent',
-                      borderTop: '1px solid #e5e7eb'
+                      borderTop: `1px solid ${isDarkMode ? '#4b5563' : '#e5e7eb'}`
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isDarkMode ? '#4a5568' : '#f9fafb'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
                     <div style={{ fontWeight: '500', marginBottom: '2px' }}>Answer was too general</div>
-                    <div style={{ fontSize: '10px', color: '#6b7280', lineHeight: '1.2' }}>
+                    <div style={{ fontSize: '10px', color: isDarkMode ? '#9ca3af' : '#6b7280', lineHeight: '1.2' }}>
                       Try Multiple queries for specific details
                     </div>
                   </div>
@@ -253,15 +258,15 @@ export function ChatMessage({ message, onSourcesClick, onFeedback, onRephrasedQu
                       padding: '8px 12px',
                       cursor: 'pointer',
                       fontSize: '12px',
-                      color: '#374151',
+                      color: isDarkMode ? '#f7fafc' : '#374151',
                       backgroundColor: 'transparent',
-                      borderTop: '1px solid #e5e7eb'
+                      borderTop: `1px solid ${isDarkMode ? '#4b5563' : '#e5e7eb'}`
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isDarkMode ? '#4a5568' : '#f9fafb'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
                     <div style={{ fontWeight: '500', marginBottom: '2px' }}>Topic needs deeper analysis</div>
-                    <div style={{ fontSize: '10px', color: '#6b7280', lineHeight: '1.2' }}>
+                    <div style={{ fontSize: '10px', color: isDarkMode ? '#9ca3af' : '#6b7280', lineHeight: '1.2' }}>
                       Try Multiple queries for comprehensive analysis
                     </div>
                   </div>
@@ -274,15 +279,15 @@ export function ChatMessage({ message, onSourcesClick, onFeedback, onRephrasedQu
                       padding: '8px 12px',
                       cursor: 'pointer',
                       fontSize: '12px',
-                      color: '#374151',
+                      color: isDarkMode ? '#f7fafc' : '#374151',
                       backgroundColor: 'transparent',
-                      borderTop: '1px solid #e5e7eb'
+                      borderTop: `1px solid ${isDarkMode ? '#4b5563' : '#e5e7eb'}`
                     }}
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isDarkMode ? '#4a5568' : '#f9fafb'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                   >
                     <div style={{ fontWeight: '500', marginBottom: '2px' }}>Technical issue</div>
-                    <div style={{ fontSize: '10px', color: '#6b7280', lineHeight: '1.2' }}>
+                    <div style={{ fontSize: '10px', color: isDarkMode ? '#9ca3af' : '#6b7280', lineHeight: '1.2' }}>
                       System or performance problem
                     </div>
                   </div>

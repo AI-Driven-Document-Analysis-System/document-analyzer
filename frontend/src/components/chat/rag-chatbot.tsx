@@ -27,7 +27,11 @@ function RAGChatbotContent() {
   const [inputValue, setInputValue] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   const [searchMode, setSearchMode] = useState<'standard' | 'rephrase' | 'multiple_queries'>('standard')
-  const [selectedModel, setSelectedModel] = useState<{ provider: string; model: string; name: string } | undefined>(undefined)
+  const [selectedModel, setSelectedModel] = useState<{ provider: string; model: string; name: string } | undefined>({
+    provider: 'groq',
+    model: 'llama-3.1-8b-instant', 
+    name: 'Groq Llama 3.1 8B'
+  })
   const [useStreaming, setUseStreaming] = useState(true) // Enable streaming by default
   // Load conversation ID from localStorage (user-specific)
   const [conversationId, setConversationId] = useState<string | null>(null)

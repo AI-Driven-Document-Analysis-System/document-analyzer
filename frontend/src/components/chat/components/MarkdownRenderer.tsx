@@ -204,10 +204,10 @@ export function MarkdownRenderer({ content, className = '', isDarkMode = false }
               marginLeft: '0',
               marginBottom: '12px',
               fontStyle: 'italic',
-              backgroundColor: '#f8fafc',
+              backgroundColor: isDarkMode ? '#2d3748' : '#f8fafc',
               padding: '12px 16px',
               borderRadius: '0 6px 6px 0',
-              color: '#475569'
+              color: isDarkMode ? '#cbd5e0' : '#475569'
             }}>
               {children}
             </blockquote>
@@ -233,15 +233,16 @@ export function MarkdownRenderer({ content, className = '', isDarkMode = false }
               <table style={{
                 width: '100%',
                 borderCollapse: 'collapse',
-                border: '1px solid #e5e7eb',
-                borderRadius: '6px'
+                border: `1px solid ${isDarkMode ? '#4a5568' : '#e5e7eb'}`,
+                borderRadius: '6px',
+                backgroundColor: isDarkMode ? '#2d3748' : 'white'
               }}>
                 {children}
               </table>
             </div>
           ),
           thead: ({ children }) => (
-            <thead style={{ backgroundColor: '#f9fafb' }}>
+            <thead style={{ backgroundColor: isDarkMode ? '#4a5568' : '#f9fafb' }}>
               {children}
             </thead>
           ),
@@ -250,8 +251,8 @@ export function MarkdownRenderer({ content, className = '', isDarkMode = false }
               padding: '12px',
               textAlign: 'left',
               fontWeight: '600',
-              color: '#374151',
-              borderBottom: '1px solid #e5e7eb'
+              color: isDarkMode ? '#f7fafc' : '#374151',
+              borderBottom: `1px solid ${isDarkMode ? '#4a5568' : '#e5e7eb'}`
             }}>
               {children}
             </th>
@@ -259,8 +260,8 @@ export function MarkdownRenderer({ content, className = '', isDarkMode = false }
           td: ({ children }) => (
             <td style={{
               padding: '12px',
-              borderBottom: '1px solid #f3f4f6',
-              color: '#374151'
+              borderBottom: `1px solid ${isDarkMode ? '#4a5568' : '#f3f4f6'}`,
+              color: isDarkMode ? '#f7fafc' : '#374151'
             }}>
               {children}
             </td>
@@ -288,7 +289,7 @@ export function MarkdownRenderer({ content, className = '', isDarkMode = false }
           hr: () => (
             <hr style={{
               border: 'none',
-              borderTop: '1px solid #e5e7eb',
+              borderTop: `1px solid ${isDarkMode ? '#4a5568' : '#e5e7eb'}`,
               margin: '20px 0'
             }} />
           )
