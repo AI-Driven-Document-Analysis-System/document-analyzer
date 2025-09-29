@@ -318,10 +318,21 @@ If no specific documents were clearly referenced, return an empty list: []
                 'conversation_id': conversation_id,
                 'data': sources
             }
+            
+            # Send retrieved documents for RAGAS evaluation
+            yield {
+                'type': 'retrieved_docs',
+                'conversation_id': conversation_id,
+                'data': [
+                    {
+                        'content': doc.page_content,
+                        'metadata': doc.metadata,
+                        'score': doc.metadata.get('score', 0)
+                    } for doc in docs_to_use
+                ]
+            }
 
             # Send completion event with full response and sources
-            # Extract the response text from the chain result
-            response_text = result.get('output_text', '') if isinstance(result, dict) else str(result)
             yield {
                 'type': 'complete',
                 'conversation_id': conversation_id,
