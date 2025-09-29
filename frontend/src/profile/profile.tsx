@@ -2,8 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
-import { User, Mail, Calendar, BarChart3, Crown, LogOut, Edit, Save, X } from "lucide-react"
+import { User, Mail, Calendar, Crown, LogOut, Edit, Save, X } from "lucide-react"
 
 // === Types ===
 interface UserProfile {
@@ -14,7 +13,6 @@ interface UserProfile {
   documents_count: number
   current_plan: string
   plan_features: Record<string, any>
-  upload_activity: Array<{ date: string; count: number }>
   created_at: string
 }
 
@@ -332,42 +330,6 @@ const UserProfilePage: React.FC = () => {
             <button onClick={handleUpgradePlan} style={styles.upgradeButton}>
               Upgrade Plan
             </button>
-          </div>
-        </div>
-
-        {/* Upload Activity Chart */}
-        <div style={styles.chartCard} className="animate-fade-in">
-          <h2 style={styles.chartTitle}>
-            <BarChart3 style={iconStyles} /> Upload Activity (Last 30 Days)
-          </h2>
-          <div style={styles.chartContainer}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={profile.upload_activity}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 12, fill: "#6B7280" }}
-                  angle={-45}
-                  textAnchor="end"
-                  height={60}
-                  interval="preserveStartEnd"
-                />
-                <YAxis tick={{ fill: "#6B7280" }} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: "#1F2937", border: "none", borderRadius: "8px" }}
-                  labelFormatter={(value) => `Date: ${value}`}
-                  formatter={(value) => [value, "Documents"]}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="count"
-                  stroke="#3B82F6"
-                  strokeWidth={3}
-                  dot={{ r: 4, fill: "#3B82F6" }}
-                  activeDot={{ r: 8, stroke: "#1D4ED8", strokeWidth: 2 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
           </div>
         </div>
       </div>

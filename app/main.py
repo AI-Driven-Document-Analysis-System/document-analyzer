@@ -6,7 +6,7 @@ import logging
 import os
 import asyncio
 from datetime import datetime
-from .api import auth, summarization, documents, chat, analytics, document_selections, chat_streaming  # Add chat_streaming import
+from .api import auth, summarization, documents, chat, analytics, document_selections, chat_streaming
 from .core.database import db_manager
 from .db.init_db import create_tables
 from .api import profile
@@ -51,15 +51,15 @@ app.add_middleware(
     allowed_hosts=["localhost", "127.0.0.1", "*.localhost", "127.0.0.1:3000"]
 )
 
-# Include routers (FIXED - removed duplicates, added documents)
+# Include routers
 app.include_router(auth.router, prefix="/api")
 app.include_router(summarization.router, prefix="/api")
-app.include_router(documents.router, prefix="/api")  # Add this line
-app.include_router(chat.router, prefix="/api")  # Add chat router
-app.include_router(analytics.router, prefix="/api")  # Add analytics router
+app.include_router(documents.router, prefix="/api")
+app.include_router(chat.router, prefix="/api")
+app.include_router(analytics.router, prefix="/api")
 app.include_router(profile.router, prefix="/api")
-app.include_router(document_selections.router, prefix="/api")  # Add document selections router
-app.include_router(chat_streaming.router, prefix="/api")  # Add streaming chat router
+app.include_router(document_selections.router, prefix="/api")
+app.include_router(chat_streaming.router, prefix="/api")
 
 
 @app.get("/")
@@ -74,7 +74,18 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
+    """Lightweight health check endpoint - no database dependency for performance"""
+    return {
+        "status": "healthy",
+        "service": "DocAnalyzer API",
+        "version": "1.0.0",
+        "timestamp": datetime.utcnow().isoformat() + "Z"
+    }
+
+
+@app.get("/health/detailed")
+async def detailed_health_check():
+    """Detailed health check with database connectivity test"""
     try:
         # Test database connection
         with db_manager.get_connection() as conn:
@@ -85,15 +96,17 @@ async def health_check():
         return {
             "status": "healthy",
             "database": "connected",
+            "service": "DocAnalyzer API",
+            "version": "1.0.0",
             "timestamp": datetime.utcnow().isoformat() + "Z"
         }
     except Exception as e:
-        logger.error(f"Health check failed: {e}")
-        # Don't crash the server, just return unhealthy status
+        logger.error(f"Detailed health check failed: {e}")
         return {
             "status": "unhealthy",
             "database": "disconnected",
             "error": str(e),
+            "service": "DocAnalyzer API",
             "timestamp": datetime.utcnow().isoformat() + "Z"
         }
 

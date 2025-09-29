@@ -42,19 +42,27 @@ class DocumentServiceAWS:
             )
             self._ensure_bucket_exists()
         return self._minio_client
-
     def _ensure_bucket_exists(self):
         """Ensure the MinIO bucket exists"""
         try:
             if not self.minio_client.bucket_exists(self.bucket_name):
                 self.minio_client.make_bucket(self.bucket_name)
-                print(f"Created bucket: {self.bucket_name}")
         except S3Error as e:
             print(f"Error creating bucket: {e}")
             raise
-
+    
+    def _upload_to_minio(self, minio_path: str, file_content: bytes, file_size: int, mime_type: str):
+        """Upload file to MinIO - thread-safe helper method"""
+        self.minio_client.put_object(
+            bucket_name=self.bucket_name,
+            object_name=minio_path,
+            data=BytesIO(file_content),
+            length=file_size,
+            content_type=mime_type
+        )
+    
     def _calculate_file_hash(self, file_content: bytes) -> str:
-        """Calculate SHA-256 hash of file content"""
+        """Calculate SHA256 hash of file content"""
         return hashlib.sha256(file_content).hexdigest()
 
     def _get_mime_type(self, file_content: bytes, filename: str) -> str:
@@ -105,7 +113,7 @@ class DocumentServiceAWS:
 
     async def upload_document(self, file: UploadFile, user_id: str) -> Dict[str, Any]:
         """
-        Upload document to MinIO and save metadata to database
+        Upload document to MinIO and save metadata to database - optimized for performance
         """
         try:
             print(f"DEBUG - Starting upload for user: {user_id}")
@@ -122,14 +130,17 @@ class DocumentServiceAWS:
                     detail=f"File too large. Maximum size: {max_size / 1024 / 1024}MB"
                 )
 
-            # Calculate file hash
+            # Optimize: Run CPU-intensive operations in thread pool
+            loop = asyncio.get_event_loop()
+            
+            # Calculate file hash in thread pool (non-blocking)
             print(f"DEBUG - Calculating file hash...")
-            file_hash = self._calculate_file_hash(file_content)
+            file_hash = await loop.run_in_executor(None, self._calculate_file_hash, file_content)
             print(f"DEBUG - File hash calculated: {file_hash[:16]}...")
 
-            # Check if document already exists
+            # Check if document already exists (optimized with new index)
             print(f"DEBUG - Checking for existing document...")
-            existing_doc_id = self._check_document_exists_by_hash(file_hash, user_id)
+            existing_doc_id = await loop.run_in_executor(None, self._check_document_exists_by_hash, file_hash, user_id)
             if existing_doc_id:
                 print(f"DEBUG - Document already exists: {existing_doc_id}")
                 return {
@@ -166,15 +177,9 @@ class DocumentServiceAWS:
             minio_path = self._generate_minio_path(user_id, file.filename or "unknown")
             print(f"DEBUG - MinIO path: {minio_path}")
 
-            # Upload to MinIO
+            # Upload to MinIO in thread pool (non-blocking)
             print(f"DEBUG - Uploading to MinIO...")
-            self.minio_client.put_object(
-                bucket_name=self.bucket_name,
-                object_name=minio_path,
-                data=BytesIO(file_content),
-                length=file_size,
-                content_type=mime_type
-            )
+            await loop.run_in_executor(None, self._upload_to_minio, minio_path, file_content, file_size, mime_type)
             print(f"DEBUG - MinIO upload successful")
 
             # Create document record in database
