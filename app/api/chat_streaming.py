@@ -11,6 +11,8 @@ from ..schemas.chat_schemas import ChatMessageRequest
 from ..services.chat_service import get_chatbot_service
 from ..services.chatbot.rag.query_preprocessing import preprocess_user_query
 from ..core.config import settings
+from ..db.conversations import get_conversations, get_messages
+from uuid import UUID
 import logging
 
 logger = logging.getLogger(__name__)
@@ -104,11 +106,53 @@ async def stream_chat_message(request: ChatMessageRequest):
                 collected_chunks.append(chunk)
                 yield f"data: {json.dumps(chunk)}\n\n"
             
+            # Save messages to database for conversation history and title generation
+            try:
+                response_text = ''.join([c.get('data', '') for c in collected_chunks if c.get('type') == 'token'])
+                
+                # Ensure conversation exists - insert directly with the conversation_id from frontend
+                conversations_repo = get_conversations()
+                existing_conv = conversations_repo.get(UUID(conversation_id))
+                if not existing_conv:
+                    # Create conversation with specific ID
+                    from datetime import datetime, timezone
+                    now = datetime.now(timezone.utc)
+                    query = """
+                        INSERT INTO conversations (id, user_id, title, created_at, updated_at)
+                        VALUES (%s, %s, %s, %s, %s)
+                        ON CONFLICT (id) DO NOTHING
+                    """
+                    conversations_repo.db.execute_query(
+                        query, 
+                        (UUID(conversation_id), UUID(request.user_id) if request.user_id else None, "New Chat", now, now)
+                    )
+                    logger.info(f"Created conversation {conversation_id}")
+                
+                # Save user message
+                messages_repo = get_messages()
+                messages_repo.add(
+                    conversation_id=UUID(conversation_id),
+                    role='user',
+                    content=request.message,
+                    metadata={}
+                )
+                
+                # Save assistant message
+                messages_repo.add(
+                    conversation_id=UUID(conversation_id),
+                    role='assistant',
+                    content=response_text,
+                    metadata={}
+                )
+                
+                logger.info(f"Saved messages to conversation {conversation_id}")
+            except Exception as e:
+                logger.error(f"Failed to save messages: {e}")
+            
             # Capture interaction for RAGAS evaluation after streaming completes (if enabled)
             try:
                 if is_ragas_enabled():
                     # Reconstruct the complete response from chunks
-                    response_text = ''.join([c.get('data', '') for c in collected_chunks if c.get('type') == 'token'])
                     sources = next((c.get('data', []) for c in collected_chunks if c.get('type') == 'sources'), [])
                     retrieved_docs = next((c.get('data', []) for c in collected_chunks if c.get('type') == 'retrieved_docs'), [])
                     
