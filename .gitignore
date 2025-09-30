@@ -63,3 +63,17 @@ node_modules/.bin/loose-envify
 
 # Windsurf rules
 .windsurf/
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+evaluation/rag-chatbot/ragas_evaluation.db
+
+# Generated files and notebooks
+*.ipynb_checkpoints/
+evaluation/rag-chatbot/rag_charts_compact.ipynb
+
+# Evaluation scripts (temporary)
+embed_all_documents.py
+debug_chroma_filter.py

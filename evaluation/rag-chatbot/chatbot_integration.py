@@ -51,13 +51,12 @@ class ChatbotEvaluationCapture:
             created_by=created_by,
             llm_provider=llm_provider,
             llm_model=llm_model,
-            search_mode=search_mode
         )
         logger.info(f"Started evaluation session {self.session_id}: {session_name}")
         return self.session_id
     
     def capture_question(self, question_text: str, conversation_id: str = None,
-                        question_type: str = None, complexity_level: str = None,
+                        document_type: str = None,
                         expected_answer_type: str = None, domain_category: str = None) -> int:
         """
         Capture a question for evaluation.
@@ -65,22 +64,17 @@ class ChatbotEvaluationCapture:
         Args:
             question_text: The user's question
             conversation_id: Unique conversation identifier
-            question_type: Type of question (factual, analytical, etc.)
-            complexity_level: Complexity (simple, medium, complex)
+            document_type: Type of document (research_paper, invoice, etc.)
             expected_answer_type: Expected answer format
             domain_category: Domain/category of the question
             
         Returns:
             int: Question ID
         """
-        if not self.session_id:
-            raise ValueError("No active session. Call start_session() first.")
-        
         question_id = self.db.add_question(
             session_id=self.session_id,
             question_text=question_text,
-            question_type=question_type,
-            complexity_level=complexity_level,
+            document_type=document_type,
             expected_answer_type=expected_answer_type,
             domain_category=domain_category
         )
@@ -178,8 +172,7 @@ class ChatbotEvaluationCapture:
         question_id = self.capture_question(
             question_text=question_text,
             conversation_id=conversation_id,
-            question_type=q_meta.get('question_type'),
-            complexity_level=q_meta.get('complexity_level'),
+            document_type=q_meta.get('document_type'),
             expected_answer_type=q_meta.get('expected_answer_type'),
             domain_category=q_meta.get('domain_category')
         )

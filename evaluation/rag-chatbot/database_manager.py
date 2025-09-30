@@ -102,7 +102,7 @@ class RAGASEvaluationDB:
     # ==================== QUESTIONS ====================
     
     def add_question(self, session_id: int, question_text: str,
-                    question_type: str = None, complexity_level: str = None,
+                    document_type: str = None, 
                     expected_answer_type: str = None, domain_category: str = None) -> int:
         """
         Add a question to an evaluation session.
@@ -114,10 +114,10 @@ class RAGASEvaluationDB:
             cursor = conn.cursor()
             cursor.execute("""
                 INSERT INTO questions 
-                (session_id, question_text, question_type, complexity_level, 
+                (session_id, question_text, document_type, 
                  expected_answer_type, domain_category)
-                VALUES (?, ?, ?, ?, ?, ?)
-            """, (session_id, question_text, question_type, complexity_level,
+                VALUES (?, ?, ?, ?, ?)
+            """, (session_id, question_text, document_type,
                   expected_answer_type, domain_category))
             
             # Update session question count
