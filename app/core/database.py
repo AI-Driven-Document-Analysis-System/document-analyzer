@@ -51,9 +51,14 @@ class DatabaseManager:
                     raise
 
                 self.connection_pool = ThreadedConnectionPool(
-                    minconn=1,
-                    maxconn=20,
-                    dsn=database_url
+                    minconn=3,   # Conservative minimum for Aiven 20-connection limit
+                    maxconn=18,  # Use 18 of 20 available (leave 2 for admin/monitoring)
+                    dsn=database_url,
+                    # Add connection timeout and keepalive settings
+                    connect_timeout=5,
+                    keepalives_idle=600,
+                    keepalives_interval=30,
+                    keepalives_count=3
                 )
                 logger.info("Database connection pool initialized successfully")
             else:
@@ -75,30 +80,27 @@ class DatabaseManager:
             return False
 
     def _get_healthy_connection(self):
-        """Get a healthy connection from the pool, with retries"""
+        """Get a healthy connection from the pool, optimized for performance"""
         if not self.connection_pool:
             raise Exception("Connection pool not initialized")
 
-        for attempt in range(self.max_retries):
+        # Reduced retries for faster failure under load
+        for attempt in range(2):  # Reduced from self.max_retries (3) to 2
             try:
                 connection = self.connection_pool.getconn()
-                if self._check_connection_health(connection):
-                    return connection
-                else:
-                    # Connection is stale, return it and try again
-                    try:
-                        self.connection_pool.putconn(connection)
-                    except Exception as e:
-                        logger.warning(f"Error returning stale connection: {e}")
-                    logger.warning(f"Stale connection detected, retrying... (attempt {attempt + 1})")
-                    time.sleep(self.retry_delay)
+                # Skip health check for performance - trust pool management
+                return connection
             except Exception as e:
-                logger.error(f"Failed to get connection (attempt {attempt + 1}): {e}")
-                if attempt < self.max_retries - 1:
-                    time.sleep(self.retry_delay)
+                logger.warning(f"Failed to get connection (attempt {attempt + 1}): {e}")
+                if attempt < 1:  # Only retry once
+                    time.sleep(0.1)  # Reduced delay from 1s to 0.1s
+                    continue
+                else:
+                    logger.error(f"Connection pool exhausted after {attempt + 1} attempts")
+                    raise Exception(f"Failed to get database connection: {e}")
 
-        # If we get here, all retries failed
-        raise Exception("Failed to get healthy database connection after all retries")
+        # Should never reach here
+        raise Exception("Failed to get healthy database connection")
 
     def _perform_health_check(self):
         """Perform periodic health check on the pool"""
@@ -160,13 +162,11 @@ class DatabaseManager:
 
     @contextmanager
     def get_connection(self):
-        """Get a connection from the pool with health checks"""
+        """Get a connection from the pool - optimized for performance"""
         connection = None
         try:
-            # Perform periodic health check
-            self._perform_health_check()
-
-            # Get a healthy connection
+            # Skip health check on every request - moved to background task
+            # Get a healthy connection with minimal overhead
             connection = self._get_healthy_connection()
             yield connection
         except Exception as e:
