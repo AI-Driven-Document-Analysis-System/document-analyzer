@@ -52,20 +52,18 @@ class Settings(BaseSettings):
 	db_password: str = Field("password", description="Database password (lowercase alternative)")
 	db_name: str = Field("document_analyzer", description="Database name (lowercase alternative)")
 
-	# API Settings (compatibility: uppercase/lowercase)
 	API_HOST: Optional[str] = Field(None, description="API host")
 	API_PORT: Optional[int] = Field(None, description="API port")
 	api_host: str = Field("0.0.0.0", description="API host (lowercase alternative)")
 	api_port: int = Field(8000, description="API port (lowercase alternative)")
 
 	# Vector Database Settings
-	VECTOR_DB_PATH: str = Field("./chroma_db", description="ChromaDB storage path")
+	VECTOR_DB_PATH: str = Field("./data/chroma_db", description="ChromaDB storage path")
 	COLLECTION_NAME: str = Field("documents", description="ChromaDB collection name")
 
 	# Document Processing Settings
 	CHUNK_SIZE: int = Field(1000, description="Document chunk size")
 	CHUNK_OVERLAP: int = Field(200, description="Document chunk overlap")
-	EMBEDDING_MODEL: str = Field("all-MiniLM-L6-v2", description="Sentence transformer model")
 	MAX_HISTORY_LENGTH: int = Field(10, description="Maximum conversation history length")
 
 	# Conversation Summarization Settings (from your chatbot)
