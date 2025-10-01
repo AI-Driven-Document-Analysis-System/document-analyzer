@@ -67,7 +67,8 @@ def main():
     print("=" * 60)
     
     # Configuration - use same path as application
-    db_path = os.path.join(os.path.dirname(__file__), 'data', 'chroma_db')
+    # db_path = os.path.join(os.path.dirname(__file__), 'data', 'chroma_db')
+    db_path = os.path.join(os.path.dirname(__file__), 'chroma_db')
     collection_name = "documents"
     
     try:
