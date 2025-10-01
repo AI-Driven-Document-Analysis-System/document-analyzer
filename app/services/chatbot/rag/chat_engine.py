@@ -145,14 +145,14 @@ class LangChainChatEngine:
                 'response': result["answer"],
                 'sources': sources,
                 'chat_history': [msg.dict() for msg in result["chat_history"]],
-                'search_mode': search_mode
             }
 
         except Exception as e:
             raise Exception(f"Error processing query: {str(e)}")
 
-    async def process_streaming_query(self, query: str,
-                                      conversation_id: Optional[str] = None) -> AsyncGenerator[Dict, None]:
+    async def process_streaming_query(self, query: str, conversation_id: Optional[str] = None,
+                                      user_id: Optional[str] = None, search_mode: str = "standard",
+                                      selected_document_ids: Optional[List[str]] = None) -> AsyncGenerator[Dict, None]:
         """
         Process a query with streaming response generation.
         
@@ -178,24 +178,67 @@ class LangChainChatEngine:
             conversation_id = str(uuid.uuid4())
 
         try:
-            # Create streaming callback handler for token-by-token processing
-            streaming_callback = AsyncStreamingCallbackHandler()
+            # Set document filter for Knowledge Base mode (same as process_query)
+            if selected_document_ids:
+                print(f"\nSTREAMING KNOWLEDGE BASE MODE: Searching within {len(selected_document_ids)} selected documents")
+                print(f"Selected document IDs: {selected_document_ids}")
+                self.enhanced_search.set_document_filter(selected_document_ids)
+            else:
+                print(f"\nSTREAMING FULL DATABASE MODE: Searching all documents")
+                self.enhanced_search.set_document_filter(None)
 
-            # Start the query processing task asynchronously
-            # This allows us to stream tokens while the full response is being generated
+            # Use enhanced search based on search mode (same as process_query)
+            enhanced_docs = None
+            if search_mode != "standard" or selected_document_ids:
+                enhanced_docs = await self.enhanced_search.search(query, search_mode, k=5)
+                
+                if enhanced_docs:
+                    print("Enhanced search results for streaming:")
+                    for i, doc in enumerate(enhanced_docs):
+                        doc_id = doc.metadata.get('document_id', 'MISSING')
+                        filename = doc.metadata.get('filename', 'MISSING')
+                        print(f"  {i+1}. Document ID: {doc_id} - File: {filename}")
+
+            # Create streaming callback handler
+            streaming_callback = AsyncStreamingCallbackHandler()
             callbacks = getattr(self.chain.llm, 'callbacks', [])
             all_callbacks = callbacks + [streaming_callback] if callbacks else [streaming_callback]
             
-            # Try structured citations first, fallback to regular if needed
-            try:
-                task = asyncio.create_task(
-                    self.chain.arun_with_structured_citations(query, callbacks=all_callbacks)
+            # For streaming, use a simple QA chain that returns clean markdown
+            from langchain.chains.question_answering import load_qa_chain
+            from langchain.prompts import PromptTemplate
+            
+            # Create a simple streaming prompt that returns clean markdown
+            streaming_prompt = PromptTemplate(
+                template="""Answer the question using the provided documents. Format your response in clean markdown.
+
+Documents:
+{context}
+
+Question: {question}
+
+Use ### headings, **bold text**, - bullet points, and `code` formatting in your response.
+Provide a comprehensive answer based on the documents. Do not include JSON formatting - just return clean markdown text.""",
+                input_variables=["context", "question"]
+            )
+            
+            # Create simple QA chain for streaming
+            streaming_chain = load_qa_chain(self.chain.llm, chain_type="stuff", prompt=streaming_prompt)
+            
+            # Use enhanced docs or retrieve new ones
+            if enhanced_docs:
+                docs_to_use = enhanced_docs
+            else:
+                # Get documents from retriever
+                docs_to_use = self.chain.retriever.get_relevant_documents(query)
+            
+            # Start streaming task
+            task = asyncio.create_task(
+                streaming_chain.ainvoke(
+                    {"input_documents": docs_to_use, "question": query},
+                    config={"callbacks": all_callbacks}
                 )
-            except Exception as e:
-                print(f"DEBUG: Structured citations not available for streaming: {e}")
-                task = asyncio.create_task(
-                    self.chain.arun(query, callbacks=all_callbacks)
-                )
+            )
 
             # Send initial event to indicate processing has started
             yield {
@@ -204,7 +247,7 @@ class LangChainChatEngine:
                 'data': 'Starting response generation...'
             }
 
-            # Stream tokens as they are generated by the LLM
+            # Stream tokens as they are generated by the LLM in real-time
             async for token in streaming_callback.get_tokens():
                 yield {
                     'type': 'token',
@@ -214,22 +257,60 @@ class LangChainChatEngine:
 
             # Wait for the complete result to get source documents
             result = await task
+            
+            # Get the actual response text
+            response_text = result.get('output_text', '') if isinstance(result, dict) else str(result)
+            
+            # Now run a quick citation detection to find ONLY the sources actually used
+            citation_prompt = f"""Given this response and the available documents, identify which specific document passages were actually referenced or used in the response.
 
-            # Use the sources from structured citations if available, otherwise format documents
-            if 'sources' in result and result['sources']:
-                # Use the actual sources identified by the LLM
-                sources = result['sources']
-            else:
-                # Fallback to formatting all retrieved documents
+Response: {response_text}
+
+Available Documents:
+"""
+            for i, doc in enumerate(docs_to_use):
+                citation_prompt += f"\n[{i}] {doc.metadata.get('filename', 'Unknown')}: {doc.page_content[:300]}...\n"
+            
+            citation_prompt += """
+Return ONLY a JSON list of the documents that were actually used/referenced:
+[{"source_id": 0, "quote": "exact passage used", "document_name": "filename.pdf"}]
+
+If no specific documents were clearly referenced, return an empty list: []
+"""
+
+            # Quick LLM call to identify actual citations
+            try:
+                citation_result = await self.chain.llm.ainvoke(citation_prompt)
+                citation_text = citation_result.content if hasattr(citation_result, 'content') else str(citation_result)
+                
+                # Parse the JSON response
+                import json
+                import re
+                json_match = re.search(r'\[.*\]', citation_text, re.DOTALL)
+                if json_match:
+                    citations_data = json.loads(json_match.group())
+                    sources = []
+                    for citation in citations_data:
+                        if isinstance(citation, dict) and 'source_id' in citation:
+                            source_id = citation['source_id']
+                            if 0 <= source_id < len(docs_to_use):
+                                doc = docs_to_use[source_id]
+                                sources.append({
+                                    'quote': citation.get('quote', doc.page_content[:200] + "..."),
+                                    'content': citation.get('quote', doc.page_content[:200] + "..."),
+                                    'metadata': doc.metadata,
+                                    'score': doc.metadata.get('score', 0),
+                                    'title': doc.metadata.get('filename', 'Unknown Document'),
+                                    'type': 'document'
+                                })
+                else:
+                    # Fallback: no specific citations found
+                    sources = []
+                    
+            except Exception as e:
+                print(f"Citation detection failed: {e}")
+                # Fallback: show no sources rather than all documents
                 sources = []
-                for doc in result["source_documents"]:
-                    sources.append({
-                        'content': doc.page_content[:200] + "...",  # Truncate content for display
-                        'metadata': doc.metadata,
-                        'score': doc.metadata.get('score', 0),  # Extract relevance score if available
-                        'title': doc.metadata.get('filename', 'Unknown Document'),
-                        'type': 'document'
-                    })
 
             # Send source documents event
             yield {
@@ -237,13 +318,26 @@ class LangChainChatEngine:
                 'conversation_id': conversation_id,
                 'data': sources
             }
+            
+            # Send retrieved documents for RAGAS evaluation
+            yield {
+                'type': 'retrieved_docs',
+                'conversation_id': conversation_id,
+                'data': [
+                    {
+                        'content': doc.page_content,
+                        'metadata': doc.metadata,
+                        'score': doc.metadata.get('score', 0)
+                    } for doc in docs_to_use
+                ]
+            }
 
             # Send completion event with full response and sources
             yield {
                 'type': 'complete',
                 'conversation_id': conversation_id,
                 'data': {
-                    'response': result["answer"],
+                    'response': response_text,
                     'sources': sources
                 }
             }

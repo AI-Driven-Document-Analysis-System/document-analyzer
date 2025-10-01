@@ -9,6 +9,7 @@ from ..schemas.user_schemas import UserCreate, UserLogin, UserResponse, Token, U
 from ..db.crud import get_user_crud
 from ..core.security import create_access_token, verify_token, ACCESS_TOKEN_EXPIRE_MINUTES
 from ..core.dependencies import get_current_user
+from ..core.user_cache import user_cache
 
 router = APIRouter(prefix="/auth",
                    tags=["authentication"])  # simply what this do is create a new router for the authentication
@@ -29,10 +30,10 @@ async def register(user_data: UserCreate):  # simply what this do is create a ne
                 detail="Email is required"
             )
 
-        if not user_data.password or len(user_data.password) < 6:
+        if not user_data.password or len(user_data.password) < 8:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Password must be at least 6 characters long"
+                detail="Password must be at least 8 characters long"
             )
 
         # Get user CRUD instance with error handling
@@ -292,6 +293,9 @@ async def update_current_user(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="User not found"
                 )
+            
+            # Invalidate cache after user update
+            user_cache.invalidate(str(current_user.id))
 
         except HTTPException:
             raise  # Re-raise HTTP exceptions
@@ -403,16 +407,20 @@ async def logout(current_user: UserResponse = Depends(get_current_user)):
 
 # Health check endpoint
 @router.get("/health")
-async def auth_health_check():
-    """Health check for authentication service"""
+async def auth_health():
+    """Health check for auth service"""
     try:
-        # Test database connection
-        user_crud = get_user_crud()
-        if not user_crud:
-            return {"status": "unhealthy", "message": "Database connection failed"}
-
-        return {"status": "healthy", "message": "Authentication service is running"}
+        return {"status": "healthy", "service": "auth", "message": "Authentication service is running"}
     except Exception as e:
         logger.error(f"Health check failed: {e}")
         return {"status": "unhealthy", "message": "Service error"}
+
+
+@router.get("/cache/stats")
+async def get_cache_stats():
+    """Get user cache statistics - for monitoring"""
+    return {
+        "cache_stats": user_cache.stats(),
+        "status": "healthy"
+    }
 

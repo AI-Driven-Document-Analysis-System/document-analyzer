@@ -66,7 +66,8 @@ def main():
     print(f"⏰ Run time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 60)
     
-    # Configuration
+    # Configuration - use same path as application
+    # db_path = os.path.join(os.path.dirname(__file__), 'data', 'chroma_db')
     db_path = os.path.join(os.path.dirname(__file__), 'chroma_db')
     collection_name = "documents"
     

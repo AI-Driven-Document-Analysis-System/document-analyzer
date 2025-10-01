@@ -4,10 +4,10 @@ import { getDocumentIcon } from '../../utils/documentUtils'
 interface KnowledgeBaseSectionProps {
   expandedSections: ExpandedSections
   toggleSection: (section: keyof ExpandedSections) => void
-  selectedDocuments: number[]
+  selectedDocuments: string[]
   documents: Document[]
   onShowDocumentModal: () => void
-  onRemoveDocument: (docId: number) => void
+  onRemoveDocument: (docId: string) => void
   documentsLoading?: boolean
   documentsError?: string | null
 }

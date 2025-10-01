@@ -52,20 +52,18 @@ class Settings(BaseSettings):
 	db_password: str = Field("password", description="Database password (lowercase alternative)")
 	db_name: str = Field("document_analyzer", description="Database name (lowercase alternative)")
 
-	# API Settings (compatibility: uppercase/lowercase)
 	API_HOST: Optional[str] = Field(None, description="API host")
 	API_PORT: Optional[int] = Field(None, description="API port")
 	api_host: str = Field("0.0.0.0", description="API host (lowercase alternative)")
 	api_port: int = Field(8000, description="API port (lowercase alternative)")
 
 	# Vector Database Settings
-	VECTOR_DB_PATH: str = Field("./chroma_db", description="ChromaDB storage path")
+	VECTOR_DB_PATH: str = Field("./data/chroma_db", description="ChromaDB storage path")
 	COLLECTION_NAME: str = Field("documents", description="ChromaDB collection name")
 
 	# Document Processing Settings
 	CHUNK_SIZE: int = Field(1000, description="Document chunk size")
 	CHUNK_OVERLAP: int = Field(200, description="Document chunk overlap")
-	EMBEDDING_MODEL: str = Field("all-MiniLM-L6-v2", description="Sentence transformer model")
 	MAX_HISTORY_LENGTH: int = Field(10, description="Maximum conversation history length")
 
 	# Conversation Summarization Settings (from your chatbot)
@@ -80,18 +78,26 @@ class Settings(BaseSettings):
 	OPENAI_API_KEY: Optional[str] = Field(None, description="OpenAI API key")
 	GEMINI_API_KEY: Optional[str] = Field(None, description="Google Gemini API key")
 	GROQ_API_KEY: Optional[str] = Field(None, description="Groq API key")
+	DEEPSEEK_API_KEY: Optional[str] = Field(None, description="DeepSeek API key")
 
+	# LLM Provider Selection
+	LLM_PROVIDER: str = Field("groq", description="Active LLM provider (groq, deepseek, openai, gemini)")
+	
 	# LLM Default Settings (your chatbot defaults preserved)
 	DEFAULT_LLM_PROVIDER: str = Field("groq", description="Default LLM provider")
 	DEFAULT_LLM_MODEL: str = Field("llama-3.1-8b-instant", description="Default LLM model")
 	DEFAULT_TEMPERATURE: float = Field(0.7, description="Default LLM temperature")
-	DEFAULT_MAX_TOKENS: int = Field(1000, description="Default max tokens")
+	DEFAULT_MAX_TOKENS: int = Field(4000, description="Default max tokens")
+	
+	# DeepSeek specific settings
+	DEEPSEEK_MODEL: str = Field("deepseek-chat", description="DeepSeek model name")
+	DEEPSEEK_TEMPERATURE: float = Field(0.7, description="DeepSeek temperature")
+	DEEPSEEK_MAX_TOKENS: int = Field(4000, description="DeepSeek max tokens")
 
 	# AI/ML Settings (friend's version for compatibility)
 	MODEL_NAME: str = Field("gpt-3.5-turbo", description="Default model name (compatibility)")
-	MAX_TOKENS: int = Field(1000, description="Maximum tokens (compatibility)")
+	MAX_TOKENS: int = Field(2000, description="Maximum tokens (compatibility)")
 	TEMPERATURE: float = Field(0.7, description="Model temperature (compatibility)")
-
 	# Security Settings
 	SECRET_KEY: str = Field("your-secret-key-change-in-production", description="Secret key for JWT")
 	ALGORITHM: str = Field("HS256", description="JWT algorithm")

@@ -959,6 +959,8 @@
 import { useState, useEffect, useMemo } from "react"
 import './Dashboard.css' // Import the CSS file
 import '../../styles/components.css';
+import DocumentActivityChart from './DocumentActivityChart';
+import StorageUsageChart from './StorageUsageChart';
 //import DocumentViewer from '../DocumentViewer/DocumentViewer';
 
 // TypeScript interfaces
@@ -1195,6 +1197,11 @@ function Dashboard() {
   const [error, setError] = useState<string | null>(null)
   const [documentsWithSummary, setDocumentsWithSummary] = useState<DocumentWithSummary[]>([])
   
+  // Storage usage state
+  const [storageUsage, setStorageUsage] = useState({ used: 0, total: 2048 }) // Default to 2GB
+  const [loadingStorage, setLoadingStorage] = useState(true)
+  const [storageError, setStorageError] = useState<string | null>(null)
+  
   // Chat and modal states
   const [activeView, setActiveView] = useState<'documents' | 'chat'>('documents')
   const [selectedDocument, setSelectedDocument] = useState<any>(null)
@@ -1239,6 +1246,60 @@ function Dashboard() {
     return token
   }
 
+  // Document activity data state
+  const [documentActivityData, setDocumentActivityData] = useState<Array<{ date: string; count: number }>>([]);
+  const [loadingActivity, setLoadingActivity] = useState(true);
+  const [activityError, setActivityError] = useState<string | null>(null);
+
+  // Fetch upload activity data
+  useEffect(() => {
+    const fetchUploadActivity = async () => {
+      const token = getToken();
+      if (!token) {
+        console.warn('No authentication token found, using empty activity data');
+        setLoadingActivity(false);
+        return;
+      }
+
+      try {
+        setLoadingActivity(true);
+        setActivityError(null);
+        
+        const response = await fetch('http://localhost:8000/api/profile/me', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data && data.upload_activity) {
+          setDocumentActivityData(data.upload_activity);
+        } else {
+          throw new Error('No upload activity data found');
+        }
+      } catch (err) {
+        console.error('Error fetching upload activity:', err);
+        setActivityError('Failed to load upload activity data');
+      } finally {
+        setLoadingActivity(false);
+      }
+    };
+
+    fetchUploadActivity();
+  }, []);
+  
+  // Mock data fallback for development
+  const mockStorageData = {
+    used: 756, // 756MB used
+    total: 2048 // 2GB total
+  };
+
   // Document preview handler
   const previewDocumentHandler = async (doc: DocumentWithSummary) => {
     setLoadingPreview(true)
@@ -1277,6 +1338,85 @@ function Dashboard() {
     setPreviewDocument(null)
     setPreviewUrl(null)
   }
+
+  // Fetch storage usage data from API
+  useEffect(() => {
+    const fetchStorageUsage = async () => {
+      const token = getToken();
+      if (!token) {
+        console.warn('No authentication token found, using mock data');
+        setStorageUsage(mockStorageData);
+        setLoadingStorage(false);
+        return;
+      }
+
+      try {
+        setLoadingStorage(true);
+        
+        // First try to get from localStorage cache if it's fresh (less than 5 minutes old)
+        const cachedData = localStorage.getItem('cachedStorage');
+        const cacheTime = localStorage.getItem('cachedStorageTime');
+        const now = Date.now();
+        const fiveMinutes = 5 * 60 * 1000; // 5 minutes in milliseconds
+        
+        if (cachedData && cacheTime && (now - parseInt(cacheTime)) < fiveMinutes) {
+          const parsedData = JSON.parse(cachedData);
+          setStorageUsage(parsedData);
+          setStorageError(null);
+          setLoadingStorage(false);
+          return;
+        }
+
+        // Fetch from API - Fixed URL to match backend endpoint
+        const response = await fetch('http://localhost:8000/api/analytics/document-uploads-over-time?period=30d', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data && data.summary) {
+          // Convert bytes to MB (1 MB = 1024 * 1024 bytes)
+          const usedMB = Math.round((data.summary.totalSize || 0) / (1024 * 1024));
+          // Default to 5GB total storage if not provided
+          const totalMB = 5 * 1024; // 5GB in MB
+          
+          const storageData = { 
+            used: usedMB, 
+            total: totalMB 
+          };
+          
+          setStorageUsage(storageData);
+          setStorageError(null);
+          
+          // Cache the data
+          try {
+            localStorage.setItem('cachedStorage', JSON.stringify(storageData));
+            localStorage.setItem('cachedStorageTime', now.toString());
+          } catch (e) {
+            console.warn('Failed to cache storage data', e);
+          }
+        } else {
+          throw new Error('Invalid data format from API');
+        }
+      } catch (err) {
+        console.error('Error fetching storage usage:', err);
+        // Fallback to mock data in case of error
+        setStorageUsage(mockStorageData);
+        setStorageError('Using sample data (API unavailable)');
+      } finally {
+        setLoadingStorage(false);
+      }
+    };
+
+    fetchStorageUsage();
+  }, []);
 
   // Fetch user documents with JWT authentication and fallback
   useEffect(() => {
@@ -1653,7 +1793,7 @@ function Dashboard() {
     <div className="main-container">
       <div className="max-w-7xl mx-auto space-y-6">
         {/* Stats Grid */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-4 gap-4 mb-6">
           {stats.map((stat) => (
             <div key={stat.title} className="stats-card fade-in">
               <div className="stats-header">
@@ -1668,6 +1808,51 @@ function Dashboard() {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Charts Row */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: '24px',
+          marginBottom: '24px',
+          width: '100%'
+        }}>
+          {/* Document Activity Chart */}
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            padding: '16px',
+            height: '400px',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            <DocumentActivityChart 
+              data={documentActivityData} 
+              loading={loadingActivity}
+              error={activityError}
+            />
+          </div>
+
+          {/* Storage Usage Chart */}
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            padding: '16px',
+            height: '400px',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            <StorageUsageChart 
+              used={storageUsage.used} 
+              total={storageUsage.total} 
+              loading={loadingStorage}
+              error={storageError}
+              isMockData={storageError !== null}
+            />
+          </div>
         </div>
 
         {/* Search and Chat Feature */}

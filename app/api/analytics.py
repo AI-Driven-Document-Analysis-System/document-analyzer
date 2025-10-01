@@ -213,3 +213,40 @@ async def get_upload_trends(
     except Exception as e:
         logger.error(f"Error getting upload trends: {e}")
         raise HTTPException(status_code=500, detail=f"Error retrieving trends: {str(e)}")
+
+@router.get("/storage-usage")
+async def get_storage_usage(
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Get storage usage statistics for the current user."""
+    try:
+        if not hasattr(current_user, 'id') or current_user.id is None:
+            raise HTTPException(status_code=400, detail="Invalid user token")
+        
+        user_id = str(current_user.id)
+        TOTAL_STORAGE = 2 * 1024 * 1024 * 1024  # 2GB in bytes
+        
+        with db_manager.get_connection() as conn:
+            with conn.cursor() as cursor:
+                query = """
+                    SELECT SUM(file_size) as total_used
+                    FROM documents 
+                    WHERE user_id = %s
+                """
+                
+                cursor.execute(query, (user_id,))
+                result = cursor.fetchone()
+                used_storage = result[0] or 0
+                
+                return {
+                    "totalStorage": TOTAL_STORAGE,
+                    "usedStorage": used_storage,
+                    "availableStorage": TOTAL_STORAGE - used_storage,
+                    "usagePercentage": (used_storage / TOTAL_STORAGE) * 100
+                }
+                
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting storage usage: {e}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving storage usage: {str(e)}")
