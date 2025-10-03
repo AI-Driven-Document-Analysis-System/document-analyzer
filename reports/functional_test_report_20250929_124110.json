@@ -1,0 +1,60 @@
+{
+  "test_execution": {
+    "start_time": "2025-09-29T12:41:01.598674",
+    "end_time": "2025-09-29T12:41:09.611543",
+    "total_duration_seconds": 8.012869,
+    "total_duration_formatted": "0m 8s"
+  },
+  "test_summary": {
+    "total_test_suites": 4,
+    "passed_suites": 0,
+    "failed_suites": 0,
+    "skipped_suites": 4,
+    "total_test_cases": 0,
+    "passed_test_cases": 0,
+    "failed_test_cases": 0,
+    "success_rate": "N/A"
+  },
+  "system_performance": {
+    "duration_seconds": 4,
+    "cpu": {
+      "average": 1.55,
+      "max": 6.2,
+      "min": 0.0
+    },
+    "memory": {
+      "average": 91.07499999999999,
+      "max": 91.1,
+      "min": 91.0
+    },
+    "samples_collected": 4
+  },
+  "test_results": [
+    {
+      "suite_name": "User Registration Tests",
+      "test_file": "tests/test_user_registration.py",
+      "status": "SKIPPED",
+      "reason": "Test file not found"
+    },
+    {
+      "suite_name": "Document Upload Tests",
+      "test_file": "tests/test_document_upload.py",
+      "status": "SKIPPED",
+      "reason": "Test file not found"
+    },
+    {
+      "suite_name": "Chat Functionality Tests",
+      "test_file": "tests/test_chat_functionality.py",
+      "status": "SKIPPED",
+      "reason": "Test file not found"
+    },
+    {
+      "suite_name": "Summary Generation Tests",
+      "test_file": "tests/test_summary_generation.py",
+      "status": "SKIPPED",
+      "reason": "Test file not found"
+    }
+  ],
+  "screenshots_directory": "screenshots/",
+  "test_files_directory": "test_files/"
+}

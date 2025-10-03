@@ -1,0 +1,44 @@
+{
+  "base_url": "http://localhost:3000",
+  "minio_url": "http://localhost:9000",
+  "timeout": 30,
+  "screenshot_on_failure": true,
+  "browser": "chrome",
+  "headless": false,
+  "test_users": {
+    "valid_user": {
+      "email": "testuser@example.com",
+      "password": "SecurePass123!",
+      "name": "Test User"
+    },
+    "admin_user": {
+      "email": "admin@example.com",
+      "password": "AdminPass123!",
+      "name": "Admin User"
+    }
+  },
+  "performance_thresholds": {
+    "max_response_time": 3000,
+    "max_cpu_usage": 80,
+    "max_memory_usage": 70
+  },
+  "test_files": {
+    "test_files_dir": "test_files",
+    "test_files": [
+      "test_file_1.json",
+      "test_file_2.json",
+      "test_file_3.json"
+    ]
+  },
+  "element_selectors": {
+    "test_file_1.json": {
+      "test_file_1": "#test-file-1"
+    },
+    "test_file_2.json": {
+      "test_file_2": "#test-file-2"
+    },
+    "test_file_3.json": {
+      "test_file_3": "#test-file-3"
+    }
+  }
+}

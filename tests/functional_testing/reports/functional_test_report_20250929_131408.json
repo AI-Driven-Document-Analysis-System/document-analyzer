@@ -1,0 +1,80 @@
+{
+  "test_execution": {
+    "start_time": "2025-09-29T13:11:04.510537",
+    "end_time": "2025-09-29T13:14:07.137821",
+    "total_duration_seconds": 182.627284,
+    "total_duration_formatted": "3m 2s"
+  },
+  "test_summary": {
+    "total_test_suites": 4,
+    "passed_suites": 0,
+    "failed_suites": 4,
+    "skipped_suites": 0,
+    "total_test_cases": 0,
+    "passed_test_cases": 0,
+    "failed_test_cases": 0,
+    "success_rate": "N/A"
+  },
+  "system_performance": {
+    "duration_seconds": 65,
+    "cpu": {
+      "average": 83.48,
+      "max": 100.0,
+      "min": 17.0
+    },
+    "memory": {
+      "average": 94.38,
+      "max": 96.5,
+      "min": 89.7
+    },
+    "samples_collected": 65
+  },
+  "test_results": [
+    {
+      "suite_name": "User Registration Tests",
+      "test_file": "tests/test_user_registration.py",
+      "status": "FAIL",
+      "passed": 0,
+      "failed": 0,
+      "duration_seconds": 102.640725,
+      "start_time": "2025-09-29T13:11:04.519189",
+      "end_time": "2025-09-29T13:12:47.159914",
+      "output": "============================= test session starts =============================\nplatform win32 -- Python 3.12.5, pytest-7.4.3, pluggy-1.6.0 -- C:\\Python312\\python.exe\ncachedir: .pytest_cache\nrootdir: D:\\Projects\\document-analyzer\\tests\\functional_testing\nplugins: anyio-3.7.1, Faker-37.0.2, langsmith-0.4.14, asyncio-0.21.1\nasyncio: mode=Mode.STRICT\ncollecting ... collected 0 items / 1 error\n\n=================================== ERRORS ====================================\n______________ ERROR collecting tests/test_user_registration.py _______________\nImportError while importing test module 'D:\\Projects\\document-analyzer\\tests\\functional_testing\\tests\\test_user_registration.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Python312\\Lib\\importlib\\__init__.py:90: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\ntests\\test_user_registration.py:7: in <module>\n    from selenium.webdriver.common.by import By\nE   ModuleNotFoundError: No module named 'selenium'\n=========================== short test summary info ===========================\nERROR tests/test_user_registration.py\n!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n============================== 1 error in 4.28s ===============================\n"
+    },
+    {
+      "suite_name": "Document Upload Tests",
+      "test_file": "tests/test_document_upload.py",
+      "status": "FAIL",
+      "passed": 0,
+      "failed": 0,
+      "duration_seconds": 23.373449,
+      "start_time": "2025-09-29T13:12:49.177847",
+      "end_time": "2025-09-29T13:13:12.551296",
+      "output": "============================= test session starts =============================\nplatform win32 -- Python 3.12.5, pytest-7.4.3, pluggy-1.6.0 -- C:\\Python312\\python.exe\ncachedir: .pytest_cache\nrootdir: D:\\Projects\\document-analyzer\\tests\\functional_testing\nplugins: anyio-3.7.1, Faker-37.0.2, langsmith-0.4.14, asyncio-0.21.1\nasyncio: mode=Mode.STRICT\ncollecting ... collected 0 items / 1 error\n\n=================================== ERRORS ====================================\n_______________ ERROR collecting tests/test_document_upload.py ________________\nImportError while importing test module 'D:\\Projects\\document-analyzer\\tests\\functional_testing\\tests\\test_document_upload.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Python312\\Lib\\importlib\\__init__.py:90: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\ntests\\test_document_upload.py:8: in <module>\n    from selenium import webdriver\nE   ModuleNotFoundError: No module named 'selenium'\n=========================== short test summary info ===========================\nERROR tests/test_document_upload.py\n!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n============================== 1 error in 1.11s ===============================\n"
+    },
+    {
+      "suite_name": "Chat Functionality Tests",
+      "test_file": "tests/test_chat_functionality.py",
+      "status": "FAIL",
+      "passed": 0,
+      "failed": 0,
+      "duration_seconds": 13.583875,
+      "start_time": "2025-09-29T13:13:14.553401",
+      "end_time": "2025-09-29T13:13:28.137276",
+      "output": "============================= test session starts =============================\nplatform win32 -- Python 3.12.5, pytest-7.4.3, pluggy-1.6.0 -- C:\\Python312\\python.exe\ncachedir: .pytest_cache\nrootdir: D:\\Projects\\document-analyzer\\tests\\functional_testing\nplugins: anyio-3.7.1, Faker-37.0.2, langsmith-0.4.14, asyncio-0.21.1\nasyncio: mode=Mode.STRICT\ncollecting ... collected 0 items / 1 error\n\n=================================== ERRORS ====================================\n______________ ERROR collecting tests/test_chat_functionality.py ______________\nImportError while importing test module 'D:\\Projects\\document-analyzer\\tests\\functional_testing\\tests\\test_chat_functionality.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Python312\\Lib\\importlib\\__init__.py:90: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\ntests\\test_chat_functionality.py:2: in <module>\n    from selenium import webdriver\nE   ModuleNotFoundError: No module named 'selenium'\n=========================== short test summary info ===========================\nERROR tests/test_chat_functionality.py\n!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n============================== 1 error in 2.00s ===============================\n"
+    },
+    {
+      "suite_name": "Summary Generation Tests",
+      "test_file": "tests/test_summary_generation.py",
+      "status": "FAIL",
+      "passed": 0,
+      "failed": 0,
+      "duration_seconds": 34.957144,
+      "start_time": "2025-09-29T13:13:30.173609",
+      "end_time": "2025-09-29T13:14:05.130753",
+      "output": "============================= test session starts =============================\nplatform win32 -- Python 3.12.5, pytest-7.4.3, pluggy-1.6.0 -- C:\\Python312\\python.exe\ncachedir: .pytest_cache\nrootdir: D:\\Projects\\document-analyzer\\tests\\functional_testing\nplugins: anyio-3.7.1, Faker-37.0.2, langsmith-0.4.14, asyncio-0.21.1\nasyncio: mode=Mode.STRICT\ncollecting ... collected 0 items / 1 error\n\n=================================== ERRORS ====================================\n______________ ERROR collecting tests/test_summary_generation.py ______________\nImportError while importing test module 'D:\\Projects\\document-analyzer\\tests\\functional_testing\\tests\\test_summary_generation.py'.\nHint: make sure your test modules/packages have valid Python names.\nTraceback:\nC:\\Python312\\Lib\\importlib\\__init__.py:90: in import_module\n    return _bootstrap._gcd_import(name[level:], package, level)\ntests\\test_summary_generation.py:6: in <module>\n    from base_test import BaseTest\ntests\\base_test.py:8: in <module>\n    from selenium import webdriver\nE   ModuleNotFoundError: No module named 'selenium'\n=========================== short test summary info ===========================\nERROR tests/test_summary_generation.py\n!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!\n============================== 1 error in 0.95s ===============================\n"
+    }
+  ],
+  "screenshots_directory": "screenshots/",
+  "test_files_directory": "test_files/"
+}
