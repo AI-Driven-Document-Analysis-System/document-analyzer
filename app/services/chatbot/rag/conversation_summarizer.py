@@ -50,22 +50,14 @@ Focus on preserving information that would be most useful for future conversatio
 
 Conversation to summarize:
 {conversation_text}
-
 Please provide a clear, structured summary that maintains the essential context:"""
 
     def _initialize_llm(self):
         """Initialize the LLM for summarization."""
         try:
-            if self.llm_provider == "openai":
-                self.llm = LLMFactory.create_openai_llm(
-                    api_key=settings.OPENAI_API_KEY,
-                    model=self.llm_model,
-                    temperature=0.3,  # Lower temperature for more consistent summarization
-                    streaming=False
-                )
-            elif self.llm_provider == "gemini":
-                self.llm = LLMFactory.create_gemini_llm(
-                    api_key=settings.GEMINI_API_KEY,
+            if self.llm_provider == "deepseek":
+                self.llm = LLMFactory.create_deepseek_llm(
+                    api_key=settings.DEEPSEEK_API_KEY,
                     model=self.llm_model,
                     temperature=0.3,
                     streaming=False

@@ -64,7 +64,9 @@ async def upload_document(
     except HTTPException:
         raise
     except Exception as e:
+        import traceback
         logger.error(f"Upload error: {e}")
+        logger.error(f"Upload error traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 @router.get("/", response_model=dict)

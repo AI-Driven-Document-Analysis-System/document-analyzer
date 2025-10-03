@@ -2,32 +2,37 @@
 
 import type React from "react"
 import { useState, useRef, useEffect } from "react"
-import { chatService, type ChatMessage as ServiceChatMessage } from "../../services/chatService"
+import { chatService, type ChatMessage as ServiceChatMessage } from '../../services/chatService'
+import { streamingChatService } from '../../services/streamingChatService'
 import type { Message, ExpandedSections, ChatHistory } from './types'
-import { initialMessages, sampleDocuments } from './data/sampleData'
+import { initialMessages } from './data/sampleData'
 import { useDocumentManagement } from './hooks/useDocumentManagement'
+import { useDocuments } from './hooks/useDocuments'
 import { ChatMessage } from './components/ChatMessage'
 import { TypingIndicator } from './components/TypingIndicator'
 import { ChatInput } from './components/ChatInput'
 import { Sidebar } from './components/sidebar/Sidebar'
 import { DocumentModal } from './components/DocumentModal'
+import { NewChatConfirmModal } from './components/NewChatConfirmModal'
+import { ThemeProvider, useTheme } from './contexts/ThemeContext'
 
 const API_BASE_URL = "http://localhost:8000"
 
-export function RAGChatbot() {
+function RAGChatbotContent() {
   // State for current user ID
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   
-  // Load messages from localStorage or use initial messages (user-specific)
-  const [messages, setMessages] = useState<Message[]>(() => {
-    // Don't load from localStorage on initial render - wait for user ID
-    return initialMessages
-  })
+  const [messages, setMessages] = useState<Message[]>([])
   
   const [inputValue, setInputValue] = useState("")
   const [isTyping, setIsTyping] = useState(false)
   const [searchMode, setSearchMode] = useState<'standard' | 'rephrase' | 'multiple_queries'>('standard')
-  
+  const [selectedModel, setSelectedModel] = useState<{ provider: string; model: string; name: string } | undefined>({
+    provider: 'groq',
+    model: 'llama-3.1-8b-instant', 
+    name: 'Groq Llama 3.1 8B'
+  })
+  const [useStreaming, setUseStreaming] = useState(true) // Enable streaming by default
   // Load conversation ID from localStorage (user-specific)
   const [conversationId, setConversationId] = useState<string | null>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -51,11 +56,121 @@ export function RAGChatbot() {
   // New chat loading state
   const [isCreatingNewChat, setIsCreatingNewChat] = useState(false)
 
+  // New chat confirmation modal state
+  const [showNewChatConfirm, setShowNewChatConfirm] = useState(false)
+  const [pendingDocumentModal, setPendingDocumentModal] = useState(false)
+
   // Handle feedback from messages
   const handleFeedback = async (messageId: string, feedback: 'thumbs_up' | 'thumbs_down', reason?: string) => {
     console.log('Feedback received:', { messageId, feedback, reason })
     
     // TODO: Send feedback to backend for analytics
+  }
+
+  // Handle answer regeneration with different search methods
+  const handleRegenerateAnswer = async (messageId: string, method: 'rephrase' | 'multiple_queries') => {
+    console.log('Regenerating answer:', { messageId, method })
+    
+    // Find the message to regenerate
+    const messageIndex = messages.findIndex(msg => msg.id === messageId)
+    if (messageIndex === -1) return
+    
+    // Find the user message that prompted this assistant response
+    let userMessage: Message | null = null
+    for (let i = messageIndex - 1; i >= 0; i--) {
+      if (messages[i].type === 'user') {
+        userMessage = messages[i]
+        break
+      }
+    }
+    
+    if (!userMessage) return
+    
+    // Remove the assistant message we're regenerating
+    const updatedMessages = messages.slice(0, messageIndex)
+    setMessages(updatedMessages)
+    setIsTyping(true)
+    
+    try {
+      // Create placeholder message for streaming regeneration
+      const assistantMessageId = Date.now().toString()
+      const newAssistantMessage: Message = {
+        id: assistantMessageId,
+        type: "assistant",
+        content: "",
+        timestamp: new Date(),
+        sources: [],
+      }
+      
+      // Add empty assistant message that will be updated in real-time
+      setMessages(prev => [...prev, newAssistantMessage])
+      
+      // Use streaming service for real-time regeneration
+      await streamingChatService.sendStreamingMessage(
+        userMessage.content,
+        conversationId || undefined,
+        method,
+        selectedDocuments.length > 0 ? selectedDocuments : undefined,
+        selectedModel,
+        {
+          onToken: (token) => {
+            // Update the assistant message content in real-time
+            setMessages((prev) => 
+              prev.map(msg => 
+                msg.id === assistantMessageId 
+                  ? { ...msg, content: msg.content + token }
+                  : msg
+              )
+            )
+          },
+          onSources: (sources) => {
+            // Update sources when received
+            setMessages((prev) => 
+              prev.map(msg => 
+                msg.id === assistantMessageId 
+                  ? { ...msg, sources: sources }
+                  : msg
+              )
+            )
+            // Update sidebar sources
+            setSelectedMessageSources(sources)
+            setExpandedSections(prev => ({ ...prev, sources: true }))
+          },
+          onComplete: (response) => {
+            console.log('✅ Regeneration completed')
+            setIsTyping(false)
+          },
+          onError: (error) => {
+            console.error('❌ Regeneration error:', error)
+            setIsTyping(false)
+            // Update message with error
+            setMessages((prev) => 
+              prev.map(msg => 
+                msg.id === assistantMessageId 
+                  ? { ...msg, content: `Error: ${error}` }
+                  : msg
+              )
+            )
+          }
+        }
+      )
+      
+    } catch (error) {
+      console.error('Error regenerating answer:', error)
+      
+      // Show error message to user
+      const errorMessage: Message = {
+        id: Date.now().toString(),
+        type: "assistant",
+        content: "I apologize, but I encountered an error while regenerating the answer. Please try again.",
+        timestamp: new Date(),
+        sources: [],
+      }
+      
+      setMessages(prev => [...prev, errorMessage])
+    } finally {
+      setIsTyping(false)
+    }
   }
 
 
@@ -207,6 +322,14 @@ export function RAGChatbot() {
     clearAllDocuments
   } = useDocumentManagement()
 
+  // Fetch documents from API
+  const {
+    documents,
+    isLoading: documentsLoading,
+    error: documentsError,
+    refetch: refetchDocuments
+  } = useDocuments()
+
   const toggleSection = (section: keyof ExpandedSections) => {
     setExpandedSections(prev => ({
       ...prev,
@@ -260,29 +383,87 @@ export function RAGChatbot() {
     setIsTyping(true)
 
     try {
-      // Send message to backend
-      const response = await chatService.sendMessage(currentMessage, conversationId || undefined, searchMode)
-
-      // Update conversation ID if this is a new conversation
-      if (!conversationId && response.conversation_id) {
-        setConversationId(response.conversation_id)
-      }
-
+      // Send message to backend with selected documents for Knowledge Base mode
+      console.log('🔍 FRONTEND: Sending message with selected documents:', {
+        selectedDocuments: selectedDocuments,
+        selectedDocumentsLength: selectedDocuments.length,
+        selectedDocumentTypes: selectedDocuments.map(id => typeof id),
+        selectedModel: selectedModel
+      })
+      
+      // Create placeholder message for streaming
+      const assistantMessageId = (Date.now() + 1).toString()
       const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
+        id: assistantMessageId,
         type: "assistant",
-        content: response.response,
+        content: "",
         timestamp: new Date(),
-        sources: response.sources || [],
+        sources: [],
       }
 
+      // Add empty assistant message that will be updated in real-time
       setMessages((prev) => [...prev, assistantMessage])
 
-      // Update selected message sources for sidebar
-      if (response.sources && response.sources.length > 0) {
-        setSelectedMessageSources(response.sources)
-        setExpandedSections(prev => ({ ...prev, sources: true }))
-      }
+      // Use streaming service for real-time responses
+      await streamingChatService.sendStreamingMessage(
+        currentMessage,
+        conversationId || undefined,
+        searchMode,
+        selectedDocuments.length > 0 ? selectedDocuments : undefined,
+        selectedModel,
+        {
+          onStart: () => {
+            console.log('🚀 Streaming started')
+          },
+          onToken: (token) => {
+            // Update the assistant message content in real-time
+            setMessages((prev) => 
+              prev.map(msg => 
+                msg.id === assistantMessageId 
+                  ? { ...msg, content: msg.content + token }
+                  : msg
+              )
+            )
+          },
+          onSources: (sources) => {
+            // Update sources when received
+            console.log('📚 STREAMING: Updating message sources:', sources.length, sources)
+            setMessages((prev) => 
+              prev.map(msg => 
+                msg.id === assistantMessageId 
+                  ? { ...msg, sources: sources }
+                  : msg
+              )
+            )
+            // Update sidebar sources
+            setSelectedMessageSources(sources)
+            setExpandedSections(prev => ({ ...prev, sources: true }))
+          },
+          onComplete: (response) => {
+            console.log('✅ Streaming completed')
+            setIsTyping(false) // Stop typing indicator
+            // Update conversation ID if needed
+            if (response.conversation_id && response.conversation_id !== conversationId) {
+              setConversationId(response.conversation_id)
+              if (currentUserId) {
+                localStorage.setItem(`rag-chatbot-conversation-id-${currentUserId}`, response.conversation_id)
+              }
+            }
+          },
+          onError: (error) => {
+            console.error('❌ Streaming error:', error)
+            setIsTyping(false) // Stop typing indicator
+            // Update message with error
+            setMessages((prev) => 
+              prev.map(msg => 
+                msg.id === assistantMessageId 
+                  ? { ...msg, content: `Error: ${error}` }
+                  : msg
+              )
+            )
+          }
+        }
+      )
 
     } catch (error) {
       console.error('Error sending message:', error)
@@ -327,6 +508,9 @@ export function RAGChatbot() {
       setInputValue("")
       setSelectedMessageSources([])
       
+      // Clear selected documents in Knowledge Base
+      clearAllDocuments()
+      
       // Clear user-specific localStorage
       if (typeof window !== 'undefined' && currentUserId) {
         localStorage.removeItem(`rag-chatbot-messages-${currentUserId}`)
@@ -339,6 +523,12 @@ export function RAGChatbot() {
         setSelectedMessageSources(latestAssistantMessage.sources)
         setExpandedSections(prev => ({ ...prev, sources: true }))
       }
+
+      // If this was triggered by document modal request, open it
+      if (pendingDocumentModal) {
+        setPendingDocumentModal(false)
+        setShowDocumentModal(true)
+      }
     } catch (error) {
       console.error('Error creating new chat:', error)
       // Fallback to local reset if backend fails
@@ -350,6 +540,12 @@ export function RAGChatbot() {
       if (typeof window !== 'undefined' && currentUserId) {
         localStorage.removeItem(`rag-chatbot-messages-${currentUserId}`)
         localStorage.removeItem(`rag-chatbot-conversation-id-${currentUserId}`)
+      }
+
+      // If this was triggered by document modal request, open it anyway
+      if (pendingDocumentModal) {
+        setPendingDocumentModal(false)
+        setShowDocumentModal(true)
       }
     } finally {
       setIsCreatingNewChat(false)
@@ -457,12 +653,73 @@ export function RAGChatbot() {
     setChatToDelete(null)
   }
 
+  // Check if current chat is new (only has initial assistant message)
+  const isNewChat = () => {
+    // A new chat has only the initial assistant message or no messages
+    const userMessages = messages.filter(msg => msg.type === 'user')
+    return userMessages.length === 0
+  }
+
+  // Handle document modal with new chat check
+  const handleShowDocumentModal = () => {
+    if (isNewChat()) {
+      // It's a new chat, allow document selection
+      setShowDocumentModal(true)
+    } else {
+      // There are existing messages, show confirmation modal
+      setShowNewChatConfirm(true)
+    }
+  }
+
+  // Handle new chat confirmation
+  const handleNewChatConfirm = async () => {
+    setShowNewChatConfirm(false)
+    setPendingDocumentModal(true)
+    await handleNewChat()
+  }
+
+  const handleNewChatCancel = () => {
+    setShowNewChatConfirm(false)
+    setPendingDocumentModal(false)
+  }
+
+  const { isDarkMode, toggleDarkMode } = useTheme()
+
   return (
-    <div className="bg-gray-50" style={{ height: '100vh', overflow: 'hidden' }}>
+    <div className={isDarkMode ? "bg-gray-900" : "bg-gray-50"} style={{ height: '100vh', overflow: 'hidden' }}>
       <div className="flex" style={{ height: '100vh', overflow: 'hidden', flexDirection: 'row' }}>
         {/* Main Chat Area */}
-        <div style={{ flex: '1 1 0%', minWidth: '0', display: 'flex', flexDirection: 'column', backgroundColor: '#f8fafc' }}>
-          <div className="flex-1 flex flex-col bg-white" style={{ position: 'relative', height: 'calc(100vh - 60px)' }}>
+        <div style={{ flex: '1 1 0%', minWidth: '0', display: 'flex', flexDirection: 'column', backgroundColor: isDarkMode ? '#1a202c' : '#f8fafc' }}>
+          <div className={`flex-1 flex flex-col`} style={{ position: 'relative', height: 'calc(100vh - 60px)', backgroundColor: isDarkMode ? '#2d3748' : 'white' }}>
+            {/* Dark Mode Toggle */}
+            <div style={{
+              position: 'absolute',
+              top: '16px',
+              right: '16px',
+              zIndex: 100
+            }}>
+              <button
+                onClick={toggleDarkMode}
+                style={{
+                  padding: '8px',
+                  borderRadius: '8px',
+                  border: `1px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
+                  backgroundColor: isDarkMode ? '#374151' : '#f9fafb',
+                  color: isDarkMode ? '#f9fafb' : '#374151',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = isDarkMode ? '#4b5563' : '#f3f4f6'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = isDarkMode ? '#374151' : '#f9fafb'
+                }}
+              >
+                <i className={`fas ${isDarkMode ? 'fa-sun' : 'fa-moon'}`}></i>
+              </button>
+            </div>
             <div 
               ref={chatContainerRef}
               data-chat-messages="true"
@@ -495,12 +752,12 @@ export function RAGChatbot() {
                   alignItems: 'center', 
                   justifyContent: 'center', 
                   height: '200px',
-                  color: '#6b7280'
+                  color: isDarkMode ? '#9ca3af' : '#6b7280'
                 }}>
                   <div style={{
                     width: '40px',
                     height: '40px',
-                    border: '3px solid #e5e7eb',
+                    border: `3px solid ${isDarkMode ? '#374151' : '#e5e7eb'}`,
                     borderTop: '3px solid #3b82f6',
                     borderRadius: '50%',
                     animation: 'spin 1s linear infinite',
@@ -525,6 +782,8 @@ export function RAGChatbot() {
                         onSourcesClick={handleSourcesClick}
                         onFeedback={handleFeedback}
                         onRephrasedQueryClick={() => {}}
+                        onRegenerateAnswer={handleRegenerateAnswer}
+                        isDarkMode={isDarkMode}
                       />
                     </div>
                   ))}
@@ -543,6 +802,9 @@ export function RAGChatbot() {
               onKeyPress={handleKeyPress}
               searchMode={searchMode}
               setSearchMode={setSearchMode}
+              selectedModel={selectedModel}
+              setSelectedModel={setSelectedModel}
+              isDarkMode={isDarkMode}
             />
           </div>
         </div>
@@ -553,20 +815,22 @@ export function RAGChatbot() {
           selectedMessageSources={selectedMessageSources}
           chatHistory={chatHistory}
           selectedDocuments={selectedDocuments}
-          documents={sampleDocuments}
-          onShowDocumentModal={() => setShowDocumentModal(true)}
+          documents={documents}
+          onShowDocumentModal={handleShowDocumentModal}
           onRemoveDocument={removeDocument}
           onNewChat={handleNewChat}
           onChatHistoryClick={handleChatHistoryClick}
           onDeleteChat={handleDeleteChat}
           selectedChatId={conversationId || undefined}
+          documentsLoading={documentsLoading}
+          documentsError={documentsError}
         />
       </div>
       
       <DocumentModal 
         showModal={showDocumentModal}
         onClose={() => setShowDocumentModal(false)}
-        documents={sampleDocuments}
+        documents={documents}
         selectedDocuments={selectedDocuments}
         documentFilter={documentFilter}
         setDocumentFilter={setDocumentFilter}
@@ -578,6 +842,14 @@ export function RAGChatbot() {
         setSortSize={setSortSize}
         onToggleDocumentSelection={toggleDocumentSelection}
         onClearAllDocuments={clearAllDocuments}
+        isLoading={documentsLoading}
+        error={documentsError}
+      />
+
+      <NewChatConfirmModal 
+        showModal={showNewChatConfirm}
+        onClose={handleNewChatCancel}
+        onConfirm={handleNewChatConfirm}
       />
 
       {/* Delete Confirmation Modal */}
@@ -595,7 +867,7 @@ export function RAGChatbot() {
           zIndex: 1000
         }}>
           <div style={{
-            backgroundColor: 'white',
+            backgroundColor: isDarkMode ? '#1f2937' : 'white',
             borderRadius: '8px',
             padding: '24px',
             maxWidth: '400px',
@@ -607,14 +879,14 @@ export function RAGChatbot() {
                 margin: '0 0 8px 0', 
                 fontSize: '18px', 
                 fontWeight: '600', 
-                color: '#1f2937' 
+                color: isDarkMode ? '#f9fafb' : '#1f2937' 
               }}>
                 Delete Conversation
               </h3>
               <p style={{ 
                 margin: 0, 
                 fontSize: '14px', 
-                color: '#6b7280',
+                color: isDarkMode ? '#9ca3af' : '#6b7280',
                 lineHeight: '1.5'
               }}>
                 Are you sure you want to delete "{chatToDelete?.title}"? This action cannot be undone.
@@ -630,20 +902,20 @@ export function RAGChatbot() {
                 onClick={cancelDeleteChat}
                 style={{
                   padding: '8px 16px',
-                  border: '1px solid #d1d5db',
+                  border: `1px solid ${isDarkMode ? '#374151' : '#d1d5db'}`,
                   borderRadius: '6px',
-                  backgroundColor: 'white',
-                  color: '#374151',
+                  backgroundColor: isDarkMode ? '#374151' : 'white',
+                  color: isDarkMode ? '#f9fafb' : '#374151',
                   fontSize: '14px',
                   fontWeight: '500',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f9fafb'
+                  e.currentTarget.style.backgroundColor = isDarkMode ? '#4b5563' : '#f9fafb'
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = 'white'
+                  e.currentTarget.style.backgroundColor = isDarkMode ? '#374151' : 'white'
                 }}
               >
                 Cancel
@@ -675,5 +947,13 @@ export function RAGChatbot() {
         </div>
       )}
     </div>
+  )
+}
+
+export function RAGChatbot() {
+  return (
+    <ThemeProvider>
+      <RAGChatbotContent />
+    </ThemeProvider>
   )
 }

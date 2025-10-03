@@ -18,6 +18,12 @@ export const getDocumentIcon = (type: string): DocumentIconInfo => {
   switch(type) {
     case 'pdf':
       return { icon: 'fa-file-pdf', color: '#ef4444', bg: '#fef2f2' }
+    case 'png':
+    case 'jpg':
+    case 'jpeg':
+      return { icon: 'fa-file-image', color: '#8b5cf6', bg: '#f3e8ff' }
+    case 'txt':
+      return { icon: 'fa-file-alt', color: '#6b7280', bg: '#f9fafb' }
     case 'doc':
     case 'docx':
       return { icon: 'fa-file-word', color: '#3b82f6', bg: '#dbeafe' }
@@ -40,9 +46,25 @@ export const getFilteredAndSortedDocuments = (
   sortSize: string
 ) => {
   let filtered = documents.filter(doc => {
+    // Debug logging for filtering
+    if (documentFilter === 'img') {
+      console.log('IMG Filter - Document:', {
+        name: doc.name,
+        type: doc.type,
+        isImageType: ['png', 'jpg', 'jpeg'].includes(doc.type)
+      })
+    }
+    
     // Type filter
-    if (documentFilter !== 'all' && doc.type !== documentFilter) {
-      return false
+    if (documentFilter !== 'all') {
+      if (documentFilter === 'img') {
+        // For 'img' filter, include png, jpg, and jpeg files
+        if (!['png', 'jpg', 'jpeg'].includes(doc.type)) {
+          return false
+        }
+      } else if (doc.type !== documentFilter) {
+        return false
+      }
     }
 
     // Search filter

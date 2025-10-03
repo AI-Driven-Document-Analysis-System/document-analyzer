@@ -21,6 +21,7 @@ from app.core.database import get_db
 from app.db.conversations import get_conversations, get_messages
 # JWT middleware not implemented yet
 from ..services.chatbot.rag.conversation_summarizer import ConversationSummarizer
+from ..services.chatbot.rag.query_preprocessing import preprocess_user_query
 from ..core.config import settings
 from uuid import UUID
 
@@ -77,12 +78,51 @@ def extract_document_sources_from_langchain(source_documents):
         if filename:
             formatted_sources.append({
                 'title': filename,
-                'type': 'document',
-                'confidence': 0.8
+                'type': 'document'
             })
     
     logger.info(f"Successfully processed {len(formatted_sources)} document sources")
     return formatted_sources
+
+def extract_sources_from_structured_result(result):
+    """Extract sources from universal citation result with quotes."""
+    if 'sources' in result and result['sources']:
+        # Use the actual sources identified by the LLM through universal citations
+        # These already contain quotes from the UniversalCitationChain
+        return result['sources']
+    else:
+        # Fallback to source documents if no structured sources
+        source_documents = result.get('source_documents', [])
+        return extract_document_sources_from_langchain(source_documents)
+
+def display_sources_in_terminal(sources):
+    """Display sources in terminal - works with ANY source format."""
+    if not sources:
+        print("\n🔍 No sources found")
+        return
+        
+    print("\n" + "=" * 80)
+    print("📚 SOURCES USED:")
+    print("=" * 80)
+    
+    for i, source in enumerate(sources, 1):
+        # Handle different source formats
+        if isinstance(source, str):
+            filename = source
+            quote = "Source document referenced"
+        elif isinstance(source, dict):
+            filename = source.get('title', source.get('filename', 'Unknown Document'))
+            quote = source.get('quote', 'Referenced by AI')
+        else:
+            filename = str(source)
+            quote = "Source referenced"
+        
+        print(f"\n📄 SOURCE {i}: {filename}")
+        print(f"📝 TEXT USED:")
+        print(f'   "{quote}"')
+        print("-" * 60)
+    
+    print("=" * 80 + "\n")
 
 # Initialize chat service on module load
 def initialize_chat_service():
@@ -146,14 +186,19 @@ async def send_message(request: ChatMessageRequest):
             if not conv:
                 raise HTTPException(status_code=404, detail="Conversation not found")
         
-        # Store user message in database
+        # Preprocess user query for better retrieval
+        preprocessed_query = preprocess_user_query(request.message)
+        logger.info(f"Query preprocessing: '{request.message}' -> '{preprocessed_query}'")
+        
+        # Store user message in database (store original message, not preprocessed)
         user_message = message_repo.add(
             conversation_id=UUID(conversation_id),
             role="user",
             content=request.message,
             metadata={
                 "user_id": request.user_id,
-                "memory_type": request.memory_type.value
+                "memory_type": request.memory_type.value,
+                "preprocessed_query": preprocessed_query
             }
         )
         
@@ -203,14 +248,52 @@ async def send_message(request: ChatMessageRequest):
                 initialize_chat_service()
                 service = get_chatbot_service()
 
-            # Base LLM config
-            llm_config = request.llm_config or {
-                'provider': 'groq',
-                'api_key': getattr(settings, 'GROQ_API_KEY', None) or os.getenv('GROQ_API_KEY'),
-                'model': 'llama-3.1-8b-instant',
-                'temperature': 0.7,
-                'streaming': False
-            }
+            # Base LLM config - use provider from environment
+            default_provider = getattr(settings, 'LLM_PROVIDER', 'groq').lower()
+            
+            if default_provider == 'groq':
+                default_config = {
+                    'provider': 'groq',
+                    'api_key': getattr(settings, 'GROQ_API_KEY', None) or os.getenv('GROQ_API_KEY'),
+                    'model': getattr(settings, 'DEFAULT_LLM_MODEL', 'llama-3.1-8b-instant'),
+                    'temperature': getattr(settings, 'DEFAULT_TEMPERATURE', 0.7),
+                    'streaming': False
+                }
+            elif default_provider == 'deepseek':
+                default_config = {
+                    'provider': 'deepseek',
+                    'api_key': getattr(settings, 'DEEPSEEK_API_KEY', None) or os.getenv('DEEPSEEK_API_KEY'),
+                    'model': getattr(settings, 'DEEPSEEK_MODEL', 'deepseek-chat'),
+                    'temperature': getattr(settings, 'DEEPSEEK_TEMPERATURE', 0.7),
+                    'streaming': False
+                }
+            elif default_provider == 'openai':
+                default_config = {
+                    'provider': 'openai',
+                    'api_key': getattr(settings, 'OPENAI_API_KEY', None) or os.getenv('OPENAI_API_KEY'),
+                    'model': 'gpt-3.5-turbo',
+                    'temperature': getattr(settings, 'DEFAULT_TEMPERATURE', 0.7),
+                    'streaming': False
+                }
+            elif default_provider == 'gemini':
+                default_config = {
+                    'provider': 'gemini',
+                    'api_key': getattr(settings, 'GEMINI_API_KEY', None) or os.getenv('GEMINI_API_KEY'),
+                    'model': 'gemini-1.5-flash',
+                    'temperature': getattr(settings, 'DEFAULT_TEMPERATURE', 0.7),
+                    'streaming': False
+                }
+            else:
+                # Fallback to groq if unknown provider
+                default_config = {
+                    'provider': 'groq',
+                    'api_key': getattr(settings, 'GROQ_API_KEY', None) or os.getenv('GROQ_API_KEY'),
+                    'model': 'llama-3.1-8b-instant',
+                    'temperature': 0.7,
+                    'streaming': False
+                }
+            
+            llm_config = request.llm_config or default_config
 
             def ensure_api_key(conf: Dict[str, Any]) -> None:
                 provider = conf.get('provider')
@@ -232,6 +315,12 @@ async def send_message(request: ChatMessageRequest):
                         conf['api_key'] = key
                     else:
                         raise HTTPException(status_code=400, detail='OPENAI_API_KEY not found in environment variables')
+                elif provider == 'deepseek' and not conf.get('api_key'):
+                    key = getattr(settings, 'DEEPSEEK_API_KEY', None) or os.getenv('DEEPSEEK_API_KEY')
+                    if key:
+                        conf['api_key'] = key
+                    else:
+                        raise HTTPException(status_code=400, detail='DEEPSEEK_API_KEY not found in environment variables')
 
             def build_engine(conf: Dict[str, Any]):
                 ensure_api_key(conf)
@@ -245,35 +334,18 @@ async def send_message(request: ChatMessageRequest):
             try:
                 chat_engine = build_engine(dict(llm_config))
                 result = await chat_engine.process_query(
-                    query=request.message,
+                    query=preprocessed_query,  # Use preprocessed query for better retrieval
                     conversation_id=conversation_id,
                     user_id=request.user_id,
-                    search_mode=request.search_mode.value
+                    search_mode=request.search_mode.value,
+                    selected_document_ids=request.selected_document_ids
                 )
                 ai_response = result['response']
                 sources_data = result.get('sources', [])
             except Exception as primary_err:
-                logger.warning(f"Primary provider failed: {primary_err}")
-                # Provider fallback: switch between groq and gemini if keys exist
-                fallback_conf = dict(llm_config)
-                gem_key = getattr(settings, 'GEMINI_API_KEY', None) or os.getenv('GEMINI_API_KEY')
-                groq_key = getattr(settings, 'GROQ_API_KEY', None) or os.getenv('GROQ_API_KEY')
-                if llm_config.get('provider') != 'gemini' and gem_key:
-                    fallback_conf.update({'provider': 'gemini', 'api_key': gem_key, 'model': 'gemini-1.5-flash'})
-                elif llm_config.get('provider') != 'groq' and groq_key:
-                    fallback_conf.update({'provider': 'groq', 'api_key': groq_key, 'model': 'llama-3.1-8b-instant'})
-                else:
-                    raise
-
-                chat_engine = build_engine(fallback_conf)
-                result = await chat_engine.process_query(
-                    query=request.message,
-                    conversation_id=conversation_id,
-                    user_id=request.user_id,
-                    search_mode=request.search_mode.value
-                )
-                ai_response = result['response']
-                sources_data = result.get('sources', [])
+                logger.error(f"Primary provider ({llm_config.get('provider')}) failed: {primary_err}")
+                # Don't fallback - raise the original error so user knows what's wrong
+                raise HTTPException(status_code=500, detail=f"LLM provider '{llm_config.get('provider')}' failed: {str(primary_err)}")
 
         except HTTPException:
             raise
@@ -282,22 +354,29 @@ async def send_message(request: ChatMessageRequest):
             ai_response = f"I apologize, but I'm currently unable to process your request due to a technical issue. Please try again later. Your message was: {request.message}"
             sources_data = []
         
-        # Extract and format sources from response using LangChain's built-in source tracking
+        # Extract and format sources using the new structured citation method
         formatted_sources = []
         if 'result' in locals() and result:
-            # Try to get source documents from LangChain result first
-            source_documents = result.get('source_documents', [])
+            # Use the new structured source extraction method
+            formatted_sources = extract_sources_from_structured_result(result)
             
-            # If no source_documents in result, fallback to sources_data
-            if not source_documents and 'sources_data' in locals() and sources_data:
-                logger.info("No source_documents in LangChain result, using fallback sources_data")
-                formatted_sources = extract_document_sources_from_langchain(sources_data)
-            elif source_documents:
-                formatted_sources = extract_document_sources_from_langchain(source_documents)
+            # Display sources in terminal (bulletproof method)
+            display_sources_in_terminal(formatted_sources)
+            
+            # Log the sources for debugging
+            if formatted_sources:
+                source_names = [s.get('title', 'Unknown') for s in formatted_sources]
+                logger.info(f"Final sources to display: {source_names}")
+                
+                # Count sources with quotes for additional logging
+                quoted_sources = [s for s in formatted_sources if s.get('quote')]
+                if quoted_sources:
+                    logger.info(f"Sources with exact quotes: {len(quoted_sources)} out of {len(formatted_sources)}")
+                    logger.info(f"Saving quotes to database for conversation {conversation_id}")
             else:
-                logger.warning("No sources available from either LangChain result or sources_data")
+                logger.warning("No sources extracted from result")
         
-        # Store assistant message in database with sources
+        # Store assistant message in database with sources (including quotes)
         assistant_message = message_repo.add(
             conversation_id=UUID(conversation_id),
             role="assistant", 
@@ -307,7 +386,7 @@ async def send_message(request: ChatMessageRequest):
                 "needs_summarization": needs_summarization,
                 "message_pairs": message_pairs,
                 "context_window_usage": context_window_usage,
-                "sources": formatted_sources  # Store sources in metadata
+                "sources": formatted_sources  # Store sources in metadata (now includes quotes)
             }
         )
         
@@ -362,14 +441,52 @@ async def send_message_stream(request: ChatMessageRequest):
         # Generate conversation ID if not provided
         conversation_id = request.conversation_id or str(uuid.uuid4())
         
-        # Prepare LLM config with streaming enabled
-        llm_config = request.llm_config or {
-            'provider': 'gemini',
-            'api_key': os.getenv('GEMINI_API_KEY'),
-            'model': 'gemini-1.5-flash',
-            'temperature': 0.7,
-            'streaming': True  # Enable streaming
-        }
+        # Prepare LLM config with streaming enabled - use provider from environment
+        default_provider = getattr(settings, 'LLM_PROVIDER', 'groq').lower()
+        
+        if default_provider == 'groq':
+            default_streaming_config = {
+                'provider': 'groq',
+                'api_key': getattr(settings, 'GROQ_API_KEY', None) or os.getenv('GROQ_API_KEY'),
+                'model': getattr(settings, 'DEFAULT_LLM_MODEL', 'llama-3.1-8b-instant'),
+                'temperature': getattr(settings, 'DEFAULT_TEMPERATURE', 0.7),
+                'streaming': True
+            }
+        elif default_provider == 'deepseek':
+            default_streaming_config = {
+                'provider': 'deepseek',
+                'api_key': getattr(settings, 'DEEPSEEK_API_KEY', None) or os.getenv('DEEPSEEK_API_KEY'),
+                'model': getattr(settings, 'DEEPSEEK_MODEL', 'deepseek-chat'),
+                'temperature': getattr(settings, 'DEEPSEEK_TEMPERATURE', 0.7),
+                'streaming': True
+            }
+        elif default_provider == 'openai':
+            default_streaming_config = {
+                'provider': 'openai',
+                'api_key': getattr(settings, 'OPENAI_API_KEY', None) or os.getenv('OPENAI_API_KEY'),
+                'model': 'gpt-3.5-turbo',
+                'temperature': getattr(settings, 'DEFAULT_TEMPERATURE', 0.7),
+                'streaming': True
+            }
+        elif default_provider == 'gemini':
+            default_streaming_config = {
+                'provider': 'gemini',
+                'api_key': getattr(settings, 'GEMINI_API_KEY', None) or os.getenv('GEMINI_API_KEY'),
+                'model': 'gemini-1.5-flash',
+                'temperature': getattr(settings, 'DEFAULT_TEMPERATURE', 0.7),
+                'streaming': True
+            }
+        else:
+            # Fallback to groq
+            default_streaming_config = {
+                'provider': 'groq',
+                'api_key': os.getenv('GROQ_API_KEY'),
+                'model': 'llama-3.1-8b-instant',
+                'temperature': 0.7,
+                'streaming': True
+            }
+        
+        llm_config = request.llm_config or default_streaming_config
         
         # Ensure API key is set based on provider
         if llm_config.get('provider') == 'groq' and not llm_config.get('api_key'):
@@ -390,6 +507,12 @@ async def send_message_stream(request: ChatMessageRequest):
                 llm_config['api_key'] = openai_key
             else:
                 raise HTTPException(status_code=400, detail="OPENAI_API_KEY not found in environment variables")
+        elif llm_config.get('provider') == 'deepseek' and not llm_config.get('api_key'):
+            deepseek_key = getattr(settings, 'DEEPSEEK_API_KEY', None) or os.getenv('DEEPSEEK_API_KEY')
+            if deepseek_key:
+                llm_config['api_key'] = deepseek_key
+            else:
+                raise HTTPException(status_code=400, detail="DEEPSEEK_API_KEY not found in environment variables")
         
         # Validate API key is present
         if not llm_config.get('api_key'):
@@ -469,9 +592,13 @@ async def search_documents(request: DocumentSearchRequest):
         
         start_time = time.time()
         
+        # Preprocess search query for better retrieval
+        preprocessed_query = preprocess_user_query(request.query)
+        logger.debug(f"Search query preprocessing: '{request.query}' -> '{preprocessed_query}'")
+        
         # Search documents
         results = service.search_documents(
-            query=request.query,
+            query=preprocessed_query,
             k=request.k,
             user_id=request.user_id
         )
@@ -826,26 +953,15 @@ async def create_chat_engine(config: ChatEngineConfig):
     except Exception as e:
         logger.error(f"Error creating chat engine: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-
-
 @router.get("/health")
 async def health_check():
     """
-    Health check endpoint for chat service
-    
-    This endpoint verifies that the chat service is running
-    and properly initialized.
+    Health check endpoint for the chat service
     """
     try:
         service = get_chatbot_service()
         stats = service.get_system_stats()
-        
-        return {
-            "status": "healthy" if stats.get('initialized', False) else "unhealthy",
-            "service": "chat",
-            "initialized": stats.get('initialized', False),
-            "timestamp": stats.get('timestamp')
-        }
+        return {"status": "healthy", "stats": stats}
         
     except Exception as e:
         logger.error(f"Health check failed: {e}")
@@ -940,3 +1056,19 @@ async def force_database_reconnect():
             "error": str(e),
             "timestamp": time.time()
         }
+
+
+@router.post("/clear-cache")
+async def clear_chat_cache():
+    """
+    Clear the chat engine cache to force recreation of LLM instances.
+    
+    This is useful when switching providers or updating configurations.
+    """
+    try:
+        service = get_chatbot_service()
+        service.clear_cache()
+        return {"status": "success", "message": "Chat engine cache cleared successfully"}
+    except Exception as e:
+        logger.error(f"Failed to clear cache: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to clear cache: {str(e)}")

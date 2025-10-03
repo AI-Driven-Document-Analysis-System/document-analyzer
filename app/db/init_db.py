@@ -3,22 +3,25 @@ import psycopg2
 import psycopg2.extras  # Add this import
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 import logging
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Register UUID adapter - ADD THIS LINE
 psycopg2.extras.register_uuid()
 
 logger = logging.getLogger(__name__)
-import os
 print("DB URL used by FastAPI:", os.getenv("DATABASE_URL"))
 
 def get_database_config():
     """Get database configuration for Aiven PostgreSQL"""
     return {
-        'host': os.getenv("DB_HOST", "your-db-host"),
-        'port': os.getenv("DB_PORT", "5432"),
-        'user': os.getenv("DB_USER", "your-username"),
-        'password': os.getenv("DB_PASSWORD", "your-password"),
-        'database': os.getenv("DB_NAME", "your-database"),
+        'host': os.getenv("DB_HOST", "pg-1cca056b-slicchandrika-3c7e.b.aivencloud.com"),
+        'port': os.getenv("DB_PORT", "22695"),
+        'user': os.getenv("DB_USER", "avnadmin"),
+        'password': os.getenv("DB_PASSWORD", "AVNS_ZXM128nbLlKRNr9Edtj"),
+        'database': os.getenv("DB_NAME", "defaultdb"),
         'sslmode': 'require'
     }
 
@@ -265,10 +268,18 @@ def create_tables():
             );
         """)
 
-        # Create indexes
+        # Create indexes for performance optimization
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_documents_type ON document_classifications(document_type);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_documents_upload_timestamp ON documents(upload_timestamp);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_processing_status ON document_processing(processing_status);")
+        
+        # Critical indexes for load testing performance
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_documents_hash_user ON documents(document_hash, user_id);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_documents_user_id ON documents(user_id);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_document_processing_doc_id ON document_processing(document_id);")
+        
+        logger.info("Created performance optimization indexes")
         # Check if searchable_content column exists before creating index
         try:
             cursor.execute("""

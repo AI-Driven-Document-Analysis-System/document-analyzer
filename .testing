@@ -1,0 +1,15 @@
+# RAGAS Evaluation Configuration
+# Set to true/false to enable/disable chatbot data recording for evaluation
+
+# Enable/disable RAGAS evaluation data collection
+RAGAS_EVALUATION_ENABLED=true
+
+# Evaluation session configuration
+RAGAS_SESSION_NAME=Live Chatbot Evaluation
+RAGAS_SESSION_DESCRIPTION=Production chatbot interactions for RAGAS evaluation
+
+# Database configuration
+RAGAS_DB_PATH=evaluation/rag-chatbot/ragas_evaluation.db
+
+# Logging configuration for evaluation
+RAGAS_VERBOSE_LOGGING=true

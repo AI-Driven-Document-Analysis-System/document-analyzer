@@ -7,8 +7,12 @@ import re
 import logging
 import os
 from typing import Optional, Dict, Any
+from dotenv import load_dotenv
 import google.generativeai as genai
 from groq import Groq
+
+# Load environment variables
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 

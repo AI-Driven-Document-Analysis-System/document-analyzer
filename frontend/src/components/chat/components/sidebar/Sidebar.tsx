@@ -9,14 +9,16 @@ interface SidebarProps {
   toggleSection: (section: keyof ExpandedSections) => void
   selectedMessageSources: any[]
   chatHistory: ChatHistory[]
-  selectedDocuments: number[]
+  selectedDocuments: string[]
   documents: Document[]
   onShowDocumentModal: () => void
-  onRemoveDocument: (docId: number) => void
+  onRemoveDocument: (docId: string) => void
   onNewChat: () => void
   onChatHistoryClick: (chatId: string) => void
   onDeleteChat: (chatId: string) => void
   selectedChatId?: string
+  documentsLoading?: boolean
+  documentsError?: string | null
 }
 
 export function Sidebar({
@@ -31,7 +33,9 @@ export function Sidebar({
   onNewChat,
   onChatHistoryClick,
   onDeleteChat,
-  selectedChatId
+  selectedChatId,
+  documentsLoading = false,
+  documentsError = null
 }: SidebarProps) {
   return (
     <div 
@@ -74,6 +78,8 @@ export function Sidebar({
           documents={documents}
           onShowDocumentModal={onShowDocumentModal}
           onRemoveDocument={onRemoveDocument}
+          documentsLoading={documentsLoading}
+          documentsError={documentsError}
         />
       </div>
     </div>
