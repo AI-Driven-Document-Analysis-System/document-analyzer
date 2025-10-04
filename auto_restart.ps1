@@ -1,7 +1,7 @@
 # PowerShell Auto-Restart Script for DocAnalyzer
 # This script monitors and restarts the Python process when it crashes
 
-Write-Host "Starting DocAnalyzer..." -ForegroundColor Green
+Write-Host "Starting DocAnalyzer with Auto-Restart..." -ForegroundColor Green
 Write-Host "Press Ctrl+C to stop permanently" -ForegroundColor Yellow
 
 $restartCount = 0
