@@ -54,19 +54,19 @@
 #                 log_level="info",
 #                 reload_dirs=["app/"],
 #                 reload_excludes=["logs/*", "storage/*", "*.log", "__pycache__/*"]
-#             )
-        
 #     except Exception as e:
 #         print(f"❌ Error during startup: {e}")
 #         sys.exit(1)
 
 #!/usr/bin/env python3
 """
-Startup script for DocAnalyzer backend
+Startup script for DocAnalyzer backend with auto-restart capability
 """
 import os
 import sys
 import logging
+import signal
+import time
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -81,6 +81,11 @@ from app.main import app
 from app.services.chatbot.title_generation.title_listener import start_title_listener
 import asyncio
 
+def signal_handler(sig, frame):
+    """Handle Ctrl+C gracefully to stop auto-restart"""
+    print("\n🛑 Shutting down server...")
+    sys.exit(0)
+
 def setup_directories():
     """Create necessary directories"""
     directories = [
@@ -94,36 +99,44 @@ def setup_directories():
         Path(directory).mkdir(parents=True, exist_ok=True)
         print(f"✓ Created directory: {directory}")
 
+def start_server():
+    """Start the FastAPI server (single attempt)"""
+    # Setup directories
+    print("\n📁 Setting up directories...")
+    setup_directories()
+    
+    # Initialize database
+    print("\n🗄️  Initializing database...")
+    initialize_database()
+    
+    print("\n✅ Backend initialization completed successfully!")
+    print("\n🌐 Starting FastAPI server...")
+    print("📖 API Documentation: http://localhost:8000/docs")
+    print("🔍 Alternative Docs: http://localhost:8000/redoc")
+    
+    # Start the server - clean configuration
+    import uvicorn
+    uvicorn.run(
+        "app.main:app",
+        host="0.0.0.0",
+        port=8000,
+        reload=False,
+        log_level="info"
+    )
+
 def main():
     """Main startup function"""
+    # Register Ctrl+C handler for graceful shutdown
+    signal.signal(signal.SIGINT, signal_handler)
+    
     print("🚀 Starting DocAnalyzer Backend...")
     
     try:
-        # Setup directories
-        print("\n📁 Setting up directories...")
-        setup_directories()
-        
-        # Initialize database
-        print("\n🗄️  Initializing database...")
-        initialize_database()
-        
-        print("\n✅ Backend initialization completed successfully!")
-        print("\n🌐 Starting FastAPI server...")
-        print("📖 API Documentation: http://localhost:8000/docs")
-        print("🔍 Alternative Docs: http://localhost:8000/redoc")
-        
-        # Start the server - clean configuration
-        import uvicorn
-        uvicorn.run(
-            "app.main:app",
-            host="0.0.0.0",
-            port=8000,
-            reload=False,
-            log_level="info"
-        )
-        
+        start_server()
+    except KeyboardInterrupt:
+        print("\n🛑 Server stopped by user")
     except Exception as e:
-        print(f"❌ Error during startup: {e}")
+        print(f"\n❌ Server error: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":
