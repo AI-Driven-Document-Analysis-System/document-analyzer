@@ -63,6 +63,7 @@ node_modules/.bin/loose-envify
 *.pyc
 /tests/ui/node_modules
 *.pdf
-*.png
+
 *.zip
-*.jpeg
+
+/tests/functional_testing/node_modules
