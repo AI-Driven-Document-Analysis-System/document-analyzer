@@ -11,7 +11,7 @@ interface StorageData {
 const Dashboard: React.FC = () => {
     // Fixed hardcoded values
     const storageData: StorageData = {
-        totalStorage: 5 * 1024 * 1024 * 1024, // 5GB
+        totalStorage: 2 * 1024 * 1024 * 1024, // 5GB
         usedStorage: 35 * 1024 * 1024, // 35MB
         availableStorage: (5 * 1024 * 1024 * 1024) - (35 * 1024 * 1024),
         usagePercentage: (35 * 1024 * 1024) / (5 * 1024 * 1024 * 1024) * 100

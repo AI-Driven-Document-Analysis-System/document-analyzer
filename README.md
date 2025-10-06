@@ -81,6 +81,16 @@ MINIO_SECRET_KEY=minioadmin
 python run.py
 ```
 
+**Alternative (with Auto-Restart):**
+```bash
+powershell -ExecutionPolicy Bypass .\auto_restart.ps1
+```
+*Automatically restarts the server if it crashes. Use Ctrl+C to stop permanently.*
+```bash
+taskkill /f /im python.exe
+```
+*Run this command to simulate a backend server crash for testing auto-restart functionality.*
+
 **Frontend:**
 ```bash
 cd frontend
