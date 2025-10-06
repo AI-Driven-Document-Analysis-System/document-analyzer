@@ -18,7 +18,7 @@ from ..core.config import settings
 from .ocr_service_aws_only import OCRService, OCRProvider
 from ..db.crud import get_document_crud
 from .document_embedding_service import document_embedding_service
-
+from .classifcation.classification import DocumentClassifier
 
 class DocumentServiceAWS:
     def __init__(self):
@@ -109,6 +109,39 @@ class DocumentServiceAWS:
                     return str(result[0]) if result else None
         except Exception as e:
             print(f"Error checking document hash: {e}")
+            return None
+    
+    async def _classify_document_async(self, local_path: str, document_id: str) -> Optional[str]:
+        """
+        Classify document asynchronously with proper error handling.
+        Returns classification result or None if failed.
+        """
+        try:
+            print(f"[Classification] Starting classification for document {document_id}")
+            
+            # Run classification in thread pool to avoid blocking
+            classifier = DocumentClassifier()
+            loop = asyncio.get_event_loop()
+            doc_type = await loop.run_in_executor(None, classifier.classify_document, local_path)
+            
+            
+            if doc_type and doc_type != "unknown":
+                print(f"[Classification] Document {document_id} classified as: {doc_type}")
+                
+                # Save classification to database
+                crud = get_document_crud()
+                crud.save_document_classification(
+                    document_id=document_id,
+                    document_type=doc_type
+                )
+                print(f"[Classification] Classification saved successfully for {document_id}")
+                return doc_type
+            else:
+                print(f"[Classification] Warning: Classification returned 'unknown' for {document_id}")
+                return None
+                
+        except Exception as e:
+            print(f"[Classification] Error classifying document {document_id}: {e}")
             return None
 
     async def upload_document(self, file: UploadFile, user_id: str) -> Dict[str, Any]:
@@ -257,6 +290,15 @@ class DocumentServiceAWS:
                         f.write(d)
             finally:
                 obj.close(); obj.release_conn()
+            
+            #Document Classification
+            print(f"Starting Document Classification")
+            classification_result = await self._classify_document_async(local_path, document_id)
+            if classification_result:
+                print(f"[Processing] Classification complete: {classification_result}")
+            else:
+                print(f"[Processing] Classification failed or returned unknown")
+            
 
             # Run OCR processing (AWS Textract or Surya fallback)
             print(f"Starting OCR processing for document {document_id}")

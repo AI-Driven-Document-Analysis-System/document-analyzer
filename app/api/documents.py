@@ -95,9 +95,11 @@ async def get_documents(
                     SELECT 
                         d.id, d.original_filename, d.file_size, d.upload_timestamp, 
                         d.mime_type, d.user_id, d.file_path_minio,
-                        dp.processing_status, dp.processing_errors
+                        dp.processing_status, dp.processing_errors,
+                        dc.document_type
                     FROM documents d
                     LEFT JOIN document_processing dp ON d.id = dp.document_id
+                    LEFT JOIN document_classifications dc ON d.id = dc.document_id
                     WHERE d.user_id = %s
                     ORDER BY d.upload_timestamp DESC
                     LIMIT %s OFFSET %s
@@ -122,7 +124,8 @@ async def get_documents(
                         "user_id": doc[5],
                         "file_path": doc[6],
                         "processing_status": doc[7] or "unknown",
-                        "processing_errors": doc[8]
+                        "processing_errors": doc[8],
+                        "document_type": doc[9] or "Unknown"
                     }
                     result.append(doc_dict)
                 
