@@ -1,0 +1,44 @@
+version: '3'
+services:
+  python39:
+    container_name: config_test_py39
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PYTHON_VERSION: 3.9
+    volumes:
+      - ./reports:/app/reports
+      - .:/app
+    # Add command to ensure container exits after tests
+    command: ["python", "run_tests.py"]
+  
+  python310:
+    container_name: config_test_py310
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PYTHON_VERSION: 3.10
+    volumes:
+      - ./reports:/app/reports
+      - .:/app
+    # Add command to ensure container exits after tests
+    command: ["python", "run_tests.py"]
+    depends_on:
+      - python39
+  
+  python311:
+    container_name: config_test_py311
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PYTHON_VERSION: 3.11
+    volumes:
+      - ./reports:/app/reports
+      - .:/app
+    # Add command to ensure container exits after tests
+    command: ["python", "run_tests.py"]
+    depends_on:
+      - python310

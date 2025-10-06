@@ -1,0 +1,39 @@
+{
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    
+    "test:chromium": "playwright test --project=chromium",
+    "test:firefox": "playwright test --project=firefox",
+    "test:webkit": "playwright test --project=webkit",
+    "test:edge": "playwright test --project=edge",
+    
+    "test:mobile": "playwright test --project=mobile-chrome --project=mobile-safari",
+    "test:mobile-chrome": "playwright test --project=mobile-chrome",
+    "test:mobile-safari": "playwright test --project=mobile-safari",
+    
+    "test:all-browsers": "playwright test --project=chromium --project=firefox --project=webkit",
+    "test:desktop": "playwright test --project=chromium --project=firefox --project=webkit --project=edge",
+    
+    "test:comparison": "playwright test tests/utils/browser-comparison.ts",
+    "test:visual": "playwright test --project=chromium --project=firefox --project=webkit --update-snapshots",
+    
+    "test:chat": "playwright test tests/chat",
+    "test:upload": "playwright test tests/upload",
+    
+    "test:performance": "playwright test --grep @performance",
+    "test:compatibility": "playwright test --grep @compatibility",
+    
+    "report": "playwright show-report",
+    "report:json": "node scripts/parse-test-results.js",
+    
+    "install:browsers": "playwright install",
+    "install:deps": "playwright install-deps"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "typescript": "^5.3.0"
+  }
+}
