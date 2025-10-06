@@ -72,3 +72,5 @@ evaluation/rag-chatbot/ragas_evaluation.db
 *.ipynb_checkpoints/
 *.ipynb
 
+/tests/functional_testing/node_modules
+/tests/ui/node_modules
