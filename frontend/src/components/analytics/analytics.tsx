@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './analytics.css';
+import StorageUsageChart from '../dashboard/StorageUsageChart';
 
 // ... (All your interfaces remain unchanged)
 interface ChartData {
@@ -126,6 +127,11 @@ const Analytics: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  
+  // Storage usage state
+  const [storageUsage, setStorageUsage] = useState({ used: 0, total: 2048 }); // Default to 5GB
+  const [loadingStorage, setLoadingStorage] = useState(true);
+  const [storageError, setStorageError] = useState<string | null>(null);
 
   // ... (All your data fetching and processing functions remain unchanged)
   const fetchAnalyticsData = async (period: string, isRefresh = false) => {
@@ -379,6 +385,58 @@ const Analytics: React.FC = () => {
     fetchAnalyticsData(selectedPeriod);
   }, [selectedPeriod]);
 
+  // Fetch storage usage data
+  useEffect(() => {
+    const fetchStorageUsage = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.warn('No authentication token found for storage data');
+        setLoadingStorage(false);
+        return;
+      }
+
+      try {
+        setLoadingStorage(true);
+        
+        // Fetch from API
+        const response = await fetch('http://localhost:8000/api/analytics/document-uploads-over-time?period=30d', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (data && data.summary) {
+          // Convert bytes to MB (1 MB = 1024 * 1024 bytes)
+          const usedMB = Math.round((data.summary.totalSize || 0) / (1024 * 1024));
+          // Default to 5GB total storage if not provided
+          const totalMB = 2 * 1024; // 5GB in MB
+          
+          setStorageUsage({ 
+            used: usedMB, 
+            total: totalMB 
+          });
+          setStorageError(null);
+        } else {
+          throw new Error('Invalid data format from API');
+        }
+      } catch (err) {
+        console.error('Error fetching storage usage:', err);
+        setStorageError(err instanceof Error ? err.message : 'Failed to load storage data');
+      } finally {
+        setLoadingStorage(false);
+      }
+    };
+
+    fetchStorageUsage();
+  }, []);
+
   const handlePeriodChange = (period: string) => {
     setSelectedPeriod(period);
   };
@@ -458,6 +516,17 @@ const Analytics: React.FC = () => {
             <option value="1y">Last year</option>
           </select>
         </div>
+      </div>
+
+      {/* Storage Usage Chart */}
+      <div style={{ marginBottom: '24px' }}>
+        <StorageUsageChart 
+          used={storageUsage.used} 
+          total={storageUsage.total} 
+          loading={loadingStorage}
+          error={storageError}
+          isMockData={storageError !== null}
+        />
       </div>
 
       {/* Summary Cards */}

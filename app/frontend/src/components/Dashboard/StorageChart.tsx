@@ -9,7 +9,7 @@ interface StorageData {
 
 export const StorageChart: React.FC = () => {
     const [storageData, setStorageData] = useState<StorageData | null>(null);
-    const TOTAL_STORAGE = 5 * 1024 * 1024 * 1024; // 5GB
+    const TOTAL_STORAGE = 2 * 1024 * 1024 * 1024; // 5GB
 
     useEffect(() => {
         const fetchStorageData = async () => {
