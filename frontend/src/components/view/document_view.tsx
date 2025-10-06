@@ -62,7 +62,6 @@ const getStatusBadgeStyle = (status: string) => {
     borderWidth: '1px',
     borderStyle: 'solid'
   }
-  
   switch (status) {
     case 'completed': 
       return {
@@ -81,9 +80,9 @@ const getStatusBadgeStyle = (status: string) => {
     case 'failed': 
       return {
         ...baseStyle,
-        backgroundColor: '#dbeafe !important',
-        color: '#1e40af !important',
-        borderColor: '#93c5fd !important'
+        backgroundColor: '#fee2e2',
+        color: '#b91c1c',
+        borderColor: '#fecaca'
       }
     default: 
       return {
@@ -92,6 +91,53 @@ const getStatusBadgeStyle = (status: string) => {
         color: '#64748b',
         borderColor: '#e2e8f0'
       }
+  }
+}
+
+// ✅ NEW: Document Type Badge Styling
+const getDocumentTypeBadgeStyle = (docType: string | undefined): React.CSSProperties => {
+  const baseStyle = {
+    padding: '0.25rem 0.75rem',
+    fontSize: '0.75rem',
+    borderRadius: '9999px',
+    fontWeight: '500',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.25rem',
+    borderWidth: '1px',
+    borderStyle: 'solid'
+  }
+
+  if (!docType) {
+    return {
+      ...baseStyle,
+      backgroundColor: '#f8fafc',
+      color: '#64748b',
+      borderColor: '#e2e8f0'
+    }
+  }
+
+  const normalized = docType.toLowerCase().trim()
+  const typeColors: Record<string, { bg: string; text: string; border: string }> = {
+    'medical record': { bg: '#f0fdf4', text: '#166534', border: '#bbf7d0' },
+    'invoice': { bg: '#fffbeb', text: '#78350f', border: '#fcd34d' },
+    'contract': { bg: '#ede9fe', text: '#5b21b6', border: '#c4b5fd' },
+    'report': { bg: '#dbeafe', text: '#1e40af', border: '#93c5fd' },
+    'prescription': { bg: '#f0f9ff', text: '#0891b2', border: '#a5f3fc' },
+    'lab result': { bg: '#f0fdf4', text: '#15803d', border: '#86efac' },
+  }
+
+  const colors = typeColors[normalized] || {
+    bg: '#f1f5f9',
+    text: '#475569',
+    border: '#cbd5e1'
+  }
+
+  return {
+    ...baseStyle,
+    backgroundColor: colors.bg,
+    color: colors.text,
+    borderColor: colors.border
   }
 }
 
@@ -125,22 +171,18 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
   const [authToken, setAuthToken] = useState<string | null>(null)
 
-  // Get auth token
   React.useEffect(() => {
     const token = propAuthToken || authService.getToken()
     setAuthToken(token)
   }, [propAuthToken])
 
-  // Fetch documents
   const fetchDocuments = async () => {
     try {
       setLoading(true)
       setError(null)
-
       if (!authToken) {
         throw new Error('No authentication token provided')
       }
-
       const response = await fetch('http://localhost:8000/api/documents/', {
         method: 'GET',
         headers: {
@@ -148,7 +190,6 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
           'Content-Type': 'application/json',
         },
       })
-
       if (!response.ok) {
         if (response.status === 401) {
           onAuthError?.()
@@ -156,10 +197,8 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
         }
         throw new Error(`Failed to fetch documents: ${response.statusText}`)
       }
-
       const data = await response.json()
       console.log('API Response:', data)
-      
       if (Array.isArray(data)) {
         setDocuments(data)
       } else if (data && Array.isArray(data.documents)) {
@@ -184,7 +223,6 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
     }
   }, [authToken])
 
-  // Filter and sort documents
   const filteredDocuments = (Array.isArray(documents) ? documents : [])
     .filter(doc => {
       const matchesSearch = doc.original_filename.toLowerCase().includes(searchQuery.toLowerCase())
@@ -206,7 +244,6 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
       }
     })
 
-  // Get recent files (last 3 uploaded)
   const recentFiles = (Array.isArray(documents) ? documents : [])
     .sort((a, b) => new Date(b.upload_date).getTime() - new Date(a.upload_date).getTime())
     .slice(0, 3)
@@ -222,11 +259,9 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
           'Authorization': `Bearer ${authToken}`,
         },
       })
-
       if (!response.ok) {
         throw new Error('Failed to download document')
       }
-
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
       const a = window.document.createElement('a')
@@ -246,7 +281,6 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
     if (!confirm(`Are you sure you want to delete "${document.original_filename}"?`)) {
       return
     }
-
     try {
       const response = await fetch(`http://localhost:8000/api/documents/${document.id}`, {
         method: 'DELETE',
@@ -254,11 +288,9 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
           'Authorization': `Bearer ${authToken}`,
         },
       })
-
       if (!response.ok) {
         throw new Error('Failed to delete document')
       }
-
       setDocuments(prev => prev.filter(doc => doc.id !== document.id))
       if (selectedDocument?.id === document.id) {
         setSelectedDocument(null)
@@ -269,7 +301,6 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
     }
   }
 
-  // LOADING STATE
   if (loading) {
     return (
       <div className="docview-container docview-loading">
@@ -284,24 +315,23 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
     )
   }
 
-  // ERROR STATE
   if (error) {
     return (
       <div className="docview-container docview-error">
-        <div className="docview-error-card">
-          <div className="docview-error-icon">
-            <i className="fas fa-exclamation-triangle"></i>
-          </div>
-          <h2 className="docview-error-title">Oops! Something went wrong</h2>
-          <p className="docview-error-message">{error}</p>
-          <button
-            onClick={fetchDocuments}
-            className="docview-cta-button docview-cta-primary"
-          >
-            Try Again
-          </button>
+      <div className="docview-error-card">
+        <div className="docview-error-icon">
+          <i className="fas fa-exclamation-triangle"></i>
         </div>
+        <h2 className="docview-error-title">Oops! Something went wrong</h2>
+        <p className="docview-error-message">{error}</p>
+        <button
+          onClick={fetchDocuments}
+          className="docview-cta-button docview-cta-primary"
+        >
+          Try Again
+        </button>
       </div>
+    </div>
     )
   }
 
@@ -409,7 +439,6 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                   )}
                 </div>
               </div>
-
               {/* Right Side - Modern Controls */}
               <div style={{
                 display: 'flex',
@@ -482,7 +511,6 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                     </svg>
                   </button>
                 </div>
-
                 {/* Modern Filter Dropdowns */}
                 <div style={{
                   display: 'flex',
@@ -526,7 +554,6 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                     <option value="processing">Processing</option>
                     <option value="failed">Failed</option>
                   </select>
-                  
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
@@ -680,7 +707,6 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                                    fileIcon.accentClass === 'bg-indigo-500' ? '#6366f1' : '#6b7280',
                         borderRadius: '1rem 1rem 0 0'
                       }}></div>
-                      
                       <div style={{
                         display: 'flex',
                         flexDirection: 'column',
@@ -740,33 +766,26 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                             </p>
                           </div>
                         </div>
-                        
-                        <div style={{ marginTop: 'auto' }}>
-                          <div style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between'
+                        <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          <span style={{
+                            fontSize: '0.875rem',
+                            color: '#6b7280',
+                            textAlign: 'left'
                           }}>
-                            <span style={{
-                              fontSize: '0.875rem',
-                              color: '#6b7280'
-                            }}>
-                              {formatDate(document.upload_date)}
-                            </span>
-                            <span style={{
-                              padding: '0.25rem 0.75rem',
-                              borderRadius: '9999px',
-                              fontSize: '0.75rem',
-                              fontWeight: '500',
-                              background: document.processing_status === 'completed' ? '#dbeafe' :
-                                         document.processing_status === 'processing' ? '#e0f2fe' : '#dbeafe',
-                              color: document.processing_status === 'completed' ? '#1e40af' :
-                                     document.processing_status === 'processing' ? '#0369a1' : '#1e40af'
-                            }}>
+                            {formatDate(document.upload_date)}
+                          </span>
+                          <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '0.5rem' }}>
+                            <span style={getStatusBadgeStyle(document.processing_status)}>
                               {document.processing_status}
                             </span>
+                            {document.document_type && (
+                              <span style={getDocumentTypeBadgeStyle(document.document_type)}>
+                                {document.document_type}
+                              </span>
+                            )}
                           </div>
                         </div>
+                  
                       </div>
                     </div>
                   )
@@ -799,7 +818,6 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
               </div>
             </div>
 
-            {/* Documents Grid/List */}
             {filteredDocuments.length === 0 ? (
               <div style={{
                 textAlign: 'center',
@@ -886,7 +904,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                 gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
                 gap: '1.5rem'
               }}>
-                {filteredDocuments.map((document, index) => {
+                {filteredDocuments.map((document) => {
                   const fileIcon = getFileIcon(document.content_type)
                   return (
                     <div
@@ -925,7 +943,6 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                                    fileIcon.accentClass === 'bg-indigo-500' ? '#6366f1' : '#6b7280',
                         borderRadius: '1rem 1rem 0 0'
                       }}></div>
-                      
                       {/* Document Preview/Icon */}
                       <div style={{
                         height: '10rem',
@@ -968,7 +985,6 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                             No Preview Available
                           </div>
                         )}
-                        
                         {/* Action Buttons */}
                         <div style={{
                           position: 'absolute',
@@ -1059,7 +1075,6 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                           </button>
                         </div>
                       </div>
-
                       {/* Document Info */}
                       <div style={{ padding: '1.5rem' }}>
                         <div style={{
@@ -1116,35 +1131,24 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                             </p>
                           </div>
                         </div>
-                        
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between'
-                        }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
                           <span style={{
                             fontSize: '0.875rem',
-                            color: '#6b7280'
+                            color: '#6b7280',
+                            textAlign: 'left'
                           }}>
                             {formatDate(document.upload_date)}
                           </span>
-                          <span style={{
-                            padding: '0.25rem 0.75rem',
-                            borderRadius: '9999px',
-                            fontSize: '0.75rem',
-                            fontWeight: '500',
-                            background: document.processing_status === 'completed' ? '#dbeafe' :
-                                       document.processing_status === 'processing' ? '#e0f2fe' : '#dbeafe',
-                            color: document.processing_status === 'completed' ? '#1e40af' :
-                                   document.processing_status === 'processing' ? '#0369a1' : '#1e40af'
-                          }}>
-                            {document.processing_status}
-                          </span>
-                        </div>
-                        
-                        <div className="flex items-center justify-between text-sm">
-                          <span className="text-gray-500 font-medium">{formatFileSize(document.file_size)}</span>
-                          <span className="text-gray-400">{formatDate(document.upload_date)}</span>
+                          <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '0.5rem' }}>
+                            <span style={getStatusBadgeStyle(document.processing_status)}>
+                              {document.processing_status}
+                            </span>
+                            {document.document_type && (
+                              <span style={getDocumentTypeBadgeStyle(document.document_type)}>
+                                {document.document_type}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1153,73 +1157,152 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
               </div>
             ) : (
               /* Enhanced List View */
-              <div className="bg-white/70 backdrop-blur-sm rounded-2xl border border-white/40 overflow-hidden shadow-lg">
-                <div className="divide-y divide-gray-100/60">
-                  {filteredDocuments.map((document, index) => {
-                    const fileIcon = getFileIcon(document.content_type)
-                    return (
-                      <div
-                        key={document.id}
-                        className="docview-list-item docview-cursor-pointer docview-group docview-transition-all docview-duration-300"
-                        onClick={() => handleDocumentClick(document)}
-                      >
-                        <div className={`docview-w-14 docview-h-14 ${fileIcon.bgClass} docview-rounded-2xl docview-flex docview-items-center docview-justify-center docview-text-2xl docview-flex-shrink-0 docview-shadow-sm docview-list-icon`}>
-                          {fileIcon.icon}
-                        </div>
-                        
-                        <div className="docview-flex-1 docview-min-w-0">
-                          <div className="docview-flex docview-items-center docview-gap-3 docview-mb-1">
-                            <h3 className="docview-text-base docview-font-semibold docview-text-gray-900 docview-truncate group-hover:docview-text-blue-600 docview-transition-colors docview-duration-300">
-                              {document.original_filename}
-                            </h3>
-                            <span style={{
-                              ...getStatusBadgeStyle(document.processing_status),
-                              backgroundColor: document.processing_status === 'failed' ? '#dbeafe' : getStatusBadgeStyle(document.processing_status).backgroundColor,
-                              color: document.processing_status === 'failed' ? '#1e40af' : getStatusBadgeStyle(document.processing_status).color,
-                              borderColor: document.processing_status === 'failed' ? '#93c5fd' : getStatusBadgeStyle(document.processing_status).borderColor
-                            }}>
-                              {document.processing_status}
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.7)',
+                backdropFilter: 'blur(20px)',
+                borderRadius: '1rem',
+                border: '1px solid rgba(255, 255, 255, 0.5)',
+                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+                overflow: 'hidden'
+              }}>
+                {filteredDocuments.map((document) => {
+                  const fileIcon = getFileIcon(document.content_type)
+                  return (
+                    <div
+                      key={document.id}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        padding: '1.25rem 1.5rem',
+                        borderBottom: '1px solid rgba(229, 231, 235, 0.4)',
+                        cursor: 'pointer',
+                        transition: 'background 0.3s ease'
+                      }}
+                      onClick={() => handleDocumentClick(document)}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(255, 255, 255, 0.9)'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'transparent'
+                      }}
+                    >
+                      <div style={{
+                        width: '3.5rem',
+                        height: '3.5rem',
+                        background: fileIcon.bgClass === 'bg-red-50' ? '#fef2f2' :
+                                   fileIcon.bgClass === 'bg-blue-50' ? '#eff6ff' :
+                                   fileIcon.bgClass === 'bg-green-50' ? '#ecfdf5' :
+                                   fileIcon.bgClass === 'bg-indigo-50' ? '#eef2ff' : '#f9fafb',
+                        color: fileIcon.colorClass === 'text-red-600' ? '#dc2626' :
+                               fileIcon.colorClass === 'text-blue-600' ? '#2563eb' :
+                               fileIcon.colorClass === 'text-green-600' ? '#16a34a' :
+                               fileIcon.colorClass === 'text-indigo-600' ? '#4f46e5' : '#6b7280',
+                        borderRadius: '0.75rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.05)'
+                      }}>
+                        {fileIcon.icon}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0, marginLeft: '1.25rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
+                          <h3 style={{
+                            fontSize: '1.125rem',
+                            fontWeight: '600',
+                            color: '#111827',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}>
+                            {document.original_filename}
+                          </h3>
+                          <span style={getStatusBadgeStyle(document.processing_status)}>
+                            {document.processing_status}
+                          </span>
+                          {document.document_type && (
+                            <span style={getDocumentTypeBadgeStyle(document.document_type)}>
+                              {document.document_type}
                             </span>
-                          </div>
-                          <div className="docview-flex docview-items-center docview-gap-4 docview-text-sm docview-text-gray-500">
-                            <span>{formatFileSize(document.file_size)}</span>
-                            <span>•</span>
-                            <span>{formatDate(document.upload_date)}</span>
-                            {document.document_type && (
-                              <>
-                                <span>•</span>
-                                <span className="docview-capitalize">{document.document_type}</span>
-                              </>
-                            )}
-                          </div>
+                          )}
                         </div>
-
-                        <div className="docview-flex docview-items-center docview-gap-3 docview-opacity-0 group-hover:docview-opacity-100 docview-transition-opacity docview-duration-300">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDownload(document)
-                            }}
-                            className="docview-p-3 docview-text-gray-400 hover:docview-text-blue-600 hover:docview-bg-blue-50 docview-rounded-xl docview-transition-all docview-duration-300"
-                            title="Download"
-                          >
-                            <i className="fas fa-download docview-icon"></i>
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handleDelete(document)
-                            }}
-                            className="docview-p-3 docview-text-gray-400 hover:docview-text-red-600 hover:docview-bg-red-50 docview-rounded-xl docview-transition-all docview-duration-300"
-                            title="Delete"
-                          >
-                            <i className="fas fa-trash docview-icon"></i>
-                          </button>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.875rem', color: '#6b7280' }}>
+                          <span>{formatFileSize(document.file_size)}</span>
+                          <span>•</span>
+                          <span>{formatDate(document.upload_date)}</span>
                         </div>
                       </div>
-                    )
-                  })}
-                </div>
+                      <div style={{
+                        display: 'flex',
+                        gap: '0.5rem',
+                        opacity: 0,
+                        transition: 'opacity 0.3s ease'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.opacity = '1'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.opacity = '0'
+                      }}>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDownload(document)
+                          }}
+                          style={{
+                            padding: '0.5rem',
+                            borderRadius: '0.5rem',
+                            color: '#6b7280',
+                            background: 'rgba(255,255,255,0.8)',
+                            border: '1px solid #e5e7eb',
+                            cursor: 'pointer'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.color = '#2563eb'
+                            e.currentTarget.style.borderColor = '#3b82f6'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.color = '#6b7280'
+                            e.currentTarget.style.borderColor = '#e5e7eb'
+                          }}
+                          title="Download"
+                        >
+                          <svg style={{ width: '1rem', height: '1rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDelete(document)
+                          }}
+                          style={{
+                            padding: '0.5rem',
+                            borderRadius: '0.5rem',
+                            color: '#6b7280',
+                            background: 'rgba(255,255,255,0.8)',
+                            border: '1px solid #e5e7eb',
+                            cursor: 'pointer'
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.color = '#dc2626'
+                            e.currentTarget.style.borderColor = '#ef4444'
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.color = '#6b7280'
+                            e.currentTarget.style.borderColor = '#e5e7eb'
+                          }}
+                          title="Delete"
+                        >
+                          <svg style={{ width: '1rem', height: '1rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
@@ -1245,7 +1328,6 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                     <i className="fas fa-times docview-icon-lg"></i>
                   </button>
                 </div>
-
                 <div className="docview-space-y-8">
                   <div className="docview-flex docview-items-center docview-gap-6">
                     <div className={`docview-w-20 docview-h-20 ${getFileIcon(selectedDocument.content_type).bgClass} docview-rounded-2xl docview-flex docview-items-center docview-justify-center docview-text-4xl docview-shadow-lg docview-detail-icon`}>
@@ -1254,19 +1336,18 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                     <div className="docview-flex-1">
                       <h3 className="docview-font-bold docview-text-xl docview-text-gray-900 docview-mb-2">{selectedDocument.original_filename}</h3>
                       <div className="docview-flex docview-items-center docview-gap-3">
-                        <span style={{
-                          ...getStatusBadgeStyle(selectedDocument.processing_status),
-                          backgroundColor: selectedDocument.processing_status === 'failed' ? '#dbeafe' : getStatusBadgeStyle(selectedDocument.processing_status).backgroundColor,
-                          color: selectedDocument.processing_status === 'failed' ? '#1e40af' : getStatusBadgeStyle(selectedDocument.processing_status).color,
-                          borderColor: selectedDocument.processing_status === 'failed' ? '#93c5fd' : getStatusBadgeStyle(selectedDocument.processing_status).borderColor
-                        }}>
+                        <span style={getStatusBadgeStyle(selectedDocument.processing_status)}>
                           {selectedDocument.processing_status}
                         </span>
+                        {selectedDocument.document_type && (
+                          <span style={getDocumentTypeBadgeStyle(selectedDocument.document_type)}>
+                            {selectedDocument.document_type}
+                          </span>
+                        )}
                         <span className="docview-text-sm docview-text-gray-500">{formatFileSize(selectedDocument.file_size)}</span>
                       </div>
                     </div>
                   </div>
-
                   <div className="docview-detail-grid">
                     <div>
                       <span className="docview-detail-label">File Size</span>
@@ -1295,7 +1376,6 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                       <p className="docview-detail-value">User {selectedDocument.user_id.slice(0, 8)}...</p>
                     </div>
                   </div>
-
                   <div className="docview-modal-actions docview-flex docview-gap-4 docview-pt-2">
                     <button
                       onClick={() => handleDownload(selectedDocument)}
