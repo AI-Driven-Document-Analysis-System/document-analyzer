@@ -4,7 +4,6 @@
 //****************************CSS */
 import { useState, useEffect, useMemo } from "react"
 import './Dashboard.css' // Import the CSS file
-import '../../styles/components.css';
 import DocumentActivityChart from './DocumentActivityChart';
 import StorageUsageChart from './StorageUsageChart';
 //import DocumentViewer from '../DocumentViewer/DocumentViewer';
@@ -14,6 +13,7 @@ interface Document {
   id: string
   original_filename: string
   content_type: string
+  file_size: number
   processing_status: 'completed' | 'processing' | 'failed'
   upload_date: string
   user_id: string
@@ -61,6 +61,13 @@ interface DocumentTypeData {
   type: string;
   count: number;
   avgSize: number;
+}
+
+interface ResourceUsageData {
+  id: string;
+  name: string;
+  size: number; // in bytes
+  processingTime: number; // in seconds (approximated)
 }
 
 // Inline styles for modal
@@ -267,12 +274,18 @@ function Dashboard() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
   const [loadingPreview, setLoadingPreview] = useState(false)
 
-
   //***********************/
   // Document type distribution state
   const [documentTypes, setDocumentTypes] = useState<DocumentTypeData[]>([]);
   const [loadingTypes, setLoadingTypes] = useState(true);
   const [typesError, setTypesError] = useState<string | null>(null);
+  const [chartType, setChartType] = useState<'bar' | 'pie'>('bar');
+
+  // Resource usage state
+  const [resourceUsageData, setResourceUsageData] = useState<ResourceUsageData[]>([]);
+  const [loadingResourceUsage, setLoadingResourceUsage] = useState(true);
+  const [resourceUsageError, setResourceUsageError] = useState<string | null>(null);
+  const [resourceMetric, setResourceMetric] = useState<'size' | 'time'>('size');
 
   // Summary options configuration
   const summaryOptions: SummaryOption[] = [
@@ -381,9 +394,7 @@ useEffect(() => {
         typeCounts[type] = { count: 0, totalSize: 0 };
       }
       typeCounts[type].count += 1;
-      // Note: your Document interface doesn't have file_size, so we can't compute avgSize accurately
-      // We'll skip avgSize or assume 0
-      typeCounts[type].totalSize += 0; // or omit if not available
+      typeCounts[type].totalSize += doc.file_size || 0;
     });
 
     return {
@@ -397,6 +408,296 @@ useEffect(() => {
 
   fetchDocumentTypes();
 }, [documents]); // Re-fetch when documents change
+
+// Process resource usage data from documents
+useEffect(() => {
+  const processResourceUsageData = () => {
+    try {
+      setLoadingResourceUsage(true);
+      setResourceUsageError(null);
+
+      const resourceData: ResourceUsageData[] = documents.map(doc => {
+        const sizeInBytes = doc.file_size || 0;
+        // Approximate processing time based on file size (larger files take longer)
+        // Base time: 2 seconds + 1 second per MB
+        const sizeInMB = sizeInBytes / (1024 * 1024);
+        const approximateProcessingTime = 2 + Math.floor(sizeInMB * 1.5); // seconds
+
+        return {
+          id: doc.id,
+          name: doc.original_filename || 'Untitled Document',
+          size: sizeInBytes,
+          processingTime: approximateProcessingTime
+        };
+      });
+
+      setResourceUsageData(resourceData);
+    } catch (err) {
+      console.error('Error processing resource usage data:', err);
+      setResourceUsageError('Failed to process resource usage data');
+    } finally {
+      setLoadingResourceUsage(false);
+    }
+  };
+
+  processResourceUsageData();
+}, [documents]);
+
+// Pie Chart Component
+const renderPieChart = () => {
+  if (documentTypes.length === 0) return null;
+  
+  const total = documentTypes.reduce((sum, item) => sum + item.count, 0);
+  const colors = ['#3b82f6', '#2563eb', '#1d4ed8', '#1e40af', '#1e3a8a', '#172554', '#0f172a', '#020617'];
+  
+  let currentAngle = 0;
+  const radius = 80;
+  const centerX = 120;
+  const centerY = 120;
+  
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '24px', height: '100%' }}>
+      <div style={{ position: 'relative' }}>
+        <svg width="240" height="240" style={{ transform: 'rotate(-90deg)' }}>
+          {documentTypes.slice(0, 8).map((item, index) => {
+            const percentage = (item.count / total) * 100;
+            const angle = (item.count / total) * 360;
+            const startAngle = currentAngle;
+            const endAngle = currentAngle + angle;
+            
+            const startAngleRad = (startAngle * Math.PI) / 180;
+            const endAngleRad = (endAngle * Math.PI) / 180;
+            
+            const x1 = centerX + radius * Math.cos(startAngleRad);
+            const y1 = centerY + radius * Math.sin(startAngleRad);
+            const x2 = centerX + radius * Math.cos(endAngleRad);
+            const y2 = centerY + radius * Math.sin(endAngleRad);
+            
+            const largeArcFlag = angle > 180 ? 1 : 0;
+            
+            const pathData = [
+              `M ${centerX} ${centerY}`,
+              `L ${x1} ${y1}`,
+              `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}`,
+              'Z'
+            ].join(' ');
+            
+            currentAngle += angle;
+            
+            return (
+              <path
+                key={index}
+                d={pathData}
+                fill={colors[index % colors.length]}
+                stroke="white"
+                strokeWidth="2"
+                style={{ 
+                  cursor: 'pointer',
+                  transition: 'transform 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.05)';
+                  e.currentTarget.style.transformOrigin = `${centerX}px ${centerY}px`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                }}
+              />
+            );
+          })}
+        </svg>
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%) rotate(90deg)',
+          textAlign: 'center',
+          color: '#4b5563',
+          fontSize: '0.875rem',
+          fontWeight: 600
+        }}>
+          <div>{total}</div>
+          <div style={{ fontSize: '0.75rem', fontWeight: 400 }}>Total</div>
+        </div>
+      </div>
+      
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {documentTypes.slice(0, 8).map((item, index) => {
+          const percentage = ((item.count / total) * 100).toFixed(1);
+          return (
+            <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{
+                width: '12px',
+                height: '12px',
+                backgroundColor: colors[index % colors.length],
+                borderRadius: '2px',
+                flexShrink: 0
+              }} />
+              <div style={{ 
+                fontSize: '0.875rem', 
+                color: '#4b5563', 
+                fontWeight: 500,
+                textTransform: 'uppercase',
+                minWidth: '60px'
+              }}>
+                {item.type}
+              </div>
+              <div style={{ 
+                fontSize: '0.875rem', 
+                color: '#6b7280',
+                marginLeft: 'auto'
+              }}>
+                {item.count} ({percentage}%)
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// Resource Usage Chart Component
+const renderResourceUsageChart = () => {
+  if (resourceUsageData.length === 0) return null;
+
+  // Helper function to format file size
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  };
+
+  // Helper function to format processing time
+  const formatProcessingTime = (seconds: number): string => {
+    if (seconds < 60) return `${seconds}s`;
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return remainingSeconds > 0 ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
+  };
+
+  // Sort data based on selected metric
+  const sortedData = [...resourceUsageData].sort((a, b) => {
+    if (resourceMetric === 'size') {
+      return b.size - a.size; // Largest to smallest
+    } else {
+      return b.processingTime - a.processingTime; // Longest to shortest
+    }
+  });
+
+  // Take top 10 documents to avoid overcrowding
+  const displayData = sortedData.slice(0, 10);
+  
+  // Calculate max value for scaling
+  const maxValue = resourceMetric === 'size' 
+    ? Math.max(...displayData.map(d => d.size))
+    : Math.max(...displayData.map(d => d.processingTime));
+
+  const colors = ['#3b82f6', '#2563eb', '#1d4ed8', '#1e40af', '#1e3a8a', '#172554', '#0f172a', '#020617'];
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '16px' }}>
+      {/* Chart Area */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'end', gap: '12px', padding: '0 16px 60px 16px' }}>
+        {displayData.map((item, index) => {
+          const value = resourceMetric === 'size' ? item.size : item.processingTime;
+          const height = maxValue > 0 ? (value / maxValue) * 180 : 0; // Max height 180px to leave space for labels
+          const displayValue = resourceMetric === 'size' 
+            ? formatFileSize(item.size)
+            : formatProcessingTime(item.processingTime);
+
+          return (
+            <div key={item.id} style={{ 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center',
+              flex: 1,
+              minWidth: '80px',
+              position: 'relative'
+            }}>
+              {/* Value Label Above Bar */}
+              <div style={{
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                color: '#374151',
+                marginBottom: '4px',
+                textAlign: 'center',
+                background: 'rgba(255, 255, 255, 0.9)',
+                padding: '2px 6px',
+                borderRadius: '4px',
+                border: '1px solid #e5e7eb',
+                boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
+              }}>
+                {displayValue}
+              </div>
+
+              {/* Bar */}
+              <div style={{
+                width: '100%',
+                maxWidth: '50px',
+                height: `${height}px`,
+                backgroundColor: colors[index % colors.length],
+                borderRadius: '4px 4px 0 0',
+                position: 'relative',
+                transition: 'all 0.3s ease',
+                cursor: 'pointer',
+                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'scaleY(1.05)';
+                e.currentTarget.style.filter = 'brightness(1.1)';
+                e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.15)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'scaleY(1)';
+                e.currentTarget.style.filter = 'brightness(1)';
+                e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.1)';
+              }}
+              title={`${item.name}: ${displayValue}`}
+              />
+              
+              {/* Document Name */}
+              <div style={{
+                marginTop: '12px',
+                fontSize: '0.8rem',
+                fontWeight: 500,
+                color: '#374151',
+                textAlign: 'center',
+                maxWidth: '100px',
+                lineHeight: '1.2',
+                wordBreak: 'break-word',
+                background: 'rgba(249, 250, 251, 0.9)',
+                padding: '4px 6px',
+                borderRadius: '4px',
+                border: '1px solid #e5e7eb'
+              }}
+              title={item.name}
+              >
+                {item.name.length > 15 ? item.name.substring(0, 15) + '...' : item.name}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Y-axis label */}
+      <div style={{
+        position: 'absolute',
+        left: '8px',
+        top: '50%',
+        transform: 'rotate(-90deg) translateX(-50%)',
+        transformOrigin: 'center',
+        fontSize: '0.8rem',
+        color: '#374151',
+        fontWeight: 600
+      }}>
+        {resourceMetric === 'size' ? 'File Size' : 'Processing Time'}
+      </div>
+    </div>
+  );
+};
 
   // Fetch upload activity data
   useEffect(() => {
@@ -993,9 +1294,42 @@ useEffect(() => {
     display: 'flex',
     flexDirection: 'column'
   }}>
-    <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '16px', color: '#1a202c' }}>
-      Document Types
-    </h3>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+      <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0, color: '#1a202c' }}>
+        Document Types
+      </h3>
+      <button
+        onClick={() => setChartType(chartType === 'bar' ? 'pie' : 'bar')}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+          padding: '6px 12px',
+          backgroundColor: chartType === 'pie' ? '#3b82f6' : '#f3f4f6',
+          color: chartType === 'pie' ? 'white' : '#4b5563',
+          border: 'none',
+          borderRadius: '6px',
+          fontSize: '0.75rem',
+          fontWeight: 500,
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+          boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
+        }}
+        onMouseEnter={(e) => {
+          if (chartType === 'bar') {
+            e.currentTarget.style.backgroundColor = '#e5e7eb';
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (chartType === 'bar') {
+            e.currentTarget.style.backgroundColor = '#f3f4f6';
+          }
+        }}
+      >
+        <i className={chartType === 'bar' ? 'fas fa-chart-pie' : 'fas fa-chart-bar'} style={{ fontSize: '0.75rem' }}></i>
+        {chartType === 'bar' ? 'Pie Chart' : 'Bar Chart'}
+      </button>
+    </div>
     {loadingTypes ? (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#718096' }}>
         Loading...
@@ -1008,6 +1342,8 @@ useEffect(() => {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#a0aec0' }}>
         No data
       </div>
+    ) : chartType === 'pie' ? (
+      renderPieChart()
     ) : (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, overflowY: 'auto' }}>
         {documentTypes.slice(0, 8).map((item, index) => {
@@ -1060,6 +1396,99 @@ useEffect(() => {
     )}
   </div>
 </div>
+
+        {/* Resource Usage Chart */}
+        <div style={{
+          backgroundColor: 'white',
+          borderRadius: '8px',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          padding: '16px',
+          height: '400px',
+          display: 'flex',
+          flexDirection: 'column',
+          marginBottom: '24px',
+          position: 'relative'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0, color: '#1a202c' }}>
+              Resource Usage
+            </h3>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button
+                onClick={() => setResourceMetric('size')}
+                style={{
+                  padding: '6px 12px',
+                  backgroundColor: resourceMetric === 'size' ? '#3b82f6' : '#f3f4f6',
+                  color: resourceMetric === 'size' ? 'white' : '#4b5563',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
+                }}
+                onMouseEnter={(e) => {
+                  if (resourceMetric !== 'size') {
+                    e.currentTarget.style.backgroundColor = '#e5e7eb';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (resourceMetric !== 'size') {
+                    e.currentTarget.style.backgroundColor = '#f3f4f6';
+                  }
+                }}
+              >
+                <i className="fas fa-weight" style={{ fontSize: '0.75rem', marginRight: '4px' }}></i>
+                By Storage Size
+              </button>
+              <button
+                onClick={() => setResourceMetric('time')}
+                style={{
+                  padding: '6px 12px',
+                  backgroundColor: resourceMetric === 'time' ? '#3b82f6' : '#f3f4f6',
+                  color: resourceMetric === 'time' ? 'white' : '#4b5563',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
+                }}
+                onMouseEnter={(e) => {
+                  if (resourceMetric !== 'time') {
+                    e.currentTarget.style.backgroundColor = '#e5e7eb';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (resourceMetric !== 'time') {
+                    e.currentTarget.style.backgroundColor = '#f3f4f6';
+                  }
+                }}
+              >
+                <i className="fas fa-clock" style={{ fontSize: '0.75rem', marginRight: '4px' }}></i>
+                By Processing Time
+              </button>
+            </div>
+          </div>
+          {loadingResourceUsage ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#718096' }}>
+              Loading...
+            </div>
+          ) : resourceUsageError ? (
+            <div style={{ color: '#e53e3e', fontSize: '0.875rem', textAlign: 'center', marginTop: '1rem' }}>
+              {resourceUsageError}
+            </div>
+          ) : resourceUsageData.length === 0 ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#a0aec0' }}>
+              No data available
+            </div>
+          ) : (
+            renderResourceUsageChart()
+          )}
+        </div>
+
         {/* Search and Chat Feature */}
         <div className="feature-container">
           <div className="tabs-container d-flex">
