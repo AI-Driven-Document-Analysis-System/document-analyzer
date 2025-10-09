@@ -1,12 +1,10 @@
-
-
-
 import React, { useState, useEffect } from 'react';
+import { useTheme } from '../../contexts/ThemeContext';
 import './settings.css';
 
 const Settings: React.FC = () => {
+  const { isDarkMode, toggleDarkMode } = useTheme();
   const [activeSection, setActiveSection] = useState('security');
-  const [darkMode, setDarkMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -18,29 +16,117 @@ const Settings: React.FC = () => {
     confirmPassword: '',
   });
 
-  useEffect(() => {
-    const savedDarkMode = localStorage.getItem('darkMode') === 'true';
-    setDarkMode(savedDarkMode);
-    if (savedDarkMode) {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    }
-  }, []);
+  // Document Preferences states
+  const [documentPrefs, setDocumentPrefs] = useState({
+    autoCategorization: true,
+    autoProcessing: false,
+    smartTagging: true,
+    duplicateDetection: false,
+    defaultExportFormat: 'PDF'
+  });
+
+  // Notification Preferences states
+  const [notificationPrefs, setNotificationPrefs] = useState({
+    emailNotifications: {
+      documentProcessed: true,
+      aiRecommendations: false,
+      contractDeadlines: true,
+      weeklyDigest: false,
+      securityAlerts: true
+    },
+    pushNotifications: {
+      documentUploaded: true,
+      processingComplete: true,
+      errorAlerts: true
+    },
+    frequency: 'immediate' // immediate, daily, weekly
+  });
 
   const showMessage = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text });
     setTimeout(() => setMessage(null), 5000);
   };
 
-  const toggleDarkMode = () => {
-    const newDarkMode = !darkMode;
-    setDarkMode(newDarkMode);
-    localStorage.setItem('darkMode', newDarkMode.toString());
-    if (newDarkMode) {
-      document.documentElement.setAttribute('data-theme', 'dark');
-    } else {
-      document.documentElement.removeAttribute('data-theme');
-    }
-    showMessage('success', `Dark mode ${newDarkMode ? 'enabled' : 'disabled'}`);
+  const handleToggleDarkMode = () => {
+    toggleDarkMode();
+    showMessage('success', `Dark mode ${!isDarkMode ? 'enabled' : 'disabled'}`);
+  };
+
+  // Document Preferences handlers
+  const handleDocumentPrefToggle = (key: keyof typeof documentPrefs) => {
+    if (key === 'defaultExportFormat') return; // Handle separately
+    
+    setDocumentPrefs(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+    
+    const prefNames = {
+      autoCategorization: 'Auto-categorization',
+      autoProcessing: 'Auto-processing',
+      smartTagging: 'Smart tagging',
+      duplicateDetection: 'Duplicate detection'
+    };
+    
+    const newValue = !documentPrefs[key];
+    showMessage('success', `${prefNames[key as keyof typeof prefNames]} ${newValue ? 'enabled' : 'disabled'}`);
+  };
+
+  const handleExportFormatChange = (format: string) => {
+    setDocumentPrefs(prev => ({
+      ...prev,
+      defaultExportFormat: format
+    }));
+    showMessage('success', `Default export format changed to ${format}`);
+  };
+
+  // Notification Preferences handlers
+  const handleEmailNotificationToggle = (key: keyof typeof notificationPrefs.emailNotifications) => {
+    setNotificationPrefs(prev => ({
+      ...prev,
+      emailNotifications: {
+        ...prev.emailNotifications,
+        [key]: !prev.emailNotifications[key]
+      }
+    }));
+    
+    const prefNames = {
+      documentProcessed: 'Document processed notifications',
+      aiRecommendations: 'AI recommendations',
+      contractDeadlines: 'Contract deadline alerts',
+      weeklyDigest: 'Weekly digest',
+      securityAlerts: 'Security alerts'
+    };
+    
+    const newValue = !notificationPrefs.emailNotifications[key];
+    showMessage('success', `${prefNames[key]} ${newValue ? 'enabled' : 'disabled'}`);
+  };
+
+  const handlePushNotificationToggle = (key: keyof typeof notificationPrefs.pushNotifications) => {
+    setNotificationPrefs(prev => ({
+      ...prev,
+      pushNotifications: {
+        ...prev.pushNotifications,
+        [key]: !prev.pushNotifications[key]
+      }
+    }));
+    
+    const prefNames = {
+      documentUploaded: 'Document upload notifications',
+      processingComplete: 'Processing complete notifications',
+      errorAlerts: 'Error alerts'
+    };
+    
+    const newValue = !notificationPrefs.pushNotifications[key];
+    showMessage('success', `${prefNames[key]} ${newValue ? 'enabled' : 'disabled'}`);
+  };
+
+  const handleFrequencyChange = (frequency: string) => {
+    setNotificationPrefs(prev => ({
+      ...prev,
+      frequency
+    }));
+    showMessage('success', `Notification frequency changed to ${frequency}`);
   };
 
   const handleChangeEmail = async (e: React.FormEvent) => {
@@ -269,8 +355,8 @@ const Settings: React.FC = () => {
                     <div className="toggle-group">
                       <span>Dark Mode</span>
                       <button
-                        className={`toggle-switch ${darkMode ? 'active' : ''}`}
-                        onClick={toggleDarkMode}
+                        className={`toggle-switch ${isDarkMode ? 'active' : ''}`}
+                        onClick={handleToggleDarkMode}
                       >
                         <span></span>
                       </button>
@@ -303,20 +389,98 @@ const Settings: React.FC = () => {
                     <i className="fas fa-file-lines"></i> Document Preferences
                   </h2>
                   <div className="settings-section">
-                    <h3>Auto-categorization</h3>
-                    <p className="disabled-feature">Coming Soon</p>
-                  </div>
-                  <div className="settings-section">
-                    <h3>Document Notifications</h3>
-                    <p className="disabled-feature">Coming Soon</p>
+                    <h3>Processing Settings</h3>
+                    <div className="toggle-list">
+                      <div className="toggle-item">
+                        <div className="toggle-info">
+                          <span>Auto-categorization</span>
+                          <p>Automatically categorize documents based on content</p>
+                        </div>
+                        <button
+                          className={`toggle-switch ${documentPrefs.autoCategorization ? 'active' : ''}`}
+                          onClick={() => handleDocumentPrefToggle('autoCategorization')}
+                        >
+                          <span></span>
+                        </button>
+                      </div>
+                      <div className="toggle-item">
+                        <div className="toggle-info">
+                          <span>Auto-processing</span>
+                          <p>Process documents immediately after upload</p>
+                        </div>
+                        <button
+                          className={`toggle-switch ${documentPrefs.autoProcessing ? 'active' : ''}`}
+                          onClick={() => handleDocumentPrefToggle('autoProcessing')}
+                        >
+                          <span></span>
+                        </button>
+                      </div>
+                      <div className="toggle-item">
+                        <div className="toggle-info">
+                          <span>Smart tagging</span>
+                          <p>Automatically add relevant tags to documents</p>
+                        </div>
+                        <button
+                          className={`toggle-switch ${documentPrefs.smartTagging ? 'active' : ''}`}
+                          onClick={() => handleDocumentPrefToggle('smartTagging')}
+                        >
+                          <span></span>
+                        </button>
+                      </div>
+                      <div className="toggle-item">
+                        <div className="toggle-info">
+                          <span>Duplicate detection</span>
+                          <p>Detect and flag potential duplicate documents</p>
+                        </div>
+                        <button
+                          className={`toggle-switch ${documentPrefs.duplicateDetection ? 'active' : ''}`}
+                          onClick={() => handleDocumentPrefToggle('duplicateDetection')}
+                        >
+                          <span></span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                   <div className="settings-section">
                     <h3>Default Export Format</h3>
-                    <select>
-                      <option>PDF</option>
-                      <option>CSV</option>
-                      <option>JSON</option>
-                    </select>
+                    <div className="radio-group">
+                      <label>
+                        <input 
+                          type="radio" 
+                          name="exportFormat" 
+                          checked={documentPrefs.defaultExportFormat === 'PDF'}
+                          onChange={() => handleExportFormatChange('PDF')}
+                        />
+                        PDF
+                      </label>
+                      <label>
+                        <input 
+                          type="radio" 
+                          name="exportFormat" 
+                          checked={documentPrefs.defaultExportFormat === 'CSV'}
+                          onChange={() => handleExportFormatChange('CSV')}
+                        />
+                        CSV
+                      </label>
+                      <label>
+                        <input 
+                          type="radio" 
+                          name="exportFormat" 
+                          checked={documentPrefs.defaultExportFormat === 'JSON'}
+                          onChange={() => handleExportFormatChange('JSON')}
+                        />
+                        JSON
+                      </label>
+                      <label>
+                        <input 
+                          type="radio" 
+                          name="exportFormat" 
+                          checked={documentPrefs.defaultExportFormat === 'DOCX'}
+                          onChange={() => handleExportFormatChange('DOCX')}
+                        />
+                        DOCX
+                      </label>
+                    </div>
                   </div>
                 </div>
               )}
@@ -329,17 +493,140 @@ const Settings: React.FC = () => {
                   </h2>
                   <div className="settings-section">
                     <h3>Email Notifications</h3>
-                    <div className="notification-item">
-                      <span>New document processed</span>
-                      <p className="disabled-feature">Coming Soon</p>
+                    <div className="toggle-list">
+                      <div className="toggle-item">
+                        <div className="toggle-info">
+                          <span>Document processed</span>
+                          <p>Get notified when document processing is complete</p>
+                        </div>
+                        <button
+                          className={`toggle-switch ${notificationPrefs.emailNotifications.documentProcessed ? 'active' : ''}`}
+                          onClick={() => handleEmailNotificationToggle('documentProcessed')}
+                        >
+                          <span></span>
+                        </button>
+                      </div>
+                      <div className="toggle-item">
+                        <div className="toggle-info">
+                          <span>AI recommendations</span>
+                          <p>Receive AI-powered insights and suggestions</p>
+                        </div>
+                        <button
+                          className={`toggle-switch ${notificationPrefs.emailNotifications.aiRecommendations ? 'active' : ''}`}
+                          onClick={() => handleEmailNotificationToggle('aiRecommendations')}
+                        >
+                          <span></span>
+                        </button>
+                      </div>
+                      <div className="toggle-item">
+                        <div className="toggle-info">
+                          <span>Contract deadlines</span>
+                          <p>Important deadline reminders for contracts</p>
+                        </div>
+                        <button
+                          className={`toggle-switch ${notificationPrefs.emailNotifications.contractDeadlines ? 'active' : ''}`}
+                          onClick={() => handleEmailNotificationToggle('contractDeadlines')}
+                        >
+                          <span></span>
+                        </button>
+                      </div>
+                      <div className="toggle-item">
+                        <div className="toggle-info">
+                          <span>Weekly digest</span>
+                          <p>Summary of your document activity and insights</p>
+                        </div>
+                        <button
+                          className={`toggle-switch ${notificationPrefs.emailNotifications.weeklyDigest ? 'active' : ''}`}
+                          onClick={() => handleEmailNotificationToggle('weeklyDigest')}
+                        >
+                          <span></span>
+                        </button>
+                      </div>
+                      <div className="toggle-item">
+                        <div className="toggle-info">
+                          <span>Security alerts</span>
+                          <p>Important security and account notifications</p>
+                        </div>
+                        <button
+                          className={`toggle-switch ${notificationPrefs.emailNotifications.securityAlerts ? 'active' : ''}`}
+                          onClick={() => handleEmailNotificationToggle('securityAlerts')}
+                        >
+                          <span></span>
+                        </button>
+                      </div>
                     </div>
-                    <div className="notification-item">
-                      <span>AI recommendations available</span>
-                      <p className="disabled-feature">Coming Soon</p>
+                  </div>
+                  <div className="settings-section">
+                    <h3>Push Notifications</h3>
+                    <div className="toggle-list">
+                      <div className="toggle-item">
+                        <div className="toggle-info">
+                          <span>Document uploaded</span>
+                          <p>Instant notification when upload is successful</p>
+                        </div>
+                        <button
+                          className={`toggle-switch ${notificationPrefs.pushNotifications.documentUploaded ? 'active' : ''}`}
+                          onClick={() => handlePushNotificationToggle('documentUploaded')}
+                        >
+                          <span></span>
+                        </button>
+                      </div>
+                      <div className="toggle-item">
+                        <div className="toggle-info">
+                          <span>Processing complete</span>
+                          <p>Real-time updates when processing finishes</p>
+                        </div>
+                        <button
+                          className={`toggle-switch ${notificationPrefs.pushNotifications.processingComplete ? 'active' : ''}`}
+                          onClick={() => handlePushNotificationToggle('processingComplete')}
+                        >
+                          <span></span>
+                        </button>
+                      </div>
+                      <div className="toggle-item">
+                        <div className="toggle-info">
+                          <span>Error alerts</span>
+                          <p>Immediate notification of processing errors</p>
+                        </div>
+                        <button
+                          className={`toggle-switch ${notificationPrefs.pushNotifications.errorAlerts ? 'active' : ''}`}
+                          onClick={() => handlePushNotificationToggle('errorAlerts')}
+                        >
+                          <span></span>
+                        </button>
+                      </div>
                     </div>
-                    <div className="notification-item">
-                      <span>Contract deadlines</span>
-                      <p className="disabled-feature">Coming Soon</p>
+                  </div>
+                  <div className="settings-section">
+                    <h3>Notification Frequency</h3>
+                    <div className="radio-group">
+                      <label>
+                        <input 
+                          type="radio" 
+                          name="frequency" 
+                          checked={notificationPrefs.frequency === 'immediate'}
+                          onChange={() => handleFrequencyChange('immediate')}
+                        />
+                        Immediate
+                      </label>
+                      <label>
+                        <input 
+                          type="radio" 
+                          name="frequency" 
+                          checked={notificationPrefs.frequency === 'daily'}
+                          onChange={() => handleFrequencyChange('daily')}
+                        />
+                        Daily digest
+                      </label>
+                      <label>
+                        <input 
+                          type="radio" 
+                          name="frequency" 
+                          checked={notificationPrefs.frequency === 'weekly'}
+                          onChange={() => handleFrequencyChange('weekly')}
+                        />
+                        Weekly digest
+                      </label>
                     </div>
                   </div>
                 </div>

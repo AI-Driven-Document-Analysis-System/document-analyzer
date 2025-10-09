@@ -341,10 +341,10 @@ const UserProfilePage: React.FC = () => {
 const styles = {
   container: {
     minHeight: "100vh",
-    backgroundColor: "#F9FAFB",
+    backgroundColor: "var(--bg-secondary)",
     padding: "2rem",
     fontFamily: "system-ui, -apple-system, sans-serif",
-    color: "#1F2937",
+    color: "var(--text-primary)",
   },
   header: {
     marginBottom: "2rem",
@@ -353,11 +353,11 @@ const styles = {
   title: {
     fontSize: "2rem",
     fontWeight: "bold",
-    color: "#111827",
+    color: "var(--text-primary)",
     marginBottom: "0.5rem",
   },
   subtitle: {
-    color: "#6B7280",
+    color: "var(--text-secondary)",
     marginBottom: "0.5rem",
   },
   alertError: {
@@ -385,8 +385,8 @@ const styles = {
     marginBottom: "2rem",
   },
   card: {
-    backgroundColor: "#FFFFFF",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06)",
+    backgroundColor: "var(--bg-primary)",
+    boxShadow: "var(--card-shadow)",
     borderRadius: "0.75rem",
     padding: "1.5rem",
     transition: "all 0.2s ease",
@@ -400,13 +400,13 @@ const styles = {
   cardTitle: {
     fontSize: "1.25rem",
     fontWeight: "600",
-    color: "#1F2937",
+    color: "var(--text-primary)",
     display: "flex",
     alignItems: "center",
     gap: "0.5rem",
   },
   editButton: {
-    backgroundColor: "#2563EB",
+    backgroundColor: "var(--accent-color)",
     color: "white",
     border: "none",
     padding: "0.5rem 1rem",
@@ -423,7 +423,7 @@ const styles = {
     gap: "0.5rem",
   },
   saveButton: {
-    backgroundColor: "#059669",
+    backgroundColor: "var(--success-color)",
     color: "white",
     border: "none",
     padding: "0.5rem 1rem",
@@ -474,26 +474,28 @@ const styles = {
     display: "block",
     fontSize: "0.875rem",
     fontWeight: "500",
-    color: "#374151",
+    color: "var(--text-secondary)",
     marginBottom: "0.25rem",
   },
   input: {
     width: "100%",
     padding: "0.75rem",
-    border: "1px solid #D1D5DB",
+    border: "1px solid var(--input-border)",
     borderRadius: "0.375rem",
     fontSize: "1rem",
     outline: "none",
+    backgroundColor: "var(--input-bg)",
+    color: "var(--text-primary)",
   },
   value: {
-    color: "#1F2937",
+    color: "var(--text-primary)",
     fontSize: "1rem",
   },
   valueWithIcon: {
     display: "flex",
     alignItems: "center",
     gap: "0.5rem",
-    color: "#1F2937",
+    color: "var(--text-primary)",
   },
   docCount: {
     fontSize: "1.875rem",
