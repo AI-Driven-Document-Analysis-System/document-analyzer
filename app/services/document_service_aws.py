@@ -12,6 +12,8 @@ from datetime import datetime
 from io import BytesIO
 from dotenv import load_dotenv
 import threading
+from pdf2image import convert_from_bytes
+from PIL import Image
 
 from ..core.database import db_manager
 from ..core.config import settings
@@ -110,6 +112,44 @@ class DocumentServiceAWS:
         except Exception as e:
             print(f"Error checking document hash: {e}")
             return None
+        
+    def create_thumbnail(self, file_content: bytes, mime_type: str, user_id: str, original_filename: str) -> Optional[str]:
+        """
+        Generate a thumbnail from the first page of a PDF or an image file, upload to MinIO, and return the MinIO path.
+        Stores the thumbnail path in the database (documents.thumbnail_url) if possible.
+        Returns the MinIO path or None if not generated.
+        """
+        from io import BytesIO
+        try:
+            if mime_type == "application/pdf":
+                images = convert_from_bytes(file_content, first_page=1, last_page=1, fmt="png")
+                if images:
+                    img = images[0]
+                    img.thumbnail((350, 350))
+                    buf = BytesIO()
+                    img.save(buf, format="PNG")
+                    thumbnail_bytes = buf.getvalue()
+                else:
+                    return None
+            elif mime_type in ["image/jpeg", "image/png", "image/gif"]:
+                img = Image.open(BytesIO(file_content))
+                img.thumbnail((350, 350))
+                buf = BytesIO()
+                img.save(buf, format="PNG")
+                thumbnail_bytes = buf.getvalue()
+            else:
+                return None
+
+            # Generate a MinIO path for the thumbnail
+            base_path = self._generate_minio_path(user_id, original_filename)
+            thumb_minio_path = base_path + ".thumb.png"
+            # Upload to MinIO
+            self._upload_to_minio(thumb_minio_path, thumbnail_bytes, len(thumbnail_bytes), "image/png")
+
+            return thumb_minio_path
+        except Exception as e:
+            print(f"Thumbnail generation failed: {e}")
+            return None
 
     async def upload_document(self, file: UploadFile, user_id: str) -> Dict[str, Any]:
         """
@@ -196,6 +236,11 @@ class DocumentServiceAWS:
             await loop.run_in_executor(None, self._upload_to_minio, minio_path, file_content, file_size, mime_type)
             print(f"DEBUG - MinIO upload successful")
 
+            # Optionally create and store thumbnail 
+            print(f"DEBUG - Generating thumbnail...")
+            thumb_path = await loop.run_in_executor(None, self.create_thumbnail, file_content, mime_type, user_id, file.filename or "unknown")
+            print(f"DEBUG - Thumbnail generated")
+
             # STEP 4: Create database record ONLY after successful MinIO upload
             now = datetime.utcnow()
             print(f"DEBUG - Creating database record after successful processing...")
@@ -206,12 +251,12 @@ class DocumentServiceAWS:
                         INSERT INTO documents (
                             id, original_filename, file_path_minio, file_size,
                             mime_type, document_hash, user_id, uploaded_by_user_id, upload_timestamp,
-                            created_at, updated_at
+                            created_at, updated_at, thumbnail_url
                         )
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """, (
                         document_id, file.filename or "unknown", minio_path,
-                        file_size, mime_type, file_hash, user_id, user_id, now, now, now
+                        file_size, mime_type, file_hash, user_id, user_id, now, now, now, thumb_path
                     ))
 
                     # Create processing record with "completed" status
@@ -257,6 +302,12 @@ class DocumentServiceAWS:
                     print(f"DEBUG - Cleaned up MinIO file after embedding failure")
                 except:
                     pass
+                if thumb_path:
+                    try:
+                        self.minio_client.remove_object(self.bucket_name, thumb_path)
+                        print(f"DEBUG - Cleaned up thumbnail after embedding failure")
+                    except:
+                        pass
                 try:
                     with db_manager.get_connection() as conn:
                         with conn.cursor() as cursor:
@@ -1075,11 +1126,17 @@ class DocumentServiceAWS:
         except S3Error as e:
             raise HTTPException(status_code=500, detail=f"Failed to generate download URL: {str(e)}")
 
-    def delete_document(self, file_path: str, document_id: str):
+    def delete_document(self, file_path: str, thumb_path: str, document_id: str):
         """Delete document from MinIO and database"""
         try:
             # Delete from MinIO
             self.minio_client.remove_object(self.bucket_name, file_path)
+            if thumb_path:
+                try:
+                    self.minio_client.remove_object(self.bucket_name, thumb_path)
+                    print(f"DEBUG - Cleaned up thumbnail after embedding failure")
+                except:
+                    pass
 
             # Delete from database (CASCADE will handle related records)
             with db_manager.get_connection() as conn:
