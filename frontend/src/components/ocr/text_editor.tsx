@@ -149,7 +149,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ documentId, onClose, au
     
     try {
       const response = await fetch(
-        `http://localhost:8000/api/documents/${documentId}/content`,
+        `http://localhost:8000/api/documents/${documentId}/save_changes`,
         {
           method: 'PUT',
           headers: {
@@ -170,7 +170,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ documentId, onClose, au
     } catch (err) {
       console.error('Error saving document:', err);
       setError('Failed to save document');
-      alert('Failed to save document. The endpoint may not be implemented yet.');
+      alert('Failed to save document.');
     } finally {
       setIsSaving(false);
     }
@@ -334,7 +334,8 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ documentId, onClose, au
                     lineHeight: '1.6',
                     border: '1px solid #d1d5db',
                     borderRadius: '6px',
-                    fontFamily: 'system-ui, -apple-system, sans-serif',
+                    // fontFamily: 'system-ui, -apple-system, sans-serif',
+                    color: '#111827',
                     resize: 'none',
                     boxSizing: 'border-box',
                     outline: 'none'
