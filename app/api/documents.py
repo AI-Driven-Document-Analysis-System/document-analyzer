@@ -94,7 +94,7 @@ async def get_documents(
                 query = """
                     SELECT 
                         d.id, d.original_filename, d.file_size, d.upload_timestamp, 
-                        d.mime_type, d.user_id, d.file_path_minio,
+                        d.mime_type, d.user_id, d.file_path_minio, d.thumbnail_url,
                         dp.processing_status, dp.processing_errors
                     FROM documents d
                     LEFT JOIN document_processing dp ON d.id = dp.document_id
@@ -109,6 +109,7 @@ async def get_documents(
                 # Get total count
                 cursor.execute("SELECT COUNT(*) FROM documents WHERE user_id = %s", (str(user_id),))
                 total_count = cursor.fetchone()[0]
+
                 
                 # Convert to list of dictionaries
                 result = []
@@ -121,8 +122,9 @@ async def get_documents(
                         "content_type": doc[4],
                         "user_id": doc[5],
                         "file_path": doc[6],
-                        "processing_status": doc[7] or "unknown",
-                        "processing_errors": doc[8]
+                        "thumbnail_url": document_service.get_document_download_url(doc[7]) if doc[7] else None,
+                        "processing_status": doc[8] or "unknown",
+                        "processing_errors": doc[9] or "unknown"
                     }
                     result.append(doc_dict)
                 
@@ -393,7 +395,7 @@ async def delete_document(
             with conn.cursor() as cursor:
                 # Get file path before deletion
                 cursor.execute(
-                    "SELECT file_path_minio FROM documents WHERE id = %s AND user_id = %s",
+                    "SELECT file_path_minio, thumbnail_url FROM documents WHERE id = %s AND user_id = %s",
                     (document_id, user_id)
                 )
                 result = cursor.fetchone()
@@ -402,9 +404,10 @@ async def delete_document(
                     raise HTTPException(status_code=404, detail="Document not found")
                 
                 file_path = result[0]
+                thumb_path = result[1]
                 
                 # Delete document
-                document_service.delete_document(file_path, document_id)
+                document_service.delete_document(file_path, thumb_path, document_id)
                 
                 return {"message": "Document deleted successfully"}
                 
