@@ -6,6 +6,27 @@
     align-items: center;
     justify-content: center;
     padding: 1rem;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+/* Main document view wrapper */
+.docview-main-wrapper {
+    min-height: 100vh;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Header with glass effect */
+.docview-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background-color: var(--bg-primary);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: var(--card-shadow);
 }
 
 /* Typography */
@@ -74,37 +95,37 @@
 .docview-divide-gray-100 > :not([hidden]) ~ :not([hidden]) { --tw-divide-opacity: 1; border-color: rgba(243, 244, 246, var(--tw-divide-opacity)); }
 
 /* Colors & Backgrounds */
-.docview-bg-white { background-color: #ffffff; }
-.docview-bg-gray-50 { background-color: #f9fafb; }
-.docview-bg-gray-100 { background-color: #f3f4f6; }
-.docview-bg-red-50 { background-color: #fef2f2; }
-.docview-bg-blue-50 { background-color: #eff6ff; }
-.docview-bg-green-50 { background-color: #ecfdf5; }
-.docview-bg-yellow-50 { background-color: #fffbeb; }
-.docview-border-gray-100 { border-color: #f3f4f6; }
-.docview-border-gray-200 { border-color: #e5e7eb; }
+.docview-bg-white { background-color: var(--bg-primary); }
+.docview-bg-gray-50 { background-color: var(--bg-tertiary); }
+.docview-bg-gray-100 { background-color: var(--bg-tertiary); }
+.docview-bg-red-50 { background-color: var(--danger-light); }
+.docview-bg-blue-50 { background-color: var(--accent-light); }
+.docview-bg-green-50 { background-color: var(--success-light); }
+.docview-bg-yellow-50 { background-color: var(--warning-light); }
+.docview-border-gray-100 { border-color: var(--border-color); }
+.docview-border-gray-200 { border-color: var(--border-color); }
 .docview-border { border-width: 1px; }
 .docview-rounded-2xl { border-radius: 1rem; }
 .docview-rounded-3xl { border-radius: 1.5rem; }
 .docview-rounded-full { border-radius: 9999px; }
-.docview-shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
-.docview-shadow { box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06); }
-.docview-shadow-lg { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
-.docview-shadow-xl { box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); }
-.docview-shadow-2xl { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
+.docview-shadow-sm { box-shadow: var(--card-shadow); }
+.docview-shadow { box-shadow: var(--card-shadow); }
+.docview-shadow-lg { box-shadow: var(--card-shadow-hover); }
+.docview-shadow-xl { box-shadow: var(--card-shadow-hover); }
+.docview-shadow-2xl { box-shadow: var(--card-shadow-hover); }
 
 /* Text Colors */
-.docview-text-gray-900 { color: #111827; }
-.docview-text-gray-800 { color: #1f2937; }
-.docview-text-gray-700 { color: #374151; }
-.docview-text-gray-600 { color: #4b5563; }
-.docview-text-gray-500 { color: #6b7280; }
-.docview-text-gray-400 { color: #9ca3af; }
-.docview-text-white { color: #ffffff; }
-.docview-text-red-600 { color: #dc2626; }
-.docview-text-blue-600 { color: #2563eb; }
-.docview-text-green-600 { color: #16a34a; }
-.docview-text-yellow-600 { color: #ca8a04; }
+.docview-text-gray-900 { color: var(--text-primary); }
+.docview-text-gray-800 { color: var(--text-primary); }
+.docview-text-gray-700 { color: var(--text-primary); }
+.docview-text-gray-600 { color: var(--text-secondary); }
+.docview-text-gray-500 { color: var(--text-secondary); }
+.docview-text-gray-400 { color: var(--text-tertiary); }
+.docview-text-white { color: var(--text-primary); }
+.docview-text-red-600 { color: var(--danger-color); }
+.docview-text-blue-600 { color: var(--accent-color); }
+.docview-text-green-600 { color: var(--success-color); }
+.docview-text-yellow-600 { color: var(--warning-color); }
 
 /* Status Colors */
 .docview-color-red { color: #ef4444; }
@@ -249,28 +270,28 @@
 
 /* Cards */
 .docview-card {
-    background-color: white;
+    background-color: var(--bg-primary);
     border-radius: 1rem;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--card-shadow);
     transition: all 0.3s ease;
 }
 .docview-card:hover {
     transform: translateY(-4px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    box-shadow: var(--card-shadow-hover);
 }
 
 /* Loading States */
 .docview-loading {
-    background: linear-gradient(135deg, #f9fafb, #dbeafe);
+    background: var(--bg-secondary);
 }
 .docview-loading-card {
     text-align: center;
     padding: 2.5rem;
     border-radius: 1.5rem;
-    background-color: rgba(255, 255, 255, 0.8);
+    background-color: var(--bg-primary);
     backdrop-filter: blur(10px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    box-shadow: var(--card-shadow-hover);
 }
 .docview-spinner {
     width: 4rem;
