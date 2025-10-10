@@ -29,8 +29,8 @@ const getFileIcon = (contentType: string) => {
     colorClass: "text-red-600", bgClass: "bg-red-50", accentClass: "bg-red-500" 
   }
   if (contentType.includes("image")) return { 
-    icon: <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>,
-    colorClass: "text-blue-600", bgClass: "bg-blue-50", accentClass: "bg-blue-500" 
+    icon: <img src="/icons/image-icon.png" alt="Image" style={{ width: '2rem', height: '2rem' }} />,
+    colorClass: "text-blue-600", bgClass: "bg-blue-50", accentClass: "bg--500" 
   }
   if (contentType.includes("spreadsheet") || contentType.includes("excel")) return { 
     icon: <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H9v-2h5v2zm0-4H9v-2h5v2zm0-4H9V7h5v2zm5 8h-3V7h3v10z"/></svg>,
@@ -964,7 +964,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                             alt={document.original_filename}
                             style={{
                               width: '100%',
-                              height: '100%',
+                              height: 'auto',
                               objectFit: 'cover',
                               transition: 'transform 0.5s ease'
                             }}
@@ -990,7 +990,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                           position: 'absolute',
                           top: '0.75rem',
                           right: '0.75rem',
-                          opacity: 0,
+                          // opacity: 0,
                           transition: 'opacity 0.3s ease',
                           display: 'flex',
                           flexDirection: 'column',
@@ -1003,8 +1003,8 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                               handleDownload(document)
                             }}
                             style={{
-                              width: '2.5rem',
-                              height: '2.5rem',
+                              width: '2rem',
+                              height: '2rem',
                               background: 'rgba(255, 255, 255, 0.9)',
                               backdropFilter: 'blur(10px)',
                               borderRadius: '0.75rem',
@@ -1041,8 +1041,8 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                               handleDelete(document)
                             }}
                             style={{
-                              width: '2.5rem',
-                              height: '2.5rem',
+                              width: '2rem',
+                              height: '2rem',
                               background: 'rgba(255, 255, 255, 0.9)',
                               backdropFilter: 'blur(10px)',
                               borderRadius: '0.75rem',

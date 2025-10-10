@@ -17,6 +17,7 @@ import { authService } from "../services/authService"
 import UserProfilePage  from "../profile/profile"
 import Settings from "../components/settings/settings"
 import { Subscription } from "../components/subscription/subscription"
+import { ThemeProvider } from "../contexts/ThemeContext" 
 
 const routes = {
   "/dashboard": { component: Dashboard, title: "Dashboard", breadcrumb: ["Dashboard"] },
@@ -28,7 +29,7 @@ const routes = {
   "/documents": { component: DocumentView, title: "My Documents", breadcrumb: ["Documents"] },
   "/profile": { component: UserProfilePage, title: "Profile",  breadcrumb: ["Account", "Profile"] },
   "/subscription": { component: Subscription, title: "Subscription", breadcrumb: ["Account", "Subscription"] },
-  "/settings": { component: Settings, title: "Settings", breadcrumb: ["Account", "Settings"] }, // Fixed: Use actual component
+  "/settings": { component: Settings, title: "Settings", breadcrumb: ["Account", "Settings"] },
 }
 
 /**
@@ -137,10 +138,10 @@ export default function Page() {
   // Show landing page only if we're sure user is not authenticated
   if (!isAuthenticated && !isVerifyingAuth) {
     return (
-      <>
+      <ThemeProvider>
         <LandingPage onShowAuth={() => setShowAuthModal(true)} />
         {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onAuthSuccess={handleAuthSuccess} />}
-      </>
+      </ThemeProvider>
     )
   }
 
@@ -152,7 +153,8 @@ export default function Page() {
   }
 
   return (
-    <div className="app-container">
+    <ThemeProvider>
+      <div className="app-container">
       {/* IMPROVED: Show subtle loading indicator while verifying auth */}
       {isVerifyingAuth && (
         <div className="auth-verifying-overlay">
@@ -219,5 +221,6 @@ export default function Page() {
         </div>
       </div>
     </div>
+    </ThemeProvider>
   )
 }

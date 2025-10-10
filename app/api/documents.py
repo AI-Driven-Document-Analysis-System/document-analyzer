@@ -94,7 +94,7 @@ async def get_documents(
                 query = """
                     SELECT 
                         d.id, d.original_filename, d.file_size, d.upload_timestamp, 
-                        d.mime_type, d.user_id, d.file_path_minio,
+                        d.mime_type, d.user_id, d.file_path_minio, d.thumbnail_url,
                         dp.processing_status, dp.processing_errors,
                         dc.document_type
                     FROM documents d
@@ -111,6 +111,7 @@ async def get_documents(
                 # Get total count
                 cursor.execute("SELECT COUNT(*) FROM documents WHERE user_id = %s", (str(user_id),))
                 total_count = cursor.fetchone()[0]
+
                 
                 # Convert to list of dictionaries
                 result = []
@@ -123,8 +124,9 @@ async def get_documents(
                         "content_type": doc[4],
                         "user_id": doc[5],
                         "file_path": doc[6],
-                        "processing_status": doc[7] or "unknown",
-                        "processing_errors": doc[8],
+                        "thumbnail_url": document_service.get_document_download_url(doc[7]) if doc[7] else None,
+                        "processing_status": doc[8] or "unknown",
+                        "processing_errors": doc[9] or "unknown",
                         "document_type": doc[9] or "Unknown"
                     }
                     result.append(doc_dict)
@@ -396,7 +398,7 @@ async def delete_document(
             with conn.cursor() as cursor:
                 # Get file path before deletion
                 cursor.execute(
-                    "SELECT file_path_minio FROM documents WHERE id = %s AND user_id = %s",
+                    "SELECT file_path_minio, thumbnail_url FROM documents WHERE id = %s AND user_id = %s",
                     (document_id, user_id)
                 )
                 result = cursor.fetchone()
@@ -405,9 +407,10 @@ async def delete_document(
                     raise HTTPException(status_code=404, detail="Document not found")
                 
                 file_path = result[0]
+                thumb_path = result[1]
                 
                 # Delete document
-                document_service.delete_document(file_path, document_id)
+                document_service.delete_document(file_path, thumb_path, document_id)
                 
                 return {"message": "Document deleted successfully"}
                 
@@ -640,6 +643,65 @@ async def manually_embed_document(
         logger.error(f"Error manually embedding document: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error manually embedding document: {str(e)}")
 
+@router.put("/{document_id}/save_changes")
+async def update_document_content(
+    document_id: str,
+    request: Request,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Update extracted text content for a document."""
+    try:
+        if not hasattr(current_user, 'id') or current_user.id is None:
+            raise HTTPException(status_code=400, detail="Invalid user token")
+        user_id = str(current_user.id)
+        
+        # Parse request body
+        body = await request.json()
+        extracted_text = body.get("extracted_text")
+        
+        if extracted_text is None:
+            raise HTTPException(status_code=400, detail="extracted_text is required")
+        
+        with db_manager.get_connection() as conn:
+            with conn.cursor() as cursor:
+                # First verify the document belongs to the user
+                cursor.execute(
+                    "SELECT id FROM documents WHERE id = %s AND user_id = %s",
+                    (document_id, user_id)
+                )
+                doc = cursor.fetchone()
+                
+                if not doc:
+                    raise HTTPException(status_code=404, detail="Document not found")
+                
+                # Update the extracted text in document_content table
+                cursor.execute("""
+                    UPDATE document_content 
+                    SET extracted_text = %s
+                    WHERE document_id = %s
+                """, (extracted_text, document_id))
+                
+                # If no rows were updated, the document_content entry doesn't exist
+                if cursor.rowcount == 0:
+                    # Insert new entry
+                    cursor.execute("""
+                        INSERT INTO document_content (document_id, extracted_text, last_modified)
+                        VALUES (%s, %s, NOW())
+                    """, (document_id, extracted_text))
+                
+                conn.commit()
+                
+                return {
+                    "success": True,
+                    "message": "Document content updated successfully",
+                    "document_id": document_id,
+                }
+                
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating document content: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating document content: {str(e)}")
 
 #overall what this code do is define a router for the document service, which includes the following endpoints:
 #GET /documents: Get a list of documents for the current user.
