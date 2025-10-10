@@ -970,7 +970,9 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                         borderRadius: '1rem',
                         border: '1px solid rgba(255, 255, 255, 0.5)',
                         boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-                        transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+                        transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                        display: 'flex',
+                        flexDirection: 'column'
                       }}
                       onClick={() => handleDocumentClick(document)}
                       onMouseEnter={(e) => {
@@ -1131,7 +1133,12 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                       </div>
 
                       {/* Document Info */}
-                      <div style={{ padding: '1.5rem' }}>
+                      <div style={{ 
+                        padding: '1.5rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        flex: 1
+                      }}>
                         <div style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -1187,7 +1194,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                           </div>
                         </div>
 
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1rem' }}>
+                        <div style={ { marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                           <span style={{
                             fontSize: '0.875rem',
                             color: '#6b7280'
