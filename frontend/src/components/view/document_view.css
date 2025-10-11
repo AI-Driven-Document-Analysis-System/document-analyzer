@@ -615,8 +615,8 @@
     margin-bottom: 2rem;
 }
 .docview-modal-close {
-    width: 2.5rem;
-    height: 2.5rem;
+    width: 2rem;
+    height: 2rem;
     background-color: #f3f4f6;
     border-radius: 9999px;
     display: flex;
