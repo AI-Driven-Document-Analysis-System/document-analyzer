@@ -240,6 +240,7 @@
   transition: var(--transition);
   color: var(--text-primary);
 }
+
 .document-card:hover .document-card-header {
   background: var(--border-color);
 }
@@ -252,9 +253,11 @@
   color: var(--text-primary);
 }
 
-/* Section Headers */
-.section-header {
+/* Chart containers need dark mode support */
+.chart-container {
   background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
   border-radius: 16px 16px 0 0;
   padding: 2rem;
   border-bottom: 1px solid var(--border-color);
