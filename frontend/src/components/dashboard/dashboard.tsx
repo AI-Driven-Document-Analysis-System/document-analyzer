@@ -483,13 +483,12 @@ const renderPieChart = () => {
             ].join(' ');
             
             currentAngle += angle;
-            
             return (
               <path
                 key={index}
                 d={pathData}
                 fill={colors[index % colors.length]}
-                stroke="white"
+                stroke="var(--bg-primary)"
                 strokeWidth="2"
                 style={{ 
                   cursor: 'pointer',
@@ -512,7 +511,7 @@ const renderPieChart = () => {
           left: '50%',
           transform: 'translate(-50%, -50%) rotate(90deg)',
           textAlign: 'center',
-          color: '#4b5563',
+          color: 'var(--text-primary)',
           fontSize: '0.875rem',
           fontWeight: 600
         }}>
@@ -535,7 +534,7 @@ const renderPieChart = () => {
               }} />
               <div style={{ 
                 fontSize: '0.875rem', 
-                color: '#4b5563', 
+                color: 'var(--text-primary)', 
                 fontWeight: 500,
                 textTransform: 'uppercase',
                 minWidth: '60px'
@@ -544,7 +543,7 @@ const renderPieChart = () => {
               </div>
               <div style={{ 
                 fontSize: '0.875rem', 
-                color: '#6b7280',
+                color: 'var(--text-secondary)',
                 marginLeft: 'auto'
               }}>
                 {item.count} ({percentage}%)
@@ -1527,7 +1526,7 @@ const renderResourceUsageChart = () => {
                       <p className="mt-3 text-muted">No documents uploaded yet.</p>
                     </div>
                   ) : (
-                    documentsWithSummary.map((doc) => (
+                    documentsWithSummary.slice(0, 10).map((doc) => (
                       <div key={doc.id} className="result-item">
                         <div className="d-flex">
                           <div className="result-icon">

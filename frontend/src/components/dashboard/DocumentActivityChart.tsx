@@ -68,10 +68,10 @@ const DocumentActivityChart: React.FC<DocumentActivityChartProps> = ({
       <h3 style={{
         fontSize: '16px',
         fontWeight: 600,
-        color: '#1a202c',
+        color: 'var(--text-primary)',
         margin: '0 0 16px 0',
         paddingBottom: '12px',
-        borderBottom: '1px solid #edf2f7'
+        borderBottom: '1px solid var(--border-color)'
       }}>
         Document Upload Activity (Last 30 Days)
       </h3>
@@ -95,12 +95,12 @@ const DocumentActivityChart: React.FC<DocumentActivityChartProps> = ({
             <CartesianGrid 
               strokeDasharray="3 3" 
               vertical={false} 
-              stroke="#f0f0f0" 
+              stroke="var(--border-color)" 
             />
             <XAxis 
               dataKey="date" 
               tick={{ 
-                fill: '#718096', 
+                fill: 'var(--text-secondary)', 
                 fontSize: 11,
                 fontWeight: 500
               }}
@@ -110,7 +110,7 @@ const DocumentActivityChart: React.FC<DocumentActivityChartProps> = ({
             />
             <YAxis 
               tick={{ 
-                fill: '#718096', 
+                fill: 'var(--text-secondary)', 
                 fontSize: 11,
                 fontWeight: 500
               }}
@@ -121,16 +121,16 @@ const DocumentActivityChart: React.FC<DocumentActivityChartProps> = ({
             />
             <Tooltip 
               contentStyle={{
-                backgroundColor: 'white',
+                backgroundColor: 'var(--bg-primary)',
                 borderRadius: '6px',
-                border: '1px solid #e2e8f0',
-                boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
+                border: '1px solid var(--border-color)',
+                boxShadow: 'var(--card-shadow)',
                 padding: '8px 12px',
                 fontSize: '12px',
                 fontWeight: 500
               }}
               labelStyle={{
-                color: '#4a5568',
+                color: 'var(--text-primary)',
                 fontWeight: 600,
                 marginBottom: '4px'
               }}
@@ -139,13 +139,13 @@ const DocumentActivityChart: React.FC<DocumentActivityChartProps> = ({
             <Line 
               type="monotone" 
               dataKey="count" 
-              stroke="#4f46e5" 
+              stroke="var(--accent-color)" 
               strokeWidth={2}
               dot={false}
               activeDot={{
                 r: 4,
-                fill: '#4f46e5',
-                stroke: '#fff',
+                fill: 'var(--accent-color)',
+                stroke: 'var(--bg-primary)',
                 strokeWidth: 2
               }}
               strokeLinecap="round"

@@ -23,8 +23,8 @@ const StorageUsageChart: React.FC<StorageUsageChartProps> = ({
   const usedPercentage = total > 0 ? Math.round((used / total) * 100) : 0;
   
   const data = [
-    { name: 'Used', value: used, color: '#4f46e5' },
-    { name: 'Remaining', value: remaining, color: '#e2e8f0' },
+    { name: 'Used', value: used, color: 'var(--accent-color)' },
+    { name: 'Remaining', value: remaining, color: 'var(--border-color)' },
   ];
 
   const formatBytes = (bytes: number, decimals = 2) => {
@@ -45,7 +45,7 @@ const StorageUsageChart: React.FC<StorageUsageChartProps> = ({
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '250px',
-        backgroundColor: '#fff',
+        backgroundColor: 'var(--bg-primary)',
         borderRadius: '8px',
         padding: '20px'
       }}>
@@ -53,19 +53,19 @@ const StorageUsageChart: React.FC<StorageUsageChartProps> = ({
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          color: '#4f46e5',
+          color: 'var(--accent-color)',
           textAlign: 'center'
         }}>
           <div style={{
             width: '40px',
             height: '40px',
-            border: '4px solid #e2e8f0',
-            borderTop: '4px solid #4f46e5',
+            border: '4px solid var(--border-color)',
+            borderTop: '4px solid var(--accent-color)',
             borderRadius: '50%',
             animation: 'spin 1s linear infinite',
             marginBottom: '12px'
           }}></div>
-          <p style={{ margin: 0, color: '#4b5563' }}>Loading storage data...</p>
+          <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Loading storage data...</p>
         </div>
       </div>
     );
@@ -81,27 +81,27 @@ const StorageUsageChart: React.FC<StorageUsageChartProps> = ({
         alignItems: 'center',
         justifyContent: 'center',
         minHeight: '250px',
-        backgroundColor: '#fff',
+        backgroundColor: 'var(--bg-primary)',
         borderRadius: '8px',
         padding: '20px',
         textAlign: 'center',
-        color: '#ef4444'
+        color: 'var(--danger-color)'
       }}>
         <FontAwesomeIcon 
           icon={faExclamationTriangle} 
           style={{ fontSize: '2rem', marginBottom: '12px' }} 
         />
         <p style={{ margin: '0 0 8px', fontWeight: 500 }}>Error loading storage data</p>
-        <small style={{ color: '#6b7280', marginBottom: '12px' }}>{error}</small>
+        <small style={{ color: 'var(--text-secondary)', marginBottom: '12px' }}>{error}</small>
         {isMockData && (
           <div style={{
             marginTop: '8px',
             padding: '4px 8px',
-            backgroundColor: '#f3f4f6',
+            backgroundColor: 'var(--bg-tertiary)',
             borderRadius: '4px',
             fontSize: '0.8rem'
           }}>
-            <small style={{ color: '#6b7280' }}>Showing sample data</small>
+            <small style={{ color: 'var(--text-secondary)' }}>Showing sample data</small>
           </div>
         )}
       </div>
@@ -116,16 +116,16 @@ const StorageUsageChart: React.FC<StorageUsageChartProps> = ({
       padding: '16px',
       boxSizing: 'border-box',
       borderRadius: '8px',
-      backgroundColor: '#fff',
-      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+      backgroundColor: 'var(--bg-primary)',
+      boxShadow: 'var(--card-shadow)'
     }}>
       <h3 style={{
         fontSize: '16px',
         fontWeight: 600,
-        color: '#1a202c',
+        color: 'var(--text-primary)',
         margin: '0 0 16px 0',
         paddingBottom: '12px',
-        borderBottom: '1px solid #edf2f7',
+        borderBottom: '1px solid var(--border-color)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center'
@@ -134,7 +134,7 @@ const StorageUsageChart: React.FC<StorageUsageChartProps> = ({
         <span style={{
           fontSize: '14px',
           fontWeight: 500,
-          color: '#4b5563'
+          color: 'var(--text-secondary)'
         }}>
           {formatBytes(used * 1024 * 1024)} / {formatBytes(total * 1024 * 1024)}
         </span>
@@ -189,7 +189,7 @@ const StorageUsageChart: React.FC<StorageUsageChartProps> = ({
                     <Cell 
                       key={`cell-${index}`} 
                       fill={entry.color}
-                      stroke="#fff"
+                      stroke="var(--bg-primary)"
                       strokeWidth={2}
                     />
                   ))}
@@ -203,10 +203,10 @@ const StorageUsageChart: React.FC<StorageUsageChartProps> = ({
                     ];
                   }}
                   contentStyle={{
-                    backgroundColor: 'white',
-                    border: '1px solid #e2e8f0',
+                    backgroundColor: 'var(--bg-primary)',
+                    border: '1px solid var(--border-color)',
                     borderRadius: '6px',
-                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
+                    boxShadow: 'var(--card-shadow)',
                     padding: '8px 12px',
                     fontSize: '12px',
                     fontWeight: 500
@@ -220,7 +220,7 @@ const StorageUsageChart: React.FC<StorageUsageChartProps> = ({
                   style={{
                     fontSize: '24px',
                     fontWeight: 700,
-                    fill: '#4f46e5'
+                    fill: 'var(--accent-color)'
                   }}
                 >
                   {usedPercentage}%
@@ -238,20 +238,20 @@ const StorageUsageChart: React.FC<StorageUsageChartProps> = ({
         gap: '24px',
         marginTop: 'auto',
         paddingTop: '16px',
-        borderTop: '1px solid #edf2f7'
+        borderTop: '1px solid var(--border-color)'
       }}>
         <div style={{
           display: 'flex',
           alignItems: 'center',
           fontSize: '13px',
-          color: '#4b5563',
+          color: 'var(--text-secondary)',
           fontWeight: 500
         }}>
           <span style={{
             display: 'inline-block',
             width: '12px',
             height: '12px',
-            backgroundColor: '#4f46e5',
+            backgroundColor: 'var(--accent-color)',
             borderRadius: '2px',
             marginRight: '6px',
             flexShrink: 0
@@ -262,14 +262,14 @@ const StorageUsageChart: React.FC<StorageUsageChartProps> = ({
           display: 'flex',
           alignItems: 'center',
           fontSize: '13px',
-          color: '#4b5563',
+          color: 'var(--text-secondary)',
           fontWeight: 500
         }}>
           <span style={{
             display: 'inline-block',
             width: '12px',
             height: '12px',
-            backgroundColor: '#e2e8f0',
+            backgroundColor: 'var(--border-color)',
             borderRadius: '2px',
             marginRight: '6px',
             flexShrink: 0
