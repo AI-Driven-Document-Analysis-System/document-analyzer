@@ -15,6 +15,7 @@ interface Document {
   document_type?: string
   created_at: string
   updated_at: string
+  download_url?: string
 }
 
 interface DocumentViewProps {
@@ -47,6 +48,50 @@ const getFileIcon = (contentType: string) => {
   return { 
     icon: <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M10 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2h-8l-2-2z"/></svg>,
     colorClass: "text-gray-500", bgClass: "bg-gray-50", accentClass: "bg-gray-400" 
+  }
+}
+const getDocumentTypeBadgeStyle = (docType: string | undefined): React.CSSProperties => {
+  const baseStyle = {
+    padding: '0.25rem 0.75rem',
+    fontSize: '0.75rem',
+    borderRadius: '9999px',
+    fontWeight: '500',
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.25rem',
+    borderWidth: '1px',
+    borderStyle: 'solid'
+  }
+
+  if (!docType) {
+    return {
+      ...baseStyle,
+      backgroundColor: '#f8fafc',
+      color: '#64748b',
+      borderColor: '#e2e8f0'
+    }
+  }
+
+  const normalized = docType.toLowerCase().trim()
+  const typeColors: Record<string, { bg: string; text: string; border: string }> = {
+    'medical record': { bg: '#f0fdf4', text: '#166534', border: '#bbf7d0' },
+    'invoice and receipt': { bg: '#fffbeb', text: '#78350f', border: '#fcd34d' },
+    'legal document': { bg: '#ede9fe', text: '#5b21b6', border: '#c4b5fd' },
+    'research paper': { bg: '#dbeafe', text: '#1e40af', border: '#93c5fd' },
+    'financial report': { bg: '#f0f9ff', text: '#0891b2', border: '#a5f3fc' },
+  }
+
+  const colors = typeColors[normalized] || {
+    bg: '#f1f5f9',
+    text: '#475569',
+    border: '#cbd5e1'
+  }
+
+  return {
+    ...baseStyle,
+    backgroundColor: colors.bg,
+    color: colors.text,
+    borderColor: colors.border
   }
 }
 
@@ -211,8 +256,27 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
     .sort((a, b) => new Date(b.upload_date).getTime() - new Date(a.upload_date).getTime())
     .slice(0, 3)
 
-  const handleDocumentClick = (document: Document) => {
-    // setSelectedDocument(document) // Disabled to fix preview errors
+  const handleDocumentClick = async (document: Document) => {
+    const downloadResponse = await fetch(
+          `http://localhost:8000/api/documents/${document.id}/download`,
+          {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${authToken}`,
+              'Content-Type': 'application/json',
+            },
+          }
+        );
+
+        if (!downloadResponse.ok) {
+          throw new Error(`Failed to fetch download URL: ${downloadResponse.status}`);
+        }
+
+        const downloadData = await downloadResponse.json();
+        document.download_url = downloadData.download_url;
+
+    setSelectedDocument(document)
+
   }
 
   const handleDownload = async (document: Document) => {
@@ -741,18 +805,19 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                           </div>
                         </div>
                         
-                        <div style={{ marginTop: 'auto' }}>
-                          <div style={{
+                        <div style={{ marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                          {/* <div style={{
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between'
-                          }}>
+                          }}> */}
                             <span style={{
                               fontSize: '0.875rem',
                               color: '#6b7280'
                             }}>
                               {formatDate(document.upload_date)}
                             </span>
+                            <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '0.5rem' }}>
                             <span style={{
                               padding: '0.25rem 0.75rem',
                               borderRadius: '9999px',
@@ -765,6 +830,11 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                             }}>
                               {document.processing_status}
                             </span>
+                            {document.document_type && (
+                              <span style={getDocumentTypeBadgeStyle(document.document_type)}>
+                                {document.document_type}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -900,7 +970,9 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                         borderRadius: '1rem',
                         border: '1px solid rgba(255, 255, 255, 0.5)',
                         boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
-                        transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+                        transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+                        display: 'flex',
+                        flexDirection: 'column'
                       }}
                       onClick={() => handleDocumentClick(document)}
                       onMouseEnter={(e) => {
@@ -1061,7 +1133,12 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                       </div>
 
                       {/* Document Info */}
-                      <div style={{ padding: '1.5rem' }}>
+                      <div style={{ 
+                        padding: '1.5rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        flex: 1
+                      }}>
                         <div style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -1116,18 +1193,15 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                             </p>
                           </div>
                         </div>
-                        
-                        <div style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between'
-                        }}>
+
+                        <div style={ { marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                           <span style={{
                             fontSize: '0.875rem',
                             color: '#6b7280'
                           }}>
                             {formatDate(document.upload_date)}
                           </span>
+                          <div style={{ display: 'flex', justifyContent: 'flex-start', gap: '0.5rem' }}>
                           <span style={{
                             padding: '0.25rem 0.75rem',
                             borderRadius: '9999px',
@@ -1140,12 +1214,18 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                           }}>
                             {document.processing_status}
                           </span>
+                          {document.document_type && (
+                              <span style={getDocumentTypeBadgeStyle(document.document_type)}>
+                                {document.document_type}
+                              </span>
+                            )}
+                        </div>
                         </div>
                         
-                        <div className="flex items-center justify-between text-sm">
+                        {/* <div className="flex items-center justify-between text-sm">
                           <span className="text-gray-500 font-medium">{formatFileSize(document.file_size)}</span>
                           <span className="text-gray-400">{formatDate(document.upload_date)}</span>
-                        </div>
+                        </div> */}
                       </div>
                     </div>
                   )
@@ -1180,6 +1260,11 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                             }}>
                               {document.processing_status}
                             </span>
+                            {document.document_type && (
+                              <span style={getDocumentTypeBadgeStyle(document.document_type)}>
+                                {document.document_type}
+                              </span>
+                            )}
                           </div>
                           <div className="docview-flex docview-items-center docview-gap-4 docview-text-sm docview-text-gray-500">
                             <span>{formatFileSize(document.file_size)}</span>
@@ -1227,95 +1312,128 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
 
         {/* Document Detail Modal */}
         {selectedDocument && (
-          <div 
+            <div 
             className="docview-modal-overlay"
             onClick={() => setSelectedDocument(null)}
-          >
+            >
             <div 
               className="docview-modal-content"
               onClick={e => e.stopPropagation()}
+              style={{ maxWidth: 900, width: '95vw', minHeight: 500, display: 'flex', flexDirection: 'column' }}
             >
-              <div className="docview-p-8">
-                <div className="docview-modal-header">
-                  <h2 className="docview-text-2xl docview-font-bold docview-text-gray-900">Document Details</h2>
-                  <button
-                    onClick={() => setSelectedDocument(null)}
-                    className="docview-modal-close"
-                  >
-                    <i className="fas fa-times docview-icon-lg"></i>
-                  </button>
+              <div className="docview-modal-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.5rem 2rem 0rem 2rem' }}>
+              <h2 className="docview-text-2xl docview-font-bold docview-text-gray-900">Document Details</h2>
+              <button
+                onClick={() => setSelectedDocument(null)}
+                className="docview-modal-close"
+              >
+                <i className="fas fa-times docview-icon-lg"></i>
+              </button>
+              </div>
+              <div style={{ flex: 1, display: 'flex', gap: 25, padding: '0 2rem 2rem 2rem', minHeight: 0 }}>
+              {/* Left: Preview */}
+              <div style={{ flex: 2, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', borderRadius: 16, minHeight: 650, overflow: 'auto', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+                {selectedDocument.content_type.includes('pdf') ? (
+                <iframe
+                  src={selectedDocument.download_url}
+                  title="PDF Preview"
+                  style={{ width: '100%', height: '100%', border: 'none', minHeight: 400 }}
+                />
+                ) : selectedDocument.content_type.startsWith('image/') ? (
+                <img
+                  src={selectedDocument.download_url || selectedDocument.thumbnail_url}
+                  alt={selectedDocument.original_filename}
+                  style={{ maxWidth: '100%', maxHeight: 480, borderRadius: 12, objectFit: 'contain', background: '#fff' }}
+                />
+                ) : selectedDocument.content_type.includes('text') ? (
+                <iframe
+                  src={selectedDocument.download_url}
+                  title="Text Preview"
+                  style={{ width: '100%', height: 480, border: 'none', background: '#fff', borderRadius: 12 }}
+                />
+                ) : (
+                <div style={{ textAlign: 'center', color: '#64748b', fontSize: 18, width: '100%' }}>
+                  <div style={{ marginBottom: 16 }}>
+                  {getFileIcon(selectedDocument.content_type).icon}
+                  </div>
+                  <div>No preview available for this file type.</div>
                 </div>
-
-                <div className="docview-space-y-8">
-                  <div className="docview-flex docview-items-center docview-gap-6">
-                    <div className={`docview-w-20 docview-h-20 ${getFileIcon(selectedDocument.content_type).bgClass} docview-rounded-2xl docview-flex docview-items-center docview-justify-center docview-text-4xl docview-shadow-lg docview-detail-icon`}>
-                      {getFileIcon(selectedDocument.content_type).icon}
-                    </div>
-                    <div className="docview-flex-1">
-                      <h3 className="docview-font-bold docview-text-xl docview-text-gray-900 docview-mb-2">{selectedDocument.original_filename}</h3>
-                      <div className="docview-flex docview-items-center docview-gap-3">
-                        <span style={{
-                          ...getStatusBadgeStyle(selectedDocument.processing_status),
-                          backgroundColor: selectedDocument.processing_status === 'failed' ? '#dbeafe' : getStatusBadgeStyle(selectedDocument.processing_status).backgroundColor,
-                          color: selectedDocument.processing_status === 'failed' ? '#1e40af' : getStatusBadgeStyle(selectedDocument.processing_status).color,
-                          borderColor: selectedDocument.processing_status === 'failed' ? '#93c5fd' : getStatusBadgeStyle(selectedDocument.processing_status).borderColor
-                        }}>
-                          {selectedDocument.processing_status}
-                        </span>
-                        <span className="docview-text-sm docview-text-gray-500">{formatFileSize(selectedDocument.file_size)}</span>
-                      </div>
-                    </div>
+                )}
+              </div>
+              {/* Right: Details */}
+              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 24 }}>
+                <div className="docview-flex docview-items-center docview-gap-4" style={{ marginBottom: 16 }}>
+                <div className={`docview-w-16 docview-h-16 ${getFileIcon(selectedDocument.content_type).bgClass} docview-rounded-xl docview-flex docview-items-center docview-justify-center docview-text-3xl docview-shadow`}>
+                  {getFileIcon(selectedDocument.content_type).icon}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <h3 className="docview-font-bold docview-text-lg docview-text-gray-900 docview-mb-1" style={{ marginBottom: 4 }}>{selectedDocument.original_filename}</h3>
+                  <div className="docview-flex docview-items-center docview-gap-2">
+                  <span style={{
+                    ...getStatusBadgeStyle(selectedDocument.processing_status),
+                    backgroundColor: selectedDocument.processing_status === 'failed' ? '#dbeafe' : getStatusBadgeStyle(selectedDocument.processing_status).backgroundColor,
+                    color: selectedDocument.processing_status === 'failed' ? '#1e40af' : getStatusBadgeStyle(selectedDocument.processing_status).color,
+                    borderColor: selectedDocument.processing_status === 'failed' ? '#93c5fd' : getStatusBadgeStyle(selectedDocument.processing_status).borderColor
+                  }}>
+                    {selectedDocument.processing_status}
+                  </span>
+                  {selectedDocument.document_type && (
+                    <span style={getDocumentTypeBadgeStyle(selectedDocument.document_type)}>
+                      {selectedDocument.document_type}
+                    </span>
+                  )}
+                  {/* <span className="docview-text-xs docview-text-gray-500">{formatFileSize(selectedDocument.file_size)}</span> */}
                   </div>
-
-                  <div className="docview-detail-grid">
-                    <div>
-                      <span className="docview-detail-label">File Size</span>
-                      <p className="docview-detail-value">{formatFileSize(selectedDocument.file_size)}</p>
-                    </div>
-                    <div>
-                      <span className="docview-detail-label">Content Type</span>
-                      <p className="docview-detail-value">{selectedDocument.content_type}</p>
-                    </div>
-                    <div>
-                      <span className="docview-detail-label">Upload Date</span>
-                      <p className="docview-detail-value">{formatDate(selectedDocument.upload_date)}</p>
-                    </div>
-                    <div>
-                      <span className="docview-detail-label">Document ID</span>
-                      <p className="docview-detail-value docview-detail-id">{selectedDocument.id}</p>
-                    </div>
-                    {selectedDocument.document_type && (
-                      <div>
-                        <span className="docview-detail-label">Document Type</span>
-                        <p className="docview-detail-value">{selectedDocument.document_type}</p>
-                      </div>
-                    )}
-                    <div>
-                      <span className="docview-detail-label">Uploaded By</span>
-                      <p className="docview-detail-value">User {selectedDocument.user_id.slice(0, 8)}...</p>
-                    </div>
+                </div>
+                </div>
+                <div className="docview-detail-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 12 }}>
+                <div>
+                  <span className="docview-detail-label">File Size</span>
+                  <p className="docview-detail-value">{formatFileSize(selectedDocument.file_size)}</p>
+                </div>
+                <div>
+                  <span className="docview-detail-label">Content Type</span>
+                  <p className="docview-detail-value">{selectedDocument.content_type}</p>
+                </div>
+                <div>
+                  <span className="docview-detail-label">Upload Date</span>
+                  <p className="docview-detail-value">{formatDate(selectedDocument.upload_date)}</p>
+                </div>
+                {/* <div>
+                  <span className="docview-detail-label">Document ID</span>
+                  <p className="docview-detail-value docview-detail-id">{selectedDocument.id}</p>
+                </div> */}
+                {selectedDocument.document_type && (
+                  <div>
+                  <span className="docview-detail-label">Document Type</span>
+                  <p className="docview-detail-value">{selectedDocument.document_type}</p>
                   </div>
-
-                  <div className="docview-modal-actions docview-flex docview-gap-4 docview-pt-2">
-                    <button
-                      onClick={() => handleDownload(selectedDocument)}
-                      className="docview-flex-1 docview-cta-primary"
-                    >
-                      <i className="fas fa-download"></i>
-                      Download Document
-                    </button>
-                    <button
-                      onClick={() => handleDelete(selectedDocument)}
-                      className="docview-flex-1 docview-cta-danger"
-                    >
-                      <i className="fas fa-trash"></i>
-                      Delete Document
-                    </button>
-                  </div>
+                )}
+                {/* <div>
+                  <span className="docview-detail-label">Uploaded By</span>
+                  <p className="docview-detail-value">User {selectedDocument.user_id.slice(0, 8)}...</p>
+                </div> */}
+                </div>
+                <div className="docview-modal-actions docview-flex docview-gap-3 docview-pt-2" style={{ marginTop: 16 }}>
+                <button
+                  onClick={() => handleDownload(selectedDocument)}
+                  className="docview-flex-1 docview-cta-primary"
+                >
+                  <i className="fas fa-download"></i>
+                  Download
+                </button>
+                <button
+                  onClick={() => handleDelete(selectedDocument)}
+                  className="docview-flex-1 docview-cta-danger"
+                >
+                  <i className="fas fa-trash"></i>
+                  Delete
+                </button>
                 </div>
               </div>
+              </div>
             </div>
-          </div>
+            </div>
         )}
       </div>
     </>
