@@ -159,6 +159,12 @@ const formatDate = (dateString: string): string => {
   })
 }
 
+const formatFileName = (filename: string): string => {
+  const lastDot = filename.lastIndexOf('.')
+  if (lastDot === -1) return filename
+  return filename.substring(0, lastDot)
+}
+
 export function DocumentView({ authToken: propAuthToken, onAuthError }: DocumentViewProps) {
   const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
@@ -793,7 +799,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                               WebkitBoxOrient: 'vertical',
                               transition: 'color 0.3s ease'
                             }}>
-                              {document.original_filename}
+                              {formatFileName(document.original_filename)}
                             </p>
                             <p style={{
                               fontSize: '0.875rem',
@@ -1182,7 +1188,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                               WebkitBoxOrient: 'vertical',
                               transition: 'color 0.3s ease'
                             }}>
-                              {document.original_filename}
+                              {formatFileName(document.original_filename)}
                             </p>
                             <p style={{
                               fontSize: '0.875rem',
@@ -1250,7 +1256,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                         <div className="docview-flex-1 docview-min-w-0">
                           <div className="docview-flex docview-items-center docview-gap-3 docview-mb-1">
                             <h3 className="docview-text-base docview-font-semibold docview-text-gray-900 docview-truncate group-hover:docview-text-blue-600 docview-transition-colors docview-duration-300">
-                              {document.original_filename}
+                              {formatFileName(document.original_filename)}
                             </h3>
                             <span style={{
                               ...getStatusBadgeStyle(document.processing_status),
@@ -1367,7 +1373,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                   {getFileIcon(selectedDocument.content_type).icon}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <h3 className="docview-font-bold docview-text-lg docview-text-gray-900 docview-mb-1" style={{ marginBottom: 4 }}>{selectedDocument.original_filename}</h3>
+                  <h3 className="docview-font-bold docview-text-lg docview-text-gray-900 docview-mb-1" style={{ marginBottom: 4 }}>{formatFileName(selectedDocument.original_filename)}</h3>
                   <div className="docview-flex docview-items-center docview-gap-2">
                   <span style={{
                     ...getStatusBadgeStyle(selectedDocument.processing_status),
@@ -1414,21 +1420,23 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                   <p className="docview-detail-value">User {selectedDocument.user_id.slice(0, 8)}...</p>
                 </div> */}
                 </div>
-                <div className="docview-modal-actions docview-flex docview-gap-3 docview-pt-2" style={{ marginTop: 16 }}>
-                <button
+                <div className="docview-modal-actions" style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  <button
                   onClick={() => handleDownload(selectedDocument)}
-                  className="docview-flex-1 docview-cta-primary"
-                >
+                  className="docview-cta-primary"
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                  >
                   <i className="fas fa-download"></i>
                   Download
-                </button>
-                <button
+                  </button>
+                  <button
                   onClick={() => handleDelete(selectedDocument)}
-                  className="docview-flex-1 docview-cta-danger"
-                >
+                  className="docview-cta-danger"
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+                  >
                   <i className="fas fa-trash"></i>
                   Delete
-                </button>
+                  </button>
                 </div>
               </div>
               </div>

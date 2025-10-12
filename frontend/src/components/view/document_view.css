@@ -115,17 +115,17 @@
 .docview-shadow-2xl { box-shadow: var(--card-shadow-hover); }
 
 /* Text Colors */
-.docview-text-gray-900 { color: var(--text-primary); }
-.docview-text-gray-800 { color: var(--text-primary); }
-.docview-text-gray-700 { color: var(--text-primary); }
-.docview-text-gray-600 { color: var(--text-secondary); }
-.docview-text-gray-500 { color: var(--text-secondary); }
-.docview-text-gray-400 { color: var(--text-tertiary); }
-.docview-text-white { color: var(--text-primary); }
-.docview-text-red-600 { color: var(--danger-color); }
-.docview-text-blue-600 { color: var(--accent-color); }
-.docview-text-green-600 { color: var(--success-color); }
-.docview-text-yellow-600 { color: var(--warning-color); }
+.docview-text-gray-900 { color: #111827; }
+.docview-text-gray-800 { color: #1f2937; }
+.docview-text-gray-700 { color: #374151; }
+.docview-text-gray-600 { color: #4b5563; }
+.docview-text-gray-500 { color: #6b7280; }
+.docview-text-gray-400 { color: #9ca3af; }
+.docview-text-white { color: #ffffff; }
+.docview-text-red-600 { color: #dc2626; }
+.docview-text-blue-600 { color: #2563eb; }
+.docview-text-green-600 { color: #059669; }
+.docview-text-yellow-600 { color: #d97706; }
 
 /* Status Colors */
 .docview-color-red { color: #ef4444; }
