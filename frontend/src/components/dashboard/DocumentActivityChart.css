@@ -1,16 +1,16 @@
 /* Chart Container */
 .chart-container {
-  background: white;
+  background: var(--bg-primary);
   border-radius: 12px;
   padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--card-shadow);
   height: 100%;
   display: flex;
   flex-direction: column;
 }
 
 .chart-container:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--card-shadow-hover);
 }
 
 /* Chart Header */
@@ -25,7 +25,7 @@
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: #1a202c;
+  color: var(--text-primary);
 }
 
 /* Loading State */
@@ -35,7 +35,7 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #64748b;
+  color: var(--text-secondary);
   text-align: center;
   padding: 20px;
 }
@@ -43,8 +43,8 @@
 .spinner {
   width: 40px;
   height: 40px;
-  border: 4px solid #e2e8f0;
-  border-top: 4px solid #4f46e5;
+  border: 4px solid var(--border-color);
+  border-top: 4px solid var(--accent-color);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 12px;
@@ -64,7 +64,7 @@
   height: 100%;
   text-align: center;
   padding: 20px;
-  color: #ef4444;
+  color: var(--danger-color);
 }
 
 .chart-error i {
@@ -78,7 +78,7 @@
 }
 
 .chart-error small {
-  color: #94a3b8;
+  color: var(--text-tertiary);
   font-size: 12px;
   margin-bottom: 8px;
 }

@@ -307,21 +307,9 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
 
   return (
     <>
-      <div style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f8fafc 0%, #e0f2fe 50%, #e8eaf6 100%)',
-        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
-      }}>
+      <div className="docview-page-background">
         {/* Modern Header with Glass Effect */}
-        <div style={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 40,
-          background: 'rgba(255, 255, 255, 0.85)',
-          backdropFilter: 'blur(20px)',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
-        }}>
+        <div className="docview-glass-header">
           <div style={{
             maxWidth: '80rem',
             margin: '0 auto',
