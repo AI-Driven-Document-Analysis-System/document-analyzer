@@ -319,7 +319,8 @@ function RAGChatbotContent() {
     setSortSize,
     toggleDocumentSelection,
     removeDocument,
-    clearAllDocuments
+    clearAllDocuments,
+    clearingDocuments
   } = useDocumentManagement()
 
   // Fetch documents from API
@@ -818,12 +819,14 @@ function RAGChatbotContent() {
           documents={documents}
           onShowDocumentModal={handleShowDocumentModal}
           onRemoveDocument={removeDocument}
+          onClearAllDocuments={clearAllDocuments}
           onNewChat={handleNewChat}
           onChatHistoryClick={handleChatHistoryClick}
           onDeleteChat={handleDeleteChat}
           selectedChatId={conversationId || undefined}
           documentsLoading={documentsLoading}
           documentsError={documentsError}
+          clearingDocuments={clearingDocuments}
         />
       </div>
       
