@@ -30,7 +30,7 @@ function RAGChatbotContent() {
   const [selectedModel, setSelectedModel] = useState<{ provider: string; model: string; name: string } | undefined>({
     provider: 'groq',
     model: 'llama-3.1-8b-instant', 
-    name: 'Groq Llama 3.1 8B'
+    name: 'Llama-3.1-8b-instant'
   })
   const [useStreaming, setUseStreaming] = useState(true) // Enable streaming by default
   // Load conversation ID from localStorage (user-specific)
