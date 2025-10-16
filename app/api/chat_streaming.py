@@ -137,15 +137,19 @@ async def stream_chat_message(request: ChatMessageRequest):
                     metadata={}
                 )
                 
-                # Save assistant message
+                # Extract sources from collected chunks
+                sources = next((c.get('data', []) for c in collected_chunks if c.get('type') == 'sources'), [])
+                logger.info(f"Extracted {len(sources)} sources from streaming chunks for conversation {conversation_id}")
+                
+                # Save assistant message with sources in metadata
                 messages_repo.add(
                     conversation_id=UUID(conversation_id),
                     role='assistant',
                     content=response_text,
-                    metadata={}
+                    metadata={'sources': sources}
                 )
                 
-                logger.info(f"Saved messages to conversation {conversation_id}")
+                logger.info(f"Saved messages with {len(sources)} sources to conversation {conversation_id}")
             except Exception as e:
                 logger.error(f"Failed to save messages: {e}")
             
