@@ -75,7 +75,7 @@
 
 .card-header {
   padding: 24px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: var(--border-color);
 }
 
 .card-header h2 {
@@ -116,7 +116,7 @@
   margin-top: 16px;
   padding: 16px;
   background-color: var(--bg-tertiary);
-  border: 1px solid var(--border-color);
+  border: var(--border-color);
   border-radius: 0.5rem;
   font-size: 0.875rem;
 }
@@ -149,7 +149,7 @@
 }
 
 .model-option {
-  border: 2px solid var(--border-color);
+  border:  var(--border-color);
   border-radius: 0.5rem;
   padding: 16px;
   cursor: pointer;
@@ -602,4 +602,138 @@
   background-color: var(--accent-light);
   border-color: var(--accent-hover);
   color: var(--accent-hover);
+}
+
+
+
+/* Shared form select style */
+/* Shared form select style — fully dark-mode compatible */
+/* Shared form select style — fully dark-mode compatible */
+.form-select {
+  width: 100%;
+  padding: 16px;
+  border: 2px solid var(--input-border);
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-primary); /* Ensures readable text */
+  background-color: var(--input-bg); /* Must be dark in dark mode */
+  background-clip: padding-box; /* Prevents background bleed */
+  transition: all 0.2s ease;
+  appearance: none;
+
+  /* Custom dropdown arrow — uses theme-compatible color */
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='rgba(156, 163, 175, 0.8)' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 1rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em;
+
+  /* Critical: Prevent white flash on some browsers */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: var(--input-focus);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+  background-color: var(--input-bg); /* Reaffirm on focus */
+}
+
+/* Ensure no white on disabled state */
+.form-select:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+/* Custom Dropdown Styles */
+.custom-dropdown-container {
+  position: relative;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.custom-dropdown {
+  width: 100%;
+  padding: 16px;
+  border: 2px solid var(--input-border);
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  background-color: var(--input-bg);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.custom-dropdown:hover {
+  border-color: var(--input-focus);
+}
+
+.custom-dropdown.selected {
+  border-color: var(--accent-color);
+}
+
+.custom-dropdown .dropdown-value {
+  flex-grow: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.custom-dropdown .dropdown-arrow {
+  margin-left: 8px;
+  color: var(--text-secondary);
+  transition: transform 0.2s ease;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-top: none;
+  border-radius: 0 0 0.5rem 0.5rem;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-item {
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover,
+.dropdown-item.active {
+  background-color: var(--accent-light);
+  color: var(--accent-color);
+  border-left: 4px solid var(--accent-color);
+}
+
+.dropdown-item-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dropdown-item-title {
+  font-weight: 600;
+}
+
+.dropdown-item-model {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
