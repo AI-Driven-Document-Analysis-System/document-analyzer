@@ -26,6 +26,8 @@ function RAGChatbotContent() {
   
   const [inputValue, setInputValue] = useState("")
   const [isTyping, setIsTyping] = useState(false)
+  const [isSending, setIsSending] = useState(false) // Prevent double submission
+  const generatingMessageIdRef = useRef<string | null>(null) // Use ref instead of state - prevents re-render issues
   const [searchMode, setSearchMode] = useState<'standard' | 'rephrase' | 'multiple_queries'>('standard')
   const [selectedModel, setSelectedModel] = useState<{ provider: string; model: string; name: string } | undefined>({
     provider: 'groq',
@@ -69,11 +71,18 @@ function RAGChatbotContent() {
 
   // Handle answer regeneration with different search methods
   const handleRegenerateAnswer = async (messageId: string, method: 'rephrase' | 'multiple_queries') => {
+    if (isSending) return // Prevent multiple regenerations
+    
     console.log('Regenerating answer:', { messageId, method })
+    
+    setIsSending(true) // Prevent double submission
     
     // Find the message to regenerate
     const messageIndex = messages.findIndex(msg => msg.id === messageId)
-    if (messageIndex === -1) return
+    if (messageIndex === -1) {
+      setIsSending(false)
+      return
+    }
     
     // Find the user message that prompted this assistant response
     let userMessage: Message | null = null
@@ -84,7 +93,10 @@ function RAGChatbotContent() {
       }
     }
     
-    if (!userMessage) return
+    if (!userMessage) {
+      setIsSending(false)
+      return
+    }
     
     // Remove the assistant message we're regenerating
     const updatedMessages = messages.slice(0, messageIndex)
@@ -94,6 +106,7 @@ function RAGChatbotContent() {
     try {
       // Create placeholder message for streaming regeneration
       const assistantMessageId = Date.now().toString()
+      generatingMessageIdRef.current = assistantMessageId
       const newAssistantMessage: Message = {
         id: assistantMessageId,
         type: "assistant",
@@ -125,6 +138,7 @@ function RAGChatbotContent() {
           },
           onSources: (sources) => {
             // Update sources when received
+            generatingMessageIdRef.current = null
             setMessages((prev) => 
               prev.map(msg => 
                 msg.id === assistantMessageId 
@@ -136,13 +150,20 @@ function RAGChatbotContent() {
             setSelectedMessageSources(sources)
             setExpandedSections(prev => ({ ...prev, sources: true }))
           },
+          onStart: () => {
+            console.log('🚀 Regeneration streaming started')
+          },
           onComplete: (response) => {
             console.log('✅ Regeneration completed')
             setIsTyping(false)
+            setIsSending(false) // Re-enable sending
+            generatingMessageIdRef.current = null
           },
           onError: (error) => {
             console.error('❌ Regeneration error:', error)
             setIsTyping(false)
+            setIsSending(false) // Re-enable sending
+            generatingMessageIdRef.current = null
             // Update message with error
             setMessages((prev) => 
               prev.map(msg => 
@@ -170,6 +191,8 @@ function RAGChatbotContent() {
       setMessages(prev => [...prev, errorMessage])
     } finally {
       setIsTyping(false)
+      setIsSending(false) // Re-enable sending
+      generatingMessageIdRef.current = null
     }
   }
 
@@ -369,8 +392,9 @@ function RAGChatbotContent() {
   }, [])
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim()) return
+    if (!inputValue.trim() || isSending) return
 
+    setIsSending(true) // Prevent double submission
     const userMessage: Message = {
       id: Date.now().toString(),
       type: "user",
@@ -392,8 +416,9 @@ function RAGChatbotContent() {
         selectedModel: selectedModel
       })
       
-      // Create placeholder message for streaming
+      // Create new assistant message for streaming
       const assistantMessageId = (Date.now() + 1).toString()
+      generatingMessageIdRef.current = assistantMessageId
       const assistantMessage: Message = {
         id: assistantMessageId,
         type: "assistant",
@@ -429,6 +454,9 @@ function RAGChatbotContent() {
           onSources: (sources) => {
             // Update sources when received
             console.log('📚 STREAMING: Updating message sources:', sources.length, sources)
+            // Stop spinner when sources received (response complete, before source extraction)
+            setIsTyping(false)
+            generatingMessageIdRef.current = null
             setMessages((prev) => 
               prev.map(msg => 
                 msg.id === assistantMessageId 
@@ -442,7 +470,8 @@ function RAGChatbotContent() {
           },
           onComplete: (response) => {
             console.log('✅ Streaming completed')
-            setIsTyping(false) // Stop typing indicator
+            setIsSending(false) // Re-enable sending
+            generatingMessageIdRef.current = null
             // Update conversation ID if needed
             if (response.conversation_id && response.conversation_id !== conversationId) {
               setConversationId(response.conversation_id)
@@ -454,6 +483,8 @@ function RAGChatbotContent() {
           onError: (error) => {
             console.error('❌ Streaming error:', error)
             setIsTyping(false) // Stop typing indicator
+            setIsSending(false) // Re-enable sending
+            generatingMessageIdRef.current = null
             // Update message with error
             setMessages((prev) => 
               prev.map(msg => 
@@ -481,6 +512,7 @@ function RAGChatbotContent() {
       setMessages((prev) => [...prev, errorMessage])
     } finally {
       setIsTyping(false)
+      setIsSending(false) // Re-enable sending
     }
   }
 
@@ -776,20 +808,25 @@ function RAGChatbotContent() {
                 </div>
               ) : (
                 <>
-                  {messages.map((message) => (
-                    <div key={message.id} style={{ marginBottom: '24px' }}>
-                      <ChatMessage 
-                        message={message} 
-                        onSourcesClick={handleSourcesClick}
-                        onFeedback={handleFeedback}
-                        onRephrasedQueryClick={() => {}}
-                        onRegenerateAnswer={handleRegenerateAnswer}
-                        isDarkMode={isDarkMode}
-                      />
-                    </div>
-                  ))}
+                  {messages.map((message, index) => {
+                    // Show spinner on the message that's currently being generated
+                    const shouldShowSpinner = message.id === generatingMessageIdRef.current
+                    
+                    return (
+                      <div key={message.id} style={{ marginBottom: '24px' }}>
+                        <ChatMessage 
+                          message={message} 
+                          onSourcesClick={handleSourcesClick}
+                          onFeedback={handleFeedback}
+                          onRephrasedQueryClick={() => {}}
+                          onRegenerateAnswer={handleRegenerateAnswer}
+                          isDarkMode={isDarkMode}
+                          isGenerating={shouldShowSpinner}
+                        />
+                      </div>
+                    )
+                  })}
 
-                  {isTyping && <TypingIndicator />}
                   <div ref={messagesEndRef} />
                 </>
               )}

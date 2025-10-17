@@ -10,9 +10,10 @@ interface ChatMessageProps {
   onRephrasedQueryClick?: (query: string) => void
   onRegenerateAnswer?: (messageId: string, method: 'rephrase' | 'multiple_queries') => void
   isDarkMode?: boolean
+  isGenerating?: boolean
 }
 
-export function ChatMessage({ message, onSourcesClick, onFeedback, onRephrasedQueryClick, onRegenerateAnswer, isDarkMode = false }: ChatMessageProps) {
+export function ChatMessage({ message, onSourcesClick, onFeedback, onRephrasedQueryClick, onRegenerateAnswer, isDarkMode = false, isGenerating = false }: ChatMessageProps) {
   const [isCopied, setIsCopied] = useState(false)
   const [showFeedbackDropdown, setShowFeedbackDropdown] = useState(false)
   const feedbackDropdownRef = useRef<HTMLDivElement>(null)
@@ -56,16 +57,29 @@ export function ChatMessage({ message, onSourcesClick, onFeedback, onRephrasedQu
           alignItems: 'center', 
           justifyContent: 'center',
           flexShrink: 0,
-          color: 'white'
+          color: 'white',
+          animation: isGenerating ? 'spin 1s linear infinite' : 'none'
         }}>
-          <i className="fas fa-robot" style={{ fontSize: '16px' }}></i>
+          {isGenerating ? (
+            <i className="fas fa-spinner" style={{ fontSize: '16px' }}></i>
+          ) : (
+            <i className="fas fa-robot" style={{ fontSize: '16px' }}></i>
+          )}
+          <style jsx>{`
+            @keyframes spin {
+              0% { transform: rotate(0deg); }
+              100% { transform: rotate(360deg); }
+            }
+          `}</style>
         </div>
         <div className="max-w-[80%]">
-          <div className="p-4 rounded-lg" style={{ backgroundColor: isDarkMode ? '#1f2937' : '#f3f4f6', color: isDarkMode ? '#f7fafc' : '#111827', border: isDarkMode ? '1px solid #1f2937' : 'none' }}>
-            <div className="text-sm leading-relaxed">
-              <MarkdownRenderer content={message.content} isDarkMode={isDarkMode} />
+          {message.content && message.content.trim() !== '' && (
+            <div className="p-4 rounded-lg" style={{ backgroundColor: isDarkMode ? '#1f2937' : '#f3f4f6', color: isDarkMode ? '#f7fafc' : '#111827', border: isDarkMode ? '1px solid #1f2937' : 'none' }}>
+              <div className="text-sm leading-relaxed">
+                <MarkdownRenderer content={message.content} isDarkMode={isDarkMode} />
+              </div>
             </div>
-          </div>
+          )}
           {message.sources && message.sources.length > 0 && (
             <div style={{ marginTop: '12px' }}>
               <p style={{ fontSize: '12px', color: isDarkMode ? '#9ca3af' : '#6b7280', fontWeight: '500', margin: '0 0 8px 0' }}>Sources:</p>
