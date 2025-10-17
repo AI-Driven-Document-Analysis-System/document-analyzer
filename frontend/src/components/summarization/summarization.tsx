@@ -627,6 +627,7 @@
 
 
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -658,27 +659,9 @@ export default function Summarization() {
   const [previewError, setPreviewError] = useState<string | null>(null);
 
   const summaryOptions = [
-    { 
-      id: "brief", 
-      name: "Brief Summary", 
-      desc: "Quick overview with key points extracted efficiently", 
-      model: "BART",
-      icon: "⚡"
-    },
-    { 
-      id: "detailed", 
-      name: "Detailed Summary", 
-      desc: "Comprehensive analysis with in-depth insights and context", 
-      model: "Pegasus",
-      icon: "📚"
-    },
-    { 
-      id: "domain_specific", 
-      name: "Domain Specific", 
-      desc: "Specialized summary tailored to specific domain requirements", 
-      model: "Domain Specific Model",
-      icon: "🎯"
-    },
+    { id: "brief", name: "Brief Summary", desc: "Quick overview using BART model", model: "BART" },
+    { id: "detailed", name: "Detailed Summary", desc: "Comprehensive analysis using Pegasus model", model: "Pegasus" },
+    { id: "domain_specific", name: "Domain Specific", desc: "Specialized summary using T5 model", model: "Domain Specific Model" },
   ];
 
   useEffect(() => {
@@ -894,7 +877,6 @@ ${generatedSummary.summary_text}`;
   };
 
   const selectedDocumentData = documents.find((d) => d.id === selectedDocument);
-  const selectedModelOption = summaryOptions.find((opt) => opt.id === summaryType);
 
   const getFileType = () => {
     if (!selectedDocumentData) return null;
@@ -918,381 +900,343 @@ ${generatedSummary.summary_text}`;
   const isImage = fileType === "IMAGE";
 
   return (
-  <div className="summarization-container">
-    {/* Header */}
-    <div className="summarization-header">
-      <h1>AI-Powered Document Summarization</h1>
-      <p>Select your document and summary type to generate intelligent summaries</p>
-    </div>
+    <div className="summarization-container">
+      {/* Header */}
+      <div className="summarization-header">
+        <h1>AI-Powered Document Summarization</h1>
+        <p>Select your document and summary type to generate intelligent summaries</p>
+      </div>
 
-    {progress && !isGenerating && <div className="message-success">{progress}</div>}
-    {error && <div className="message-error">{error}</div>}
-    {copySuccess && <div className="message-success">Copied to clipboard!</div>}
+      {progress && !isGenerating && <div className="message-success">{progress}</div>}
+      {error && <div className="message-error">{error}</div>}
+      {copySuccess && <div className="message-success">Copied to clipboard!</div>}
 
-    <div className="layout-grid">
-      <div className="left-panel">
-        {/* Document Selection */}
-        <div className="card">
-          <div className="card-header">
-            <h2>Select Document</h2>
-          </div>
-          <div className="card-body document-select">
-            <select
-              value={selectedDocument}
-              onChange={(e) => setSelectedDocument(e.target.value)}
-            >
-              <option value="">Select a document from the list</option>
-              {documents.map((doc) => (
-                <option key={doc.id} value={doc.id}>
-                  {doc.original_filename || doc.name}
-                  {doc.document_type && ` (${doc.document_type})`}
-                  {doc.page_count && ` • ${doc.page_count} pages`}
-                </option>
-              ))}
-            </select>
+      <div className="layout-grid">
+        <div className="left-panel">
+          {/* Document Selection */}
+          <div className="card">
+            <div className="card-header">
+              <h2>Select Document</h2>
+            </div>
+            <div className="card-body document-select">
+              <select
+                value={selectedDocument}
+                onChange={(e) => setSelectedDocument(e.target.value)}
+                className="form-select"
+              >
+                <option value="">Select a document from the list</option>
+                {documents.map((doc) => (
+                  <option key={doc.id} value={doc.id}>
+                    {doc.original_filename || doc.name}
+                    {doc.document_type && ` (${doc.document_type})`}
+                    {doc.page_count && ` • ${doc.page_count} pages`}
+                  </option>
+                ))}
+              </select>
 
-            {selectedDocumentData && (
-              <div className="document-info">
-                <div>
-                  <span className="label">Document:</span>{" "}
-                  <span className="value">{selectedDocumentData.original_filename}</span>
-                </div>
-                {selectedDocumentData.document_type && (
+              {selectedDocumentData && (
+                <div className="document-info">
                   <div>
-                    <span className="label">Type:</span>{" "}
-                    <span className="value">{selectedDocumentData.document_type}</span>
+                    <span className="label">Document:</span>{" "}
+                    <span className="value">{selectedDocumentData.original_filename}</span>
                   </div>
-                )}
-                {selectedDocumentData.page_count && (
-                  <div>
-                    <span className="label">Pages:</span>{" "}
-                    <span className="value">{selectedDocumentData.page_count}</span>
-                  </div>
-                )}
+                  {selectedDocumentData.document_type && (
+                    <div>
+                      <span className="label">Type:</span>{" "}
+                      <span className="value">{selectedDocumentData.document_type}</span>
+                    </div>
+                  )}
+                  {selectedDocumentData.page_count && (
+                    <div>
+                      <span className="label">Pages:</span>{" "}
+                      <span className="value">{selectedDocumentData.page_count}</span>
+                    </div>
+                  )}
 
-                {/* Open in New Tab Button */}
-                <div style={{ marginTop: "16px" }}>
-                  <button
-                    onClick={openDocumentInNewTab}
-                    className="open-in-tab-btn"
-                    title="Open full document in new tab"
-                  >
-                    <i className="fas fa-external-link-alt"></i>
-                    Open in New Tab
-                  </button>
+                  <div style={{ marginTop: "16px" }}>
+                    <button
+                      onClick={openDocumentInNewTab}
+                      className="open-in-tab-btn"
+                      title="Open full document in new tab"
+                    >
+                      <i className="fas fa-external-link-alt"></i>
+                      Open in New Tab
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Document Preview */}
-            {selectedDocument && (
-              <div className="document-preview-container">
-                <h3 className="preview-title">Document Preview</h3>
-                {previewLoading ? (
-                  <div className="preview-loading">
-                    <div className="spinner small"></div>
-                    <p>Loading preview...</p>
-                  </div>
-                ) : previewError ? (
-                  <div className="preview-error">
-                    <i className="fas fa-exclamation-triangle"></i> {previewError}
-                  </div>
-                ) : previewUrl ? (
-                  <div className="preview-viewer">
-                    {isPdf ? (
-                      <iframe
-                        src={previewUrl}
-                        title="Document Preview"
-                        className="preview-iframe"
-                      ></iframe>
-                    ) : isImage ? (
-                      <img
-                        src={previewUrl}
-                        alt="Document Preview"
-                        className="preview-image"
-                      />
-                    ) : (
-                      <div className="preview-unsupported">
-                        <i className="fas fa-file-alt"></i>
-                        <p>Preview not available for this file type.</p>
-                      </div>
-                    )}
-                  </div>
-                ) : null}
-              </div>
-            )}
+              {/* Document Preview */}
+              {selectedDocument && (
+                <div className="document-preview-container">
+                  <h3 className="preview-title">Document Preview</h3>
+                  {previewLoading ? (
+                    <div className="preview-loading">
+                      <div className="spinner small"></div>
+                      <p>Loading preview...</p>
+                    </div>
+                  ) : previewError ? (
+                    <div className="preview-error">
+                      <i className="fas fa-exclamation-triangle"></i> {previewError}
+                    </div>
+                  ) : previewUrl ? (
+                    <div className="preview-viewer">
+                      {isPdf ? (
+                        <iframe
+                          src={previewUrl}
+                          title="Document Preview"
+                          className="preview-iframe"
+                        ></iframe>
+                      ) : isImage ? (
+                        <img
+                          src={previewUrl}
+                          alt="Document Preview"
+                          className="preview-image"
+                        />
+                      ) : (
+                        <div className="preview-unsupported">
+                          <i className="fas fa-file-alt"></i>
+                          <p>Preview not available for this file type.</p>
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Summary Options - NEW DROPDOWN DESIGN */}
-        <div className="card">
-          <div className="card-header">
-            <h2>Summary Options</h2>
-          </div>
-          <div className="card-body">
-            <div className="summary-options-wrapper">
-              <label className="summary-options-label">
-                Select AI Model for Summary Generation
-              </label>
-              
-              <div className="summary-dropdown-container">
+          {/* Summary Options — NOW A DROPDOWN */}
+          <div className="card">
+            <div className="card-header">
+              <h2>Summary Options</h2>
+            </div>
+            <div className="card-body">
+              <div className="model-select">
                 <select
-                  className="summary-dropdown"
                   value={summaryType}
                   onChange={(e) => setSummaryType(e.target.value)}
+                  className="form-select"
                 >
+                
                   {summaryOptions.map((option) => (
                     <option key={option.id} value={option.id}>
-                      {option.icon} {option.name} - {option.model}
+                      {option.name} – {option.model}
                     </option>
                   ))}
                 </select>
               </div>
 
-              {/* Selected Model Details Box */}
-              {selectedModelOption && (
-                <div className="selected-model-details">
-                  <div className="model-detail-header">
-                    <div className="model-detail-icon">
-                      {selectedModelOption.icon}
-                    </div>
-                    <div className="model-detail-title">
-                      {selectedModelOption.name}
-                    </div>
-                  </div>
-                  
-                  <div className="model-detail-description">
-                    {selectedModelOption.desc}
-                  </div>
-                  
-                  <div className="model-detail-meta">
-                    <div className="model-detail-badge">
-                      <i className="fas fa-microchip"></i>
-                      Model: {selectedModelOption.model}
-                    </div>
-                    <div className="model-detail-badge">
-                      <i className="fas fa-bolt"></i>
-                      AI-Powered
-                    </div>
-                  </div>
-                </div>
-              )}
+              <button
+                onClick={handleGenerateSummary}
+                disabled={!selectedDocument || isGenerating}
+                className="generate-button"
+              >
+                {isGenerating ? (
+                  <>
+                    <span className="spinner"></span>
+                    AI Processing...
+                  </>
+                ) : (
+                  "Generate Summary"
+                )}
+              </button>
             </div>
-
-            <button
-              onClick={handleGenerateSummary}
-              disabled={!selectedDocument || isGenerating}
-              className="generate-button"
-            >
-              {isGenerating ? (
-                <>
-                  <span className="spinner"></span>
-                  AI Processing...
-                </>
-              ) : (
-                "Generate Summary"
-              )}
-            </button>
           </div>
         </div>
-      </div>
 
-      {/* Right Panel */}
-      <div className="right-panel">
-        <div className="results-card">
-          <div className="results-header">
-            <div>
-              <h2>AI Generated Summary</h2>
-              {generatedSummary && (
-                <p>
-                  Generated using {generatedSummary.model_used} • {generatedSummary.summary_type}
-                </p>
-              )}
-            </div>
-          </div>
-          <div className="results-content" style={{ position: "relative", minHeight: "500px" }}>
-            {isGenerating ? (
-              <div className="loading-state">
-                <div className="ripple-spinner"></div>
-                <h3 className="processing-text">AI is Processing Your Document</h3>
-                <p>
-                  This may take a few minutes. Please wait while our AI analyzes your document and
-                  generates a comprehensive summary.
-                </p>
-                <div className="dots">
-                  <div className="dot"></div>
-                  <div className="dot"></div>
-                  <div className="dot"></div>
-                </div>
-              </div>
-            ) : generatedSummary ? (
+        {/* Right Panel */}
+        <div className="right-panel">
+          <div className="results-card">
+            <div className="results-header">
               <div>
-                <div className="summary-box">
-                  {generatedSummary.summary_text.split("\n").map((paragraph, index) => (
-                    <p key={index}>{paragraph}</p>
-                  ))}
-                </div>
-                <div className="summary-meta">
-                  <div>
-                    <span>Word count: {generatedSummary.word_count || "N/A"}</span>
-                  </div>
-                  <div>
-                    <span>Model: {generatedSummary.model_used}</span>
-                  </div>
-                  <div>
-                    <span>Type: {generatedSummary.summary_type}</span>
-                  </div>
-                  <div>
-                    <span>
-                      Generated: {new Date(generatedSummary.created_at ?? "").toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-
-                {/* ACTION BUTTONS */}
-                <div style={{ marginTop: "24px", display: "flex", gap: "12px", flexWrap: "wrap" }}>
-                  {/* Copy Button */}
-                  <button
-                    onClick={handleCopy}
-                    style={{
-                      padding: "12px 24px",
-                      backgroundColor: "#3b82f6",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "8px",
-                      fontSize: "1rem",
-                      fontWeight: "600",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      boxShadow: "0 2px 6px rgba(59, 130, 246, 0.3)",
-                      transition: "background-color 0.2s",
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#2563eb")}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#3b82f6")}
-                  >
-                    <i className="fas fa-copy"></i>
-                    Copy Summary
-                  </button>
-
-                  {/* Export Button */}
-                  <button
-                    onClick={handleExport}
-                    style={{
-                      padding: "12px 24px",
-                      backgroundColor: "#10b981",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "8px",
-                      fontSize: "1rem",
-                      fontWeight: "600",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      boxShadow: "0 2px 6px rgba(16, 185, 129, 0.3)",
-                      transition: "background-color 0.2s",
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#0da271")}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#10b981")}
-                  >
-                    <i className="fas fa-download"></i>
-                    Export as TXT
-                  </button>
-
-                  {/* Email Button */}
-                  <button
-                    onClick={async () => {
-                      try {
-                        const token = localStorage.getItem("token");
-                        if (!token) {
-                          setError("Please log in to email your summary.");
-                          return;
-                        }
-                        const res = await fetch("http://localhost:8000/api/profile/me", {
-                          headers: { Authorization: `Bearer ${token}` },
-                        });
-                        if (res.ok) {
-                          const profile = await res.json();
-                          const emailRes = await fetch("http://localhost:8000/api/summarize/email", {
-                            method: "POST",
-                            headers: {
-                              "Content-Type": "application/json",
-                              Authorization: `Bearer ${token}`,
-                            },
-                            body: JSON.stringify({
-                              document_id: selectedDocument,
-                              summary_type: summaryType,
-                              email: profile.email,
-                            }),
-                          });
-                          if (emailRes.ok) {
-                            setCopySuccess(true);
-                            setTimeout(() => setCopySuccess(false), 2000);
-                          } else {
-                            setError("Failed to email summary.");
-                          }
-                        }
-                      } catch (err) {
-                        setError("Error sending email.");
-                      }
-                    }}
-                    style={{
-                      padding: "12px 24px",
-                      backgroundColor: "#8b5cf6",
-                      color: "white",
-                      border: "none",
-                      borderRadius: "8px",
-                      fontSize: "1rem",
-                      fontWeight: "600",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
-                      boxShadow: "0 2px 6px rgba(139, 92, 246, 0.3)",
-                      transition: "background-color 0.2s",
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#7c3aed")}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#8b5cf6")}
-                  >
-                    <i className="fas fa-envelope"></i>
-                    Email Summary
-                  </button>
-                </div>
-
-                {copySuccess && (
-                  <div
-                    style={{
-                      marginTop: "16px",
-                      padding: "12px",
-                      backgroundColor: "#dcfce7",
-                      color: "#166534",
-                      border: "1px solid #bbf7d0",
-                      borderRadius: "8px",
-                      fontWeight: "500",
-                      textAlign: "center",
-                    }}
-                  >
-                    ✅ Summary copied or emailed successfully!
-                  </div>
+                <h2>AI Generated Summary</h2>
+                {generatedSummary && (
+                  <p>
+                    Generated using {generatedSummary.model_used} • {generatedSummary.summary_type}
+                  </p>
                 )}
               </div>
-            ) : (
-              <div className="empty-state">
-                <div style={{ fontSize: "3rem" }}>📝</div>
-                <h3>Ready to Generate</h3>
-                <p>
-                  Select a document from the dropdown menu on the left and choose a summary type.
-                  Click the "Generate Summary" button to create an AI-powered summary of your
-                  document.
-                </p>
-              </div>
-            )}
+            </div>
+            <div className="results-content">
+              {isGenerating ? (
+                <div className="loading-state">
+                  <div className="ripple-spinner"></div>
+                  <h3 className="processing-text">AI is Processing Your Document</h3>
+                  <p>
+                    This may take a few minutes. Please wait while our AI analyzes your document and
+                    generates a comprehensive summary.
+                  </p>
+                  <div className="dots">
+                    <div className="dot"></div>
+                    <div className="dot"></div>
+                    <div className="dot"></div>
+                  </div>
+                </div>
+              ) : generatedSummary ? (
+                <div>
+                  <div className="summary-box">
+                    {generatedSummary.summary_text.split("\n").map((paragraph, index) => (
+                      <p key={index}>{paragraph}</p>
+                    ))}
+                  </div>
+                  <div className="summary-meta">
+                    <div>
+                      <span>Word count: {generatedSummary.word_count || "N/A"}</span>
+                    </div>
+                    <div>
+                      <span>Model: {generatedSummary.model_used}</span>
+                    </div>
+                    <div>
+                      <span>Type: {generatedSummary.summary_type}</span>
+                    </div>
+                    <div>
+                      <span>
+                        Generated: {new Date(generatedSummary.created_at ?? "").toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: "24px", display: "flex", gap: "12px", flexWrap: "wrap" }}>
+                    <button
+                      onClick={handleCopy}
+                      style={{
+                        padding: "12px 24px",
+                        backgroundColor: "#3b82f6",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "8px",
+                        fontSize: "1rem",
+                        fontWeight: "600",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        boxShadow: "0 2px 6px rgba(59, 130, 246, 0.3)",
+                        transition: "background-color 0.2s",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#2563eb")}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#3b82f6")}
+                    >
+                      <i className="fas fa-copy"></i>
+                      Copy Summary
+                    </button>
+
+                    <button
+                      onClick={handleExport}
+                      style={{
+                        padding: "12px 24px",
+                        backgroundColor: "#10b981",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "8px",
+                        fontSize: "1rem",
+                        fontWeight: "600",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        boxShadow: "0 2px 6px rgba(16, 185, 129, 0.3)",
+                        transition: "background-color 0.2s",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#0da271")}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#10b981")}
+                    >
+                      <i className="fas fa-download"></i>
+                      Export as TXT
+                    </button>
+
+                    {/* <button
+                      onClick={async () => {
+                        try {
+                          const token = localStorage.getItem("token");
+                          if (!token) {
+                            setError("Please log in to email your summary.");
+                            return;
+                          }
+                          const res = await fetch("http://localhost:8000/api/profile/me", {
+                            headers: { Authorization: `Bearer ${token}` },
+                          });
+                          if (res.ok) {
+                            const profile = await res.json();
+                            const emailRes = await fetch("http://localhost:8000/api/summarize/email", {
+                              method: "POST",
+                              headers: {
+                                "Content-Type": "application/json",
+                                Authorization: `Bearer ${token}`,
+                              },
+                              body: JSON.stringify({
+                                document_id: selectedDocument,
+                                summary_type: summaryType,
+                                email: profile.email,
+                              }),
+                            });
+                            if (emailRes.ok) {
+                              setCopySuccess(true);
+                              setTimeout(() => setCopySuccess(false), 2000);
+                            } else {
+                              setError("Failed to email summary.");
+                            }
+                          }
+                        } catch (err) {
+                          setError("Error sending email.");
+                        }
+                      }}
+                      style={{
+                        padding: "12px 24px",
+                        backgroundColor: "#8b5cf6",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "8px",
+                        fontSize: "1rem",
+                        fontWeight: "600",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        boxShadow: "0 2px 6px rgba(139, 92, 246, 0.3)",
+                        transition: "background-color 0.2s",
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#7c3aed")}
+                      onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#8b5cf6")}
+                    >
+                      <i className="fas fa-envelope"></i>
+                      Email Summary
+                    </button> */}
+                  </div>
+
+                  {copySuccess && (
+                    <div
+                      style={{
+                        marginTop: "16px",
+                        padding: "12px",
+                        backgroundColor: "#dcfce7",
+                        color: "#166534",
+                        border: "1px solid #bbf7d0",
+                        borderRadius: "8px",
+                        fontWeight: "500",
+                        textAlign: "center",
+                      }}
+                    >
+                      ✅ Summary copied or emailed successfully!
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="empty-state">
+                  <div style={{ fontSize: "3rem" }}>📝</div>
+                  <h3>Ready to Generate</h3>
+                  <p>
+                    Select a document from the dropdown menu on the left and choose a summary type.
+                    Click the "Generate Summary" button to create an AI-powered summary of your
+                    document.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
 }
