@@ -95,13 +95,15 @@ async def get_documents(
                     SELECT 
                         d.id, d.original_filename, d.file_size, d.upload_timestamp, 
                         d.mime_type, d.user_id, d.file_path_minio, d.thumbnail_url,
-                        dp.processing_status, dp.processing_errors
+                        dp.processing_status, dp.processing_errors,
+                        dc.document_type
                     FROM documents d
                     LEFT JOIN document_processing dp ON d.id = dp.document_id
+                    LEFT JOIN document_classifications dc ON d.id = dc.document_id
                     WHERE d.user_id = %s
                     ORDER BY d.upload_timestamp DESC
                     LIMIT %s OFFSET %s
-                """
+                """        
                 cursor.execute(query, (user_id, limit, offset))
                 documents = cursor.fetchall()
                 
@@ -124,7 +126,8 @@ async def get_documents(
                         "file_path": doc[6],
                         "thumbnail_url": document_service.get_document_download_url(doc[7]) if doc[7] else None,
                         "processing_status": doc[8] or "unknown",
-                        "processing_errors": doc[9] or "unknown"
+                        "processing_errors": doc[9] or "unknown",
+                        "document_type": doc[10] or "Other"
                     }
                     result.append(doc_dict)
                 

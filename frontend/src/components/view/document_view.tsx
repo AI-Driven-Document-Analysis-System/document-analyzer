@@ -1,6 +1,57 @@
 import React, { useState, useEffect } from "react"
 import { authService } from "../../services/authService"
+import { useTheme } from "../../contexts/ThemeContext"
 import "./document_view.css"
+
+// Fixed document types based on the classification system
+const DOCUMENT_TYPES = [
+  { value: 'all', label: 'All Types' },
+  { value: 'financial report', label: 'Financial Report' },
+  { value: 'invoice or receipt', label: 'Invoice or Receipt' },
+  { value: 'legal document', label: 'Legal Document' },
+  { value: 'medical record', label: 'Medical Record' },
+  { value: 'research paper', label: 'Research Paper' },
+  { value: 'other', label: 'Other' },
+] as const;
+
+// Theme-aware color system
+const getThemeColors = (isDark: boolean) => ({
+  // Background colors
+  pageBackground: isDark 
+    ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)'
+    : 'linear-gradient(135deg, #f8fafc 0%, #e0f2fe 50%, #e8eaf6 100%)',
+  cardBackground: isDark
+    ? 'rgba(30, 41, 59, 0.8)'
+    : 'rgba(255, 255, 255, 0.8)',
+  headerBackground: isDark
+    ? 'rgba(30, 41, 59, 0.85)'
+    : 'rgba(255, 255, 255, 0.85)',
+  inputBackground: isDark
+    ? 'rgba(30, 41, 59, 0.7)'
+    : 'rgba(255, 255, 255, 0.7)',
+  
+  // Text colors
+  primaryText: isDark ? '#f1f5f9' : '#111827',
+  secondaryText: isDark ? '#555e6aff' : '#6b7280',
+  mutedText: isDark ? '#64748b' : '#9ca3af',
+  
+  // Border colors
+  border: isDark ? 'rgba(71, 85, 105, 0.6)' : 'rgba(229, 231, 235, 0.6)',
+  borderLight: isDark ? 'rgba(71, 85, 105, 0.3)' : 'rgba(255, 255, 255, 0.2)',
+  
+  // Interactive colors
+  accent: '#3b82f6',
+  accentHover: '#2563eb',
+  
+  // Status colors
+  success: isDark ? '#10b981' : '#059669',
+  warning: isDark ? '#f59e0b' : '#d97706',
+  error: isDark ? '#ef4444' : '#dc2626',
+  
+  // Shadow colors
+  shadow: isDark ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.1)',
+  shadowHover: isDark ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0.15)',
+})
 
 // Keep interfaces unchanged
 interface Document {
@@ -31,7 +82,7 @@ const getFileIcon = (contentType: string) => {
   }
   if (contentType.includes("image")) return { 
     icon: <img src="/icons/image-icon.png" alt="Image" style={{ width: '2rem', height: '2rem' }} />,
-    colorClass: "text-blue-600", bgClass: "bg-blue-50", accentClass: "bg--500" 
+    colorClass: "text-blue-600", bgClass: "bg-blue-50", accentClass: "bg-blue-500" 
   }
   if (contentType.includes("spreadsheet") || contentType.includes("excel")) return { 
     icon: <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H9v-2h5v2zm0-4H9v-2h5v2zm0-4H9V7h5v2zm5 8h-3V7h3v10z"/></svg>,
@@ -75,10 +126,11 @@ const getDocumentTypeBadgeStyle = (docType: string | undefined): React.CSSProper
   const normalized = docType.toLowerCase().trim()
   const typeColors: Record<string, { bg: string; text: string; border: string }> = {
     'medical record': { bg: '#f0fdf4', text: '#166534', border: '#bbf7d0' },
-    'invoice and receipt': { bg: '#fffbeb', text: '#78350f', border: '#fcd34d' },
+    'invoice or receipt': { bg: '#fffbeb', text: '#78350f', border: '#fcd34d' },
     'legal document': { bg: '#ede9fe', text: '#5b21b6', border: '#c4b5fd' },
-    'research paper': { bg: '#dbeafe', text: '#1e40af', border: '#93c5fd' },
+    'research paper': { bg: '#dbeafe', text: '#0e0c7fff', border: '#799aecff' },
     'financial report': { bg: '#f0f9ff', text: '#0891b2', border: '#a5f3fc' },
+    'other': { bg: '#f1f5f9', text: '#475569', border: '#cbd5e1' },
   }
 
   const colors = typeColors[normalized] || {
@@ -140,6 +192,10 @@ const getStatusBadgeStyle = (status: string) => {
   }
 }
 
+const capitalizeFirstLetter = (str: string): string => {
+  return str.charAt(0).toUpperCase() + str.slice(1)
+}
+
 const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 Bytes'
   const k = 1024
@@ -166,15 +222,19 @@ const formatFileName = (filename: string): string => {
 }
 
 export function DocumentView({ authToken: propAuthToken, onAuthError }: DocumentViewProps) {
+  const { isDarkMode } = useTheme()
   const [documents, setDocuments] = useState<Document[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
+  const [filterDocumentType, setFilterDocumentType] = useState<string>("all")
   const [sortBy, setSortBy] = useState<string>("newest")
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
   const [authToken, setAuthToken] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState<number>(1)
+  const [documentsPerPage] = useState<number>(20)
 
   // Get auth token
   React.useEffect(() => {
@@ -240,7 +300,10 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
     .filter(doc => {
       const matchesSearch = doc.original_filename.toLowerCase().includes(searchQuery.toLowerCase())
       const matchesStatus = filterStatus === "all" || doc.processing_status === filterStatus
-      return matchesSearch && matchesStatus
+      const matchesDocumentType = filterDocumentType === "all" || 
+        (doc.document_type && doc.document_type.toLowerCase() === filterDocumentType.toLowerCase()) ||
+        (!doc.document_type && filterDocumentType === "unclassified")
+      return matchesSearch && matchesStatus && matchesDocumentType
     })
     .sort((a, b) => {
       switch (sortBy) {
@@ -256,6 +319,17 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
           return 0
       }
     })
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredDocuments.length / documentsPerPage)
+  const startIndex = (currentPage - 1) * documentsPerPage
+  const endIndex = startIndex + documentsPerPage
+  const paginatedDocuments = filteredDocuments.slice(startIndex, endIndex)
+
+  // Reset to first page when filters change
+  React.useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, filterStatus, filterDocumentType, sortBy])
 
   // Get recent files (last 3 uploaded)
   const recentFiles = (Array.isArray(documents) ? documents : [])
@@ -375,11 +449,25 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
     )
   }
 
+  const themeColors = getThemeColors(isDarkMode)
+
   return (
     <>
-      <div className="docview-page-background">
+      <div style={{
+        minHeight: '100vh',
+        background: themeColors.pageBackground,
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+      }}>
         {/* Modern Header with Glass Effect */}
-        <div className="docview-glass-header">
+        <div style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 40,
+          background: themeColors.headerBackground,
+          backdropFilter: 'blur(20px)',
+          borderBottom: `1px solid ${themeColors.borderLight}`,
+          boxShadow: `0 1px 3px ${themeColors.shadow}`
+        }}>
           <div style={{
             maxWidth: '80rem',
             margin: '0 auto',
@@ -407,7 +495,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                     <svg style={{
                       width: '1.25rem',
                       height: '1.25rem',
-                      color: '#9ca3af'
+                      color: themeColors.mutedText
                     }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
@@ -423,23 +511,23 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                       paddingRight: '3rem',
                       paddingTop: '0.875rem',
                       paddingBottom: '0.875rem',
-                      background: 'rgba(255, 255, 255, 0.7)',
+                      background: themeColors.inputBackground,
                       backdropFilter: 'blur(10px)',
-                      border: '1px solid rgba(229, 231, 235, 0.6)',
+                      border: `1px solid ${themeColors.border}`,
                       borderRadius: '1rem',
-                      color: '#111827',
+                      color: themeColors.primaryText,
                       fontSize: '0.875rem',
                       transition: 'all 0.3s ease',
-                      boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
+                      boxShadow: `0 1px 2px ${themeColors.shadow}`
                     }}
                     onFocus={(e) => {
                       e.target.style.outline = 'none'
-                      e.target.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.1)'
-                      e.target.style.borderColor = '#3b82f6'
+                      e.target.style.boxShadow = `0 0 0 4px ${themeColors.accent}20`
+                      e.target.style.borderColor = themeColors.accent
                     }}
                     onBlur={(e) => {
-                      e.target.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)'
-                      e.target.style.borderColor = 'rgba(229, 231, 235, 0.6)'
+                      e.target.style.boxShadow = `0 1px 2px ${themeColors.shadow}`
+                      e.target.style.borderColor = themeColors.border
                     }}
                   />
                   {searchQuery && (
@@ -478,12 +566,12 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
-                  background: 'rgba(255, 255, 255, 0.7)',
+                  background: themeColors.cardBackground,
                   backdropFilter: 'blur(10px)',
                   borderRadius: '0.75rem',
                   padding: '0.25rem',
-                  border: '1px solid rgba(229, 231, 235, 0.6)',
-                  boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
+                  border: `1px solid ${themeColors.border}`,
+                  boxShadow: `0 1px 2px ${themeColors.shadow}`
                 }}>
                   <button
                     onClick={() => setViewMode('grid')}
@@ -585,6 +673,46 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                     <option value="failed">Failed</option>
                   </select>
                   
+                  {/* Document Type Filter */}
+                  <select
+                    value={filterDocumentType}
+                    onChange={(e) => setFilterDocumentType(e.target.value)}
+                    style={{
+                      padding: '0.625rem 1rem',
+                      background: 'rgba(255, 255, 255, 0.7)',
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(229, 231, 235, 0.6)',
+                      borderRadius: '0.75rem',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#374151',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+                      appearance: 'none',
+                      backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3e%3cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3e%3c/svg%3e")',
+                      backgroundRepeat: 'no-repeat',
+                      backgroundPosition: 'right 0.75rem center',
+                      backgroundSize: '1em 1em',
+                      paddingRight: '2.5rem'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.outline = 'none'
+                      e.target.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.1)'
+                      e.target.style.borderColor = '#3b82f6'
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)'
+                      e.target.style.borderColor = 'rgba(229, 231, 235, 0.6)'
+                    }}
+                  >
+                    {DOCUMENT_TYPES.map(type => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </select>
+                  
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
@@ -647,15 +775,15 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                   <h2 style={{
                     fontSize: '1.875rem',
                     fontWeight: '700',
-                    color: '#111827',
+                    color: themeColors.primaryText,
                     marginBottom: '0.5rem'
                   }}>Recent Files</h2>
                   <p style={{
-                    color: '#6b7280',
+                    color: themeColors.secondaryText,
                     fontSize: '1rem'
                   }}>Your most recently uploaded documents</p>
                 </div>
-                <button style={{
+                {/* <button style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.5rem',
@@ -686,7 +814,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                   }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
-                </button>
+                </button> */}
               </div>
               <div style={{
                 display: 'flex',
@@ -707,22 +835,22 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                         overflow: 'hidden',
                         flexShrink: 0,
                         width: '20rem',
-                        background: 'rgba(255, 255, 255, 0.8)',
+                        background: themeColors.cardBackground,
                         backdropFilter: 'blur(20px)',
-                        borderRadius: '1rem',
+                        borderRadius: '0.5rem',
                         padding: '1.5rem',
-                        border: '1px solid rgba(255, 255, 255, 0.5)',
-                        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+                        border: `1px solid ${themeColors.borderLight}`,
+                        boxShadow: `0 10px 25px ${themeColors.shadow}`,
                         transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
                       }}
                       onClick={() => handleDocumentClick(document)}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.transform = 'translateY(-8px) scale(1.02)'
-                        e.currentTarget.style.boxShadow = '0 25px 50px rgba(0, 0, 0, 0.15)'
+                        e.currentTarget.style.boxShadow = `0 25px 50px ${themeColors.shadowHover}`
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.transform = 'translateY(0) scale(1)'
-                        e.currentTarget.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.1)'
+                        e.currentTarget.style.boxShadow = `0 10px 25px ${themeColors.shadow}`
                       }}
                     >
                       {/* Decorative accent bar */}
@@ -777,7 +905,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                             <p style={{
                               fontSize: '1.125rem',
                               fontWeight: '600',
-                              color: '#111827',
+                              color: themeColors.primaryText,
                               lineHeight: '1.4',
                               marginBottom: '0.25rem',
                               overflow: 'hidden',
@@ -822,7 +950,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                               color: document.processing_status === 'completed' ? '#1e40af' :
                                      document.processing_status === 'processing' ? '#0369a1' : '#1e40af'
                             }}>
-                              {document.processing_status}
+                              {capitalizeFirstLetter(document.processing_status)}
                             </span>
                             {document.document_type && (
                               <span style={getDocumentTypeBadgeStyle(document.document_type)}>
@@ -851,14 +979,19 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                 <h2 style={{
                   fontSize: '1.875rem',
                   fontWeight: '700',
-                  color: '#111827',
+                  color: themeColors.primaryText,
                   marginBottom: '0.5rem'
                 }}>All Files</h2>
                 <p style={{
-                  color: '#6b7280',
+                  color: themeColors.secondaryText,
                   fontSize: '1rem'
                 }}>
                   {filteredDocuments.length} {filteredDocuments.length === 1 ? 'document' : 'documents'} found
+                  {filteredDocuments.length > documentsPerPage && (
+                    <span>
+                      {' • '}Showing {startIndex + 1}-{Math.min(endIndex, filteredDocuments.length)} of {filteredDocuments.length}
+                    </span>
+                  )}
                 </p>
               </div>
             </div>
@@ -868,11 +1001,11 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
               <div style={{
                 textAlign: 'center',
                 padding: '5rem 2rem',
-                background: 'rgba(255, 255, 255, 0.7)',
+                background: themeColors.cardBackground,
                 backdropFilter: 'blur(20px)',
-                borderRadius: '1.5rem',
-                border: '1px solid rgba(255, 255, 255, 0.5)',
-                boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)'
+                borderRadius: '0.5rem',
+                border: `1px solid ${themeColors.borderLight}`,
+                boxShadow: `0 10px 25px ${themeColors.shadow}`
               }}>
                 <div style={{
                   width: '6rem',
@@ -887,7 +1020,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                   <svg style={{
                     width: '3rem',
                     height: '3rem',
-                    color: '#9ca3af'
+                    color: themeColors.mutedText
                   }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 5a2 2 0 012-2h4a2 2 0 012 2v2H8V5z" />
@@ -896,11 +1029,11 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                 <h3 style={{
                   fontSize: '1.5rem',
                   fontWeight: '700',
-                  color: '#111827',
+                  color: themeColors.primaryText,
                   marginBottom: '0.75rem'
                 }}>No documents found</h3>
                 <p style={{
-                  color: '#6b7280',
+                  color: themeColors.secondaryText,
                   fontSize: '1.125rem',
                   maxWidth: '28rem',
                   margin: '0 auto 2rem',
@@ -950,7 +1083,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                 gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
                 gap: '1.5rem'
               }}>
-                {filteredDocuments.map((document, index) => {
+                {paginatedDocuments.map((document, index) => {
                   const fileIcon = getFileIcon(document.content_type)
                   return (
                     <div
@@ -959,11 +1092,11 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                         cursor: 'pointer',
                         position: 'relative',
                         overflow: 'hidden',
-                        background: 'rgba(255, 255, 255, 0.8)',
+                        background: themeColors.cardBackground,
                         backdropFilter: 'blur(20px)',
-                        borderRadius: '1rem',
-                        border: '1px solid rgba(255, 255, 255, 0.5)',
-                        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+                        borderRadius: '0.5rem',
+                        border: `1px solid ${themeColors.borderLight}`,
+                        boxShadow: `0 10px 25px ${themeColors.shadow}`,
                         transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
                         display: 'flex',
                         flexDirection: 'column'
@@ -971,11 +1104,11 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                       onClick={() => handleDocumentClick(document)}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)'
-                        e.currentTarget.style.boxShadow = '0 25px 50px rgba(0, 0, 0, 0.15)'
+                        e.currentTarget.style.boxShadow = `0 25px 50px ${themeColors.shadowHover}`
                       }}
                       onMouseLeave={(e) => {
                         e.currentTarget.style.transform = 'translateY(0) scale(1)'
-                        e.currentTarget.style.boxShadow = '0 10px 25px rgba(0, 0, 0, 0.1)'
+                        e.currentTarget.style.boxShadow = `0 10px 25px ${themeColors.shadow}`
                       }}
                     >
                       {/* Decorative accent bar */}
@@ -999,7 +1132,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                                    fileIcon.bgClass === 'bg-blue-50' ? '#eff6ff' :
                                    fileIcon.bgClass === 'bg-green-50' ? '#ecfdf5' :
                                    fileIcon.bgClass === 'bg-indigo-50' ? '#eef2ff' : '#f9fafb',
-                        borderRadius: '1rem 1rem 0 0',
+                        borderRadius: '1rem rem 0 0',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
@@ -1166,7 +1299,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                             <p style={{
                               fontSize: '1.125rem',
                               fontWeight: '600',
-                              color: '#111827',
+                              color: themeColors.primaryText,
                               lineHeight: '1.4',
                               marginBottom: '0.25rem',
                               overflow: 'hidden',
@@ -1206,7 +1339,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                             color: document.processing_status === 'completed' ? '#1e40af' :
                                    document.processing_status === 'processing' ? '#0369a1' : '#1e40af'
                           }}>
-                            {document.processing_status}
+                            {capitalizeFirstLetter(document.processing_status)}
                           </span>
                           {document.document_type && (
                               <span style={getDocumentTypeBadgeStyle(document.document_type)}>
@@ -1229,7 +1362,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
               /* Enhanced List View */
               <div className="bg-white/70 backdrop-blur-sm rounded-2xl border border-white/40 overflow-hidden shadow-lg">
                 <div className="divide-y divide-gray-100/60">
-                  {filteredDocuments.map((document, index) => {
+                  {paginatedDocuments.map((document, index) => {
                     const fileIcon = getFileIcon(document.content_type)
                     return (
                       <div
@@ -1243,7 +1376,19 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                         
                         <div className="docview-flex-1 docview-min-w-0">
                           <div className="docview-flex docview-items-center docview-gap-3 docview-mb-1">
-                            <h3 className="docview-text-base docview-font-semibold docview-text-gray-900 docview-truncate group-hover:docview-text-blue-600 docview-transition-colors docview-duration-300">
+                            <h3 style={{
+                              fontSize: '1.125rem',
+                              fontWeight: '600',
+                              color: themeColors.primaryText,
+                              lineHeight: '1.4',
+                              marginBottom: '0.25rem',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              transition: 'color 0.3s ease'
+                            }}>
                               {formatFileName(document.original_filename)}
                             </h3>
                             <span style={{
@@ -1252,7 +1397,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                               color: document.processing_status === 'failed' ? '#1e40af' : getStatusBadgeStyle(document.processing_status).color,
                               borderColor: document.processing_status === 'failed' ? '#93c5fd' : getStatusBadgeStyle(document.processing_status).borderColor
                             }}>
-                              {document.processing_status}
+                              {capitalizeFirstLetter(document.processing_status)}
                             </span>
                             {document.document_type && (
                               <span style={getDocumentTypeBadgeStyle(document.document_type)}>
@@ -1264,12 +1409,12 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                             <span>{formatFileSize(document.file_size)}</span>
                             <span>•</span>
                             <span>{formatDate(document.upload_date)}</span>
-                            {document.document_type && (
+                            {/* {document.document_type && (
                               <>
                                 <span>•</span>
                                 <span className="docview-capitalize">{document.document_type}</span>
                               </>
-                            )}
+                            )} */}
                           </div>
                         </div>
 
@@ -1301,6 +1446,159 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                 </div>
               </div>
             )}
+
+            {/* Pagination Controls */}
+            {filteredDocuments.length > documentsPerPage && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginTop: '3rem',
+                gap: '1rem'
+              }}>
+                {/* Previous Button */}
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.75rem 1.25rem',
+                    background: currentPage === 1 ? themeColors.mutedText : themeColors.cardBackground,
+                    backdropFilter: 'blur(10px)',
+                    border: `1px solid ${themeColors.border}`,
+                    borderRadius: '0.75rem',
+                    fontSize: '0.875rem',
+                    fontWeight: '500',
+                    color: currentPage === 1 ? themeColors.mutedText : themeColors.secondaryText,
+                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.3s ease',
+                    boxShadow: `0 1px 2px ${themeColors.shadow}`
+                  }}
+                  onMouseEnter={(e) => {
+                    if (currentPage !== 1) {
+                      const target = e.target as HTMLButtonElement
+                      target.style.background = themeColors.cardBackground
+                      target.style.boxShadow = `0 4px 12px ${themeColors.shadowHover}`
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (currentPage !== 1) {
+                      const target = e.target as HTMLButtonElement
+                      target.style.background = themeColors.cardBackground
+                      target.style.boxShadow = `0 1px 2px ${themeColors.shadow}`
+                    }
+                  }}
+                >
+                  <svg style={{ width: '1rem', height: '1rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Previous
+                </button>
+
+                {/* Page Numbers */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}>
+                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage > totalPages - 3) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        style={{
+                          width: '2.5rem',
+                          height: '2.5rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: currentPage === pageNum ? '#3b82f6' : themeColors.cardBackground,
+                          backdropFilter: 'blur(10px)',
+                          border: `1px solid ${themeColors.border}`,
+                          borderRadius: '0.5rem',
+                          fontSize: '0.875rem',
+                          fontWeight: '500',
+                          color: currentPage === pageNum ? 'white' : themeColors.secondaryText,
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          boxShadow: currentPage === pageNum ? '0 4px 14px rgba(59, 130, 246, 0.25)' : `0 1px 2px ${themeColors.shadow}`
+                        }}
+                        onMouseEnter={(e) => {
+                          if (currentPage !== pageNum) {
+                            const target = e.target as HTMLButtonElement
+                            target.style.background = 'rgba(59, 130, 246, 0.1)'
+                            target.style.color = '#3b82f6'
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (currentPage !== pageNum) {
+                            const target = e.target as HTMLButtonElement
+                            target.style.background = themeColors.cardBackground
+                            target.style.color = themeColors.secondaryText
+                          }
+                        }}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Next Button */}
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.75rem 1.25rem',
+                    background: currentPage === totalPages ? themeColors.mutedText : themeColors.cardBackground,
+                    backdropFilter: 'blur(10px)',
+                    border: `1px solid ${themeColors.border}`,
+                    borderRadius: '0.75rem',
+                    fontSize: '0.875rem',
+                    fontWeight: '500',
+                    color: currentPage === totalPages ? themeColors.mutedText : themeColors.secondaryText,
+                    cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.3s ease',
+                    boxShadow: `0 1px 2px ${themeColors.shadow}`
+                  }}
+                  onMouseEnter={(e) => {
+                    if (currentPage !== totalPages) {
+                      const target = e.target as HTMLButtonElement
+                      target.style.background = themeColors.cardBackground
+                      target.style.boxShadow = `0 4px 12px ${themeColors.shadowHover}`
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (currentPage !== totalPages) {
+                      const target = e.target as HTMLButtonElement
+                      target.style.background = themeColors.cardBackground
+                      target.style.boxShadow = `0 1px 2px ${themeColors.shadow}`
+                    }
+                  }}
+                >
+                  Next
+                  <svg style={{ width: '1rem', height: '1rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -1316,7 +1614,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
               style={{ maxWidth: 900, width: '95vw', minHeight: 500, display: 'flex', flexDirection: 'column' }}
             >
               <div className="docview-modal-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.5rem 2rem 0rem 2rem' }}>
-              <h2 className="docview-text-2xl docview-font-bold docview-text-gray-900">Document Details</h2>
+              <h2 className="docview-text-2xl docview-font-bold" style={{ color: themeColors.primaryText }}>Document Details</h2>
               <button
                 onClick={() => setSelectedDocument(null)}
                 className="docview-modal-close"
@@ -1326,7 +1624,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
               </div>
               <div style={{ flex: 1, display: 'flex', gap: 25, padding: '0 2rem 2rem 2rem', minHeight: 0 }}>
               {/* Left: Preview */}
-              <div style={{ flex: 2, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', borderRadius: 16, minHeight: 650, overflow: 'auto', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+              <div style={{ flex: 2, minWidth: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: themeColors.inputBackground, borderRadius: 16, minHeight: 650, overflow: 'auto', boxShadow: themeColors.shadow }}>
                 {selectedDocument.content_type.includes('pdf') ? (
                 <iframe
                   src={selectedDocument.download_url}
@@ -1337,16 +1635,16 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                 <img
                   src={selectedDocument.download_url || selectedDocument.thumbnail_url}
                   alt={selectedDocument.original_filename}
-                  style={{ maxWidth: '100%', maxHeight: 480, borderRadius: 12, objectFit: 'contain', background: '#fff' }}
+                  style={{ maxWidth: '100%', maxHeight: 480, borderRadius: 12, objectFit: 'contain', background: themeColors.cardBackground }}
                 />
                 ) : selectedDocument.content_type.includes('text') ? (
                 <iframe
                   src={selectedDocument.download_url}
                   title="Text Preview"
-                  style={{ width: '100%', height: 480, border: 'none', background: '#fff', borderRadius: 12 }}
+                  style={{ width: '100%', height: 480, border: 'none', background: themeColors.cardBackground, borderRadius: 12 }}
                 />
                 ) : (
-                <div style={{ textAlign: 'center', color: '#64748b', fontSize: 18, width: '100%' }}>
+                <div style={{ textAlign: 'center', color: themeColors.mutedText, fontSize: 18, width: '100%' }}>
                   <div style={{ marginBottom: 16 }}>
                   {getFileIcon(selectedDocument.content_type).icon}
                   </div>
@@ -1361,7 +1659,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                   {getFileIcon(selectedDocument.content_type).icon}
                 </div>
                 <div style={{ flex: 1 }}>
-                  <h3 className="docview-font-bold docview-text-lg docview-text-gray-900 docview-mb-1" style={{ marginBottom: 4 }}>{formatFileName(selectedDocument.original_filename)}</h3>
+                  <h3 className="docview-font-bold docview-text-lg docview-mb-1" style={{ marginBottom: 4, color: themeColors.primaryText }}>{formatFileName(selectedDocument.original_filename)}</h3>
                   <div className="docview-flex docview-items-center docview-gap-2">
                   <span style={{
                     ...getStatusBadgeStyle(selectedDocument.processing_status),
@@ -1369,7 +1667,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                     color: selectedDocument.processing_status === 'failed' ? '#1e40af' : getStatusBadgeStyle(selectedDocument.processing_status).color,
                     borderColor: selectedDocument.processing_status === 'failed' ? '#93c5fd' : getStatusBadgeStyle(selectedDocument.processing_status).borderColor
                   }}>
-                    {selectedDocument.processing_status}
+                    {capitalizeFirstLetter(selectedDocument.processing_status)}
                   </span>
                   {selectedDocument.document_type && (
                     <span style={getDocumentTypeBadgeStyle(selectedDocument.document_type)}>
