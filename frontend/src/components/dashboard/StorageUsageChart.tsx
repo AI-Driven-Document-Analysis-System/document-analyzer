@@ -110,21 +110,22 @@ const StorageUsageChart: React.FC<StorageUsageChartProps> = ({
 
   return (
     <div style={{
+      width: '100%',
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      padding: '16px',
+      padding: '12px',
       boxSizing: 'border-box',
       borderRadius: '8px',
       backgroundColor: 'var(--bg-primary)',
       boxShadow: 'var(--card-shadow)'
     }}>
       <h3 style={{
-        fontSize: '16px',
+        fontSize: '13px',
         fontWeight: 600,
         color: 'var(--text-primary)',
-        margin: '0 0 16px 0',
-        paddingBottom: '12px',
+        margin: '0 0 8px 0',
+        paddingBottom: '8px',
         borderBottom: '1px solid var(--border-color)',
         display: 'flex',
         justifyContent: 'space-between',
@@ -132,7 +133,7 @@ const StorageUsageChart: React.FC<StorageUsageChartProps> = ({
       }}>
         <span>Storage Usage</span>
         <span style={{
-          fontSize: '14px',
+          fontSize: '11px',
           fontWeight: 500,
           color: 'var(--text-secondary)'
         }}>
@@ -142,13 +143,12 @@ const StorageUsageChart: React.FC<StorageUsageChartProps> = ({
       
       <div style={{ 
         flex: 1,
-        minHeight: '250px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         position: 'relative',
-        padding: '16px 0'
+        padding: '8px 0'
       }}>
         {total === 0 ? (
           <div style={{
@@ -168,19 +168,18 @@ const StorageUsageChart: React.FC<StorageUsageChartProps> = ({
         ) : (
           <div style={{ 
             width: '100%', 
-            height: '100%', 
-            maxWidth: '220px',
+            height: '100%',
             margin: '0 auto',
             position: 'relative'
           }}>
-            <ResponsiveContainer width="100%" height="100%" minHeight="220px">
+            <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={data}
                   cx="50%"
                   cy="50%"
-                  innerRadius={70}
-                  outerRadius={90}
+                  innerRadius={60}
+                  outerRadius={80}
                   paddingAngle={2}
                   dataKey="value"
                   labelLine={false}
