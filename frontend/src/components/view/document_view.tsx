@@ -77,7 +77,7 @@ const getDocumentTypeBadgeStyle = (docType: string | undefined): React.CSSProper
     'medical record': { bg: '#f0fdf4', text: '#166534', border: '#bbf7d0' },
     'invoice and receipt': { bg: '#fffbeb', text: '#78350f', border: '#fcd34d' },
     'legal document': { bg: '#ede9fe', text: '#5b21b6', border: '#c4b5fd' },
-    'research paper': { bg: '#dbeafe', text: '#1e40af', border: '#93c5fd' },
+    'research paper': { bg: '#dbeafe', text: '#3b1eafff', border: '#9393fdff' },
     'financial report': { bg: '#f0f9ff', text: '#0891b2', border: '#a5f3fc' },
   }
 
@@ -171,6 +171,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
+  const [filterDocumentType, setFilterDocumentType] = useState<string>("all")
   const [sortBy, setSortBy] = useState<string>("newest")
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
@@ -240,7 +241,10 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
     .filter(doc => {
       const matchesSearch = doc.original_filename.toLowerCase().includes(searchQuery.toLowerCase())
       const matchesStatus = filterStatus === "all" || doc.processing_status === filterStatus
-      return matchesSearch && matchesStatus
+      const matchesDocumentType = filterDocumentType === "all" || 
+        (doc.document_type && doc.document_type.toLowerCase() === filterDocumentType.toLowerCase()) ||
+        (!doc.document_type && filterDocumentType === "unclassified")
+      return matchesSearch && matchesStatus && matchesDocumentType
     })
     .sort((a, b) => {
       switch (sortBy) {
@@ -377,9 +381,21 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
 
   return (
     <>
-      <div className="docview-page-background">
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #f8fafc 0%, #e0f2fe 50%, #e8eaf6 100%)',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+      }}>
         {/* Modern Header with Glass Effect */}
-        <div className="docview-glass-header">
+        <div style={{
+          position: 'sticky',
+          top: 0,
+          zIndex: 40,
+          background: 'rgba(255, 255, 255, 0.85)',
+          backdropFilter: 'blur(20px)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+        }}>
           <div style={{
             maxWidth: '80rem',
             margin: '0 auto',
@@ -583,6 +599,54 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                     <option value="completed">Completed</option>
                     <option value="processing">Processing</option>
                     <option value="failed">Failed</option>
+                  </select>
+                  
+                  {/* Document Type Filter */}
+                  <select
+                    value={filterDocumentType}
+                    onChange={(e) => setFilterDocumentType(e.target.value)}
+                    style={{
+                      padding: '0.625rem 1rem',
+                      background: 'rgba(255, 255, 255, 0.7)',
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(229, 231, 235, 0.6)',
+                      borderRadius: '0.75rem',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#374151',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+                      appearance: 'none',
+                      backgroundImage: 'url("data:image/svg+xml,%3csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3e%3cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M6 8l4 4 4-4\'/%3e%3c/svg%3e")',
+                      backgroundRepeat: 'no-repeat',
+                      backgroundPosition: 'right 0.75rem center',
+                      backgroundSize: '1em 1em',
+                      paddingRight: '2.5rem'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.outline = 'none'
+                      e.target.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.1)'
+                      e.target.style.borderColor = '#3b82f6'
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)'
+                      e.target.style.borderColor = 'rgba(229, 231, 235, 0.6)'
+                    }}
+                  >
+                    <option value="all">All Types</option>
+                    <option value="invoice">Invoice</option>
+                    <option value="contract">Contract</option>
+                    <option value="report">Report</option>
+                    <option value="letter">Letter</option>
+                    <option value="receipt">Receipt</option>
+                    <option value="form">Form</option>
+                    <option value="medical record">Medical Record</option>
+                    <option value="invoice and receipt">Invoice & Receipt</option>
+                    <option value="legal document">Legal Document</option>
+                    <option value="research paper">Research Paper</option>
+                    <option value="financial report">Financial Report</option>
+                    <option value="unclassified">Unclassified</option>
                   </select>
                   
                   <select
