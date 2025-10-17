@@ -17,6 +17,7 @@
 :root {
   /* Light Mode Colors */
   --bg-primary: #ffffff;
+  --bg-primary-rgb: 255, 255, 255;
   --bg-secondary: #f8fafc;
   --bg-tertiary: #f1f5f9;
   --text-primary: #1e293b;
@@ -51,6 +52,7 @@
 /* Dark Mode Colors - Dark Blue & Black Theme */
 [data-theme='dark'] {
   --bg-primary: #0f172a;
+  --bg-primary-rgb: 15, 23, 42;
   --bg-secondary: #1e293b;
   --bg-tertiary: #334155;
   --text-primary: #f1f5f9;
