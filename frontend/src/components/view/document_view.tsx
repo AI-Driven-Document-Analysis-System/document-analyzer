@@ -188,6 +188,8 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null)
   const [authToken, setAuthToken] = useState<string | null>(null)
+  const [currentPage, setCurrentPage] = useState<number>(1)
+  const [documentsPerPage] = useState<number>(20)
 
   // Get auth token
   React.useEffect(() => {
@@ -272,6 +274,17 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
           return 0
       }
     })
+
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredDocuments.length / documentsPerPage)
+  const startIndex = (currentPage - 1) * documentsPerPage
+  const endIndex = startIndex + documentsPerPage
+  const paginatedDocuments = filteredDocuments.slice(startIndex, endIndex)
+
+  // Reset to first page when filters change
+  React.useEffect(() => {
+    setCurrentPage(1)
+  }, [searchQuery, filterStatus, filterDocumentType, sortBy])
 
   // Get recent files (last 3 uploaded)
   const recentFiles = (Array.isArray(documents) ? documents : [])
@@ -723,7 +736,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                     fontSize: '1rem'
                   }}>Your most recently uploaded documents</p>
                 </div>
-                <button style={{
+                {/* <button style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.5rem',
@@ -754,7 +767,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                   }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
-                </button>
+                </button> */}
               </div>
               <div style={{
                 display: 'flex',
@@ -927,6 +940,11 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                   fontSize: '1rem'
                 }}>
                   {filteredDocuments.length} {filteredDocuments.length === 1 ? 'document' : 'documents'} found
+                  {filteredDocuments.length > documentsPerPage && (
+                    <span>
+                      {' • '}Showing {startIndex + 1}-{Math.min(endIndex, filteredDocuments.length)} of {filteredDocuments.length}
+                    </span>
+                  )}
                 </p>
               </div>
             </div>
@@ -1018,7 +1036,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                 gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
                 gap: '1.5rem'
               }}>
-                {filteredDocuments.map((document, index) => {
+                {paginatedDocuments.map((document, index) => {
                   const fileIcon = getFileIcon(document.content_type)
                   return (
                     <div
@@ -1297,7 +1315,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
               /* Enhanced List View */
               <div className="bg-white/70 backdrop-blur-sm rounded-2xl border border-white/40 overflow-hidden shadow-lg">
                 <div className="divide-y divide-gray-100/60">
-                  {filteredDocuments.map((document, index) => {
+                  {paginatedDocuments.map((document, index) => {
                     const fileIcon = getFileIcon(document.content_type)
                     return (
                       <div
@@ -1367,6 +1385,159 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                     )
                   })}
                 </div>
+              </div>
+            )}
+
+            {/* Pagination Controls */}
+            {filteredDocuments.length > documentsPerPage && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginTop: '3rem',
+                gap: '1rem'
+              }}>
+                {/* Previous Button */}
+                <button
+                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.75rem 1.25rem',
+                    background: currentPage === 1 ? 'rgba(156, 163, 175, 0.3)' : 'rgba(255, 255, 255, 0.8)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(229, 231, 235, 0.6)',
+                    borderRadius: '0.75rem',
+                    fontSize: '0.875rem',
+                    fontWeight: '500',
+                    color: currentPage === 1 ? '#9ca3af' : '#374151',
+                    cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (currentPage !== 1) {
+                      const target = e.target as HTMLButtonElement
+                      target.style.background = 'rgba(255, 255, 255, 0.95)'
+                      target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (currentPage !== 1) {
+                      const target = e.target as HTMLButtonElement
+                      target.style.background = 'rgba(255, 255, 255, 0.8)'
+                      target.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)'
+                    }
+                  }}
+                >
+                  <svg style={{ width: '1rem', height: '1rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Previous
+                </button>
+
+                {/* Page Numbers */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}>
+                  {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage > totalPages - 3) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        style={{
+                          width: '2.5rem',
+                          height: '2.5rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: currentPage === pageNum ? '#3b82f6' : 'rgba(255, 255, 255, 0.8)',
+                          backdropFilter: 'blur(10px)',
+                          border: '1px solid rgba(229, 231, 235, 0.6)',
+                          borderRadius: '0.5rem',
+                          fontSize: '0.875rem',
+                          fontWeight: '500',
+                          color: currentPage === pageNum ? 'white' : '#374151',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          boxShadow: currentPage === pageNum ? '0 4px 14px rgba(59, 130, 246, 0.25)' : '0 1px 2px rgba(0, 0, 0, 0.05)'
+                        }}
+                        onMouseEnter={(e) => {
+                          if (currentPage !== pageNum) {
+                            const target = e.target as HTMLButtonElement
+                            target.style.background = 'rgba(59, 130, 246, 0.1)'
+                            target.style.color = '#3b82f6'
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (currentPage !== pageNum) {
+                            const target = e.target as HTMLButtonElement
+                            target.style.background = 'rgba(255, 255, 255, 0.8)'
+                            target.style.color = '#374151'
+                          }
+                        }}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Next Button */}
+                <button
+                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: '0.75rem 1.25rem',
+                    background: currentPage === totalPages ? 'rgba(156, 163, 175, 0.3)' : 'rgba(255, 255, 255, 0.8)',
+                    backdropFilter: 'blur(10px)',
+                    border: '1px solid rgba(229, 231, 235, 0.6)',
+                    borderRadius: '0.75rem',
+                    fontSize: '0.875rem',
+                    fontWeight: '500',
+                    color: currentPage === totalPages ? '#9ca3af' : '#374151',
+                    cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (currentPage !== totalPages) {
+                      const target = e.target as HTMLButtonElement
+                      target.style.background = 'rgba(255, 255, 255, 0.95)'
+                      target.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (currentPage !== totalPages) {
+                      const target = e.target as HTMLButtonElement
+                      target.style.background = 'rgba(255, 255, 255, 0.8)'
+                      target.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)'
+                    }
+                  }}
+                >
+                  Next
+                  <svg style={{ width: '1rem', height: '1rem' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
               </div>
             )}
           </div>

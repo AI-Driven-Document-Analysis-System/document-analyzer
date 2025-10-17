@@ -127,7 +127,7 @@ async def get_documents(
                         "thumbnail_url": document_service.get_document_download_url(doc[7]) if doc[7] else None,
                         "processing_status": doc[8] or "unknown",
                         "processing_errors": doc[9] or "unknown",
-                        "document_type": doc[10] or "Unknown"
+                        "document_type": doc[10] or "Other"
                     }
                     result.append(doc_dict)
                 
