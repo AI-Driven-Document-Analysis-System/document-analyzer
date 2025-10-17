@@ -2,6 +2,17 @@ import React, { useState, useEffect } from "react"
 import { authService } from "../../services/authService"
 import "./document_view.css"
 
+// Fixed document types based on the classification system
+const DOCUMENT_TYPES = [
+  { value: 'all', label: 'All Types' },
+  { value: 'financial report', label: 'Financial Report' },
+  { value: 'invoice or receipt', label: 'Invoice or Receipt' },
+  { value: 'legal document', label: 'Legal Document' },
+  { value: 'medical record', label: 'Medical Record' },
+  { value: 'research paper', label: 'Research Paper' },
+  { value: 'other', label: 'Other' },
+] as const;
+
 // Keep interfaces unchanged
 interface Document {
   id: string
@@ -75,10 +86,11 @@ const getDocumentTypeBadgeStyle = (docType: string | undefined): React.CSSProper
   const normalized = docType.toLowerCase().trim()
   const typeColors: Record<string, { bg: string; text: string; border: string }> = {
     'medical record': { bg: '#f0fdf4', text: '#166534', border: '#bbf7d0' },
-    'invoice and receipt': { bg: '#fffbeb', text: '#78350f', border: '#fcd34d' },
+    'invoice or receipt': { bg: '#fffbeb', text: '#78350f', border: '#fcd34d' },
     'legal document': { bg: '#ede9fe', text: '#5b21b6', border: '#c4b5fd' },
-    'research paper': { bg: '#dbeafe', text: '#3b1eafff', border: '#9393fdff' },
+    'research paper': { bg: '#dbeafe', text: '#1e40af', border: '#93c5fd' },
     'financial report': { bg: '#f0f9ff', text: '#0891b2', border: '#a5f3fc' },
+    'other': { bg: '#f1f5f9', text: '#475569', border: '#cbd5e1' },
   }
 
   const colors = typeColors[normalized] || {
@@ -634,19 +646,11 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                       e.target.style.borderColor = 'rgba(229, 231, 235, 0.6)'
                     }}
                   >
-                    <option value="all">All Types</option>
-                    <option value="invoice">Invoice</option>
-                    <option value="contract">Contract</option>
-                    <option value="report">Report</option>
-                    <option value="letter">Letter</option>
-                    <option value="receipt">Receipt</option>
-                    <option value="form">Form</option>
-                    <option value="medical record">Medical Record</option>
-                    <option value="invoice and receipt">Invoice & Receipt</option>
-                    <option value="legal document">Legal Document</option>
-                    <option value="research paper">Research Paper</option>
-                    <option value="financial report">Financial Report</option>
-                    <option value="unclassified">Unclassified</option>
+                    {DOCUMENT_TYPES.map(type => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
                   </select>
                   
                   <select
