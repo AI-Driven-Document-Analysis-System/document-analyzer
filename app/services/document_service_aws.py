@@ -20,7 +20,7 @@ from ..core.config import settings
 from .ocr_service_aws_only import OCRService, OCRProvider
 from ..db.crud import get_document_crud
 from .document_embedding_service import document_embedding_service
-
+from .classifcation.classification import DocumentClassifier
 
 class DocumentServiceAWS:
     def __init__(self):
@@ -31,6 +31,10 @@ class DocumentServiceAWS:
         self.minio_secure = settings.MINIO_SECURE
         self.bucket_name = settings.MINIO_BUCKET_NAME
         self._minio_client = None
+        
+        # Classification configuration
+        self._classifier = None
+        self._classifier_lock = threading.Lock()
     
     @property
     def minio_client(self):
@@ -44,6 +48,22 @@ class DocumentServiceAWS:
             )
             self._ensure_bucket_exists()
         return self._minio_client
+    @property
+    def classifier(self):
+        """Lazy initialization of classifier - thread-safe singleton"""
+        if self._classifier is None:
+            with self._classifier_lock:
+                # Double-check locking pattern
+                if self._classifier is None:
+                    print("[Classifier] Initializing DocumentClassifier (one-time load)...")
+                    try:
+                        self._classifier = DocumentClassifier()
+                        print("[Classifier] DocumentClassifier initialized successfully")
+                    except Exception as e:
+                        print(f"[Classifier] ERROR - Failed to initialize classifier: {e}")
+                        self._classifier = None
+        return self._classifier
+
     def _ensure_bucket_exists(self):
         """Ensure the MinIO bucket exists"""
         try:
@@ -150,6 +170,68 @@ class DocumentServiceAWS:
         except Exception as e:
             print(f"Thumbnail generation failed: {e}")
             return None
+        
+    async def _classify_document_async(self, file_content: bytes, filename: str, document_id: str) -> Optional[str]:
+        """
+        Classify document asynchronously with proper error handling.
+        Returns classification result or None if failed.
+        """
+        local_path = None
+        try:
+            # Check if classifier is available
+            if self.classifier is None:
+                print(f"[Classification] Classifier not available, skipping")
+                return None
+                
+            print(f"[Classification] Starting classification for document {document_id}")
+
+            # Create temp file for classification
+            tmp_dir = os.path.join(os.getcwd(), "_classify_tmp")
+            os.makedirs(tmp_dir, exist_ok=True)
+            local_path = os.path.join(tmp_dir, f"{document_id}_{filename}")
+            
+            # Write file content to temp
+            with open(local_path, "wb") as f:
+                f.write(file_content)
+            
+            # Run classification in thread pool
+            loop = asyncio.get_event_loop()
+            doc_type = await loop.run_in_executor(
+                None,
+                self.classifier.classify_document,
+                local_path
+            )
+
+            if doc_type and doc_type != "unknown":
+                print(f"[Classification] Document {document_id} classified as: {doc_type}")
+                
+                # Save classification to database
+                try:
+                    crud = get_document_crud()
+                    crud.save_document_classification(
+                        document_id=document_id,
+                        document_type=doc_type
+                    )
+                    print(f"[Classification] Classification saved successfully")
+                    return doc_type
+                except Exception as db_error:
+                    print(f"[Classification] Failed to save to DB: {db_error}")
+                    return doc_type  # Still return the classification
+            else:
+                print(f"[Classification] Returned 'unknown'")
+                return None
+                
+        except Exception as e:
+            print(f"[Classification] Error: {e}")
+            return None
+        finally:
+            # Always clean up temp file
+            if local_path and os.path.exists(local_path):
+                try:
+                    os.remove(local_path)
+                except:
+                    pass
+
 
     async def upload_document(self, file: UploadFile, user_id: str) -> Dict[str, Any]:
         """
@@ -285,6 +367,14 @@ class DocumentServiceAWS:
                 print(f"DEBUG - Document content saved to database")
                 # Clean up temp results
                 delattr(self, '_temp_processing_results')
+
+            #Document Classification
+            print(f"Starting Document Classification")
+            classification_result = await self._classify_document_async(file_content, file.filename, document_id)
+            if classification_result:
+                print(f"[Processing] Classification complete: {classification_result}")
+            else:
+                print(f"[Processing] Classification failed or returned unknown")
 
             # STEP 5: Create embeddings ONLY after everything else succeeds
             print(f"DEBUG - Creating embeddings...")
@@ -1001,6 +1091,14 @@ class DocumentServiceAWS:
                         f.write(d)
             finally:
                 obj.close(); obj.release_conn()
+
+            #Document Classification
+            print(f"Starting Document Classification")
+            classification_result = await self._classify_document_async(local_path, document_id)
+            if classification_result:
+                print(f"[Processing] Classification complete: {classification_result}")
+            else:
+                print(f"[Processing] Classification failed or returned unknown")
 
             # Run OCR processing (AWS Textract or Surya fallback)
             print(f"Starting OCR processing for document {document_id}")
