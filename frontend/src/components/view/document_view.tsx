@@ -1376,7 +1376,19 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                         
                         <div className="docview-flex-1 docview-min-w-0">
                           <div className="docview-flex docview-items-center docview-gap-3 docview-mb-1">
-                            <h3 className="docview-text-base docview-font-semibold docview-text-gray-900 docview-truncate group-hover:docview-text-blue-600 docview-transition-colors docview-duration-300">
+                            <h3 style={{
+                              fontSize: '1.125rem',
+                              fontWeight: '600',
+                              color: themeColors.primaryText,
+                              lineHeight: '1.4',
+                              marginBottom: '0.25rem',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              transition: 'color 0.3s ease'
+                            }}>
                               {formatFileName(document.original_filename)}
                             </h3>
                             <span style={{
@@ -1397,12 +1409,12 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                             <span>{formatFileSize(document.file_size)}</span>
                             <span>•</span>
                             <span>{formatDate(document.upload_date)}</span>
-                            {document.document_type && (
+                            {/* {document.document_type && (
                               <>
                                 <span>•</span>
                                 <span className="docview-capitalize">{document.document_type}</span>
                               </>
-                            )}
+                            )} */}
                           </div>
                         </div>
 
