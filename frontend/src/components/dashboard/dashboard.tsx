@@ -1695,46 +1695,31 @@ const renderResourceUsageChart = () => {
         </div>
 
         {/* Search and Chat Feature */}
-        <div className="feature-container">
-          <div className="tabs-container d-flex">
-            <button
-              className={`tab-btn ${activeView === 'documents' ? 'active' : ''}`}
-              onClick={() => setActiveView('documents')}
-            >
-              <i className="fas fa-search me-2"></i>Search Documents
-            </button>
-            <button
-              className={`tab-btn ${activeView === 'chat' ? 'active' : ''}`}
-              onClick={() => alert('🚧 Ask DocuMind AI feature is coming soon!')}
-            >
-              <i className="fas fa-robot me-2"></i>Ask DocuMind AI
-            </button>
-          </div>
-
-          <div className="tab-content-container">
-            {activeView === 'documents' && (
-              <div id="search-tab" className="tab-content active">
-                <div className="search-input-group">
-                  <span className="search-icon"><i className="fas fa-search"></i></span>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Search across all your documents..."
-                  />
-                </div>
-
-                <div id="searchResults">
-                  <h5 className="mb-4"><i className="fas fa-history me-2"></i>Recent Documents</h5>
-
-                  {documentsWithSummary.length === 0 ? (
-                    <div className="text-center py-5">
-                      <i className="fas fa-file-alt empty-state-icon"></i>
-                      <p className="mt-3 text-muted">No documents uploaded yet.</p>
+        <div style={{ display: 'flex', gap: '1.5rem', position: 'relative', minHeight: '600px' }}>
+          {/* Left side - Search and Recent Documents (50% width) */}
+          <div className="feature-container" style={{ flex: '0 0 50%', borderRight: '2px solid var(--border-color)' }}>
+            <div className="tab-content-container">
+                    <div className="search-input-group">
+                      <span className="search-icon"><i className="fas fa-search"></i></span>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Search across all your documents..."
+                      />
                     </div>
-                  ) : (
-                    documentsWithSummary.slice(0, 10).map((doc) => (
-                      <div key={doc.id} className="result-item">
-                        <div className="d-flex">
+
+                    <h5 className="mb-4"><i className="fas fa-history me-2"></i>Recent Documents</h5>
+
+                    {documentsWithSummary.length === 0 ? (
+                      <div className="text-center py-5">
+                        <i className="fas fa-file-alt empty-state-icon"></i>
+                        <p className="mt-3 text-muted">No documents uploaded yet.</p>
+                      </div>
+                    ) : (
+                      <div>
+                        {documentsWithSummary.slice(0, 5).map((doc) => (
+                        <div key={doc.id} className="result-item">
+                          <div className="d-flex">
                           <div className="result-icon">
                             <i className="fas fa-file-invoice"></i>
                           </div>
@@ -1770,83 +1755,24 @@ const renderResourceUsageChart = () => {
                               </button>
                             </div>
                           </div>
+                          </div>
                         </div>
+                        ))}
                       </div>
-                    ))
-                  )}
-                </div>
-                <div className="chat-input-group" style={{display: 'none'}}>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder={selectedDocument
-                      ? `Ask about ${selectedDocument.name}...`
-                      : "Search functionality coming soon..."
-                    }
-                  />
-                  <button className="btn btn-primary">
-                    <i className="fas fa-paper-plane"></i>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Chat Tab */}
-            {activeView === 'chat' && (
-              <div className="tab-content active">
-                {selectedDocument && (
-                  <div className="selected-document-context">
-                    <div className="context-header">
-                      <i className="fas fa-file-alt"></i>
-                      <span>Chatting about: {selectedDocument.name}</span>
-                      <button 
-                        className="btn btn-sm btn-outline-secondary"
-                        onClick={() => setSelectedDocument(null)}
-                      >
-                        <i className="fas fa-times"></i>
-                      </button>
-                    </div>
-                  </div>
-                )}
-                <div className="chat-messages">
-                  <div className="message bot">
-                    <div className="message-content">
-                      {selectedDocument 
-                        ? `Hello! I'm ready to help you with "${selectedDocument.name}". What would you like to know about this document?`
-                        : "Hello! I'm DocuMind AI. I can help you analyze and understand your documents. What would you like to know?"
-                      }
-                    </div>
-                  </div>
-                  {selectedDocument && (
-                    <div className="message bot">
-                      <div className="message-content">
-                        I can see you've selected "{selectedDocument.name}". I can help you:
-                        <ul>
-                          <li>Summarize key points</li>
-                          <li>Answer specific questions about the content</li>
-                          <li>Extract important data or insights</li>
-                          <li>Compare with other documents</li>
-                        </ul>
-                        What would you like to explore?
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="chat-input-group" style={{display: 'none'}}>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    placeholder={selectedDocument 
-                      ? `Ask about ${selectedDocument.name}...` 
-                      : "Search functionality coming soon..."
-                    } 
-                  />
-                  <button className="btn btn-primary">
-                    <i className="fas fa-paper-plane"></i>
-                  </button>
-                </div>
-              </div>
-            )}
+                    )}
+            </div>
+          </div>
+                  
+          {/* Right side - Charts area (50% width) */}
+          <div style={{ flex: '1', paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {/* Top chart placeholder */}
+            <div style={{ flex: '1', minHeight: '250px' }}>
+              {/* Add your top chart here */}
+            </div>
+            {/* Bottom chart placeholder */}
+            <div style={{ flex: '1', minHeight: '250px' }}>
+              {/* Add your bottom chart here */}
+            </div>
           </div>
         </div>
 

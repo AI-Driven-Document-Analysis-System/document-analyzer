@@ -4,6 +4,12 @@ from transformers import LayoutLMv3FeatureExtractor, LayoutLMv3TokenizerFast, La
 import torch
 import logging
 import traceback
+import pytesseract
+import os
+
+# Set Tesseract path for Windows
+if os.name == 'nt':  # Windows
+    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
