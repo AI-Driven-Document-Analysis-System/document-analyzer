@@ -2,11 +2,16 @@
 
 
 //****************************CSS */
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import './Dashboard.css' // Import the CSS file
 import DocumentActivityChart from './DocumentActivityChart';
 import StorageUsageChart from './StorageUsageChart';
 //import DocumentViewer from '../DocumentViewer/DocumentViewer';
+
+// Cache for dashboard data (5-minute TTL)
+const dashboardCache: { data: any; timestamp: number } | null = null;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+let cacheInstance: { data: any; timestamp: number } | null = null;
 
 // TypeScript interfaces
 interface Document {
@@ -257,7 +262,7 @@ function Dashboard() {
   const [documentsWithSummary, setDocumentsWithSummary] = useState<DocumentWithSummary[]>([])
   
   // Storage usage state
-  const [storageUsage, setStorageUsage] = useState({ used: 0, total: 2048 }) // Default to 2GB
+  const [storageUsage, setStorageUsage] = useState({ used: 0, total: 1024 }) // Default to 2GB
   const [loadingStorage, setLoadingStorage] = useState(true)
   const [storageError, setStorageError] = useState<string | null>(null)
   
@@ -323,10 +328,173 @@ function Dashboard() {
   const [loadingActivity, setLoadingActivity] = useState(true);
   const [activityError, setActivityError] = useState<string | null>(null);
 
+  // Helper function: Process documents for types (moved outside useEffect)
+  const processDocumentsForTypes = useCallback((docs: Document[]) => {
+    const typeCounts: { [key: string]: { count: number; totalSize: number } } = {};
+
+    docs.forEach(doc => {
+      let type = 'Unknown';
+      if (doc.original_filename) {
+        const ext = doc.original_filename.split('.').pop()?.toUpperCase();
+        type = ext || 'Unknown';
+      } else if (doc.content_type) {
+        const mimeMap: { [key: string]: string } = {
+          'application/pdf': 'PDF',
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'DOCX',
+          'application/msword': 'DOC',
+          'text/plain': 'TXT',
+          'image/png': 'PNG',
+          'image/jpeg': 'JPG',
+          'image/jpg': 'JPG',
+          'application/vnd.ms-excel': 'XLS',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'XLSX'
+        };
+        type = mimeMap[doc.content_type] || doc.content_type.split('/').pop()?.toUpperCase() || 'Unknown';
+      }
+
+      if (!typeCounts[type]) {
+        typeCounts[type] = { count: 0, totalSize: 0 };
+      }
+      typeCounts[type].count += 1;
+      typeCounts[type].totalSize += doc.file_size || 0;
+    });
+
+    return {
+      chartData: Object.entries(typeCounts).map(([type, data]) => ({
+        type,
+        count: data.count,
+        avgSize: data.count > 0 ? data.totalSize / data.count : 0
+      })).sort((a, b) => b.count - a.count)
+    };
+  }, []);
+
+  // UNIFIED DATA FETCHING with PARALLEL API CALLS
+  useEffect(() => {
+    const fetchAllDashboardData = async () => {
+      // Check cache first
+      if (cacheInstance && Date.now() - cacheInstance.timestamp < CACHE_TTL) {
+        console.log('Using cached dashboard data');
+        const cached = cacheInstance.data;
+        setDocuments(cached.documents || []);
+        setDocumentTypes(cached.documentTypes || []);
+        setDocumentActivityData(cached.activityData || []);
+        setStorageUsage(cached.storageUsage || { used: 0, total: 2048 });
+        setResourceUsageData(cached.resourceUsage || []);
+        setLoading(false);
+        setLoadingTypes(false);
+        setLoadingActivity(false);
+        setLoadingStorage(false);
+        setLoadingResourceUsage(false);
+        return;
+      }
+
+      const token = getToken();
+      if (!token) {
+        console.warn('No token found');
+        setLoading(false);
+        setLoadingTypes(false);
+        setLoadingActivity(false);
+        setLoadingStorage(false);
+        setLoadingResourceUsage(false);
+        return;
+      }
+
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      };
+
+      try {
+        console.log('Fetching all dashboard data in parallel...');
+        
+        // PARALLEL FETCH - All API calls happen at once
+        const [documentsRes, typesRes, activityRes, storageRes] = await Promise.all([
+          fetch('http://localhost:8000/api/documents/?limit=100', { headers }), // Limit to 100 for faster load
+          fetch('http://localhost:8000/api/analytics/document-types-distribution', { headers }),
+          fetch('http://localhost:8000/api/profile/me', { headers }),
+          fetch('http://localhost:8000/api/analytics/document-uploads-over-time?period=30d', { headers })
+        ]);
+
+        // Process responses
+        const docsData = documentsRes.ok ? await documentsRes.json() : { documents: [] };
+        const docs = docsData.documents || [];
+        
+        let types: DocumentTypeData[] = [];
+        if (typesRes.ok) {
+          const typesData = await typesRes.json();
+          types = typesData.chartData || [];
+        } else {
+          types = processDocumentsForTypes(docs).chartData;
+        }
+
+        let activity: Array<{ date: string; count: number }> = [];
+        if (activityRes.ok) {
+          const actData = await activityRes.json();
+          activity = actData.upload_activity || [];
+        }
+
+        let storage: { used: number; total: number } = { used: 0, total: 2048 };
+        if (storageRes.ok) {
+          const storData = await storageRes.json();
+          if (storData.summary) {
+            const usedMB = Math.round((storData.summary.totalSize || 0) / (1024 * 1024));
+            storage = { used: usedMB, total: 5 * 1024 };
+          }
+        }
+
+        // Process resource usage from documents
+        const resourceData: ResourceUsageData[] = docs.map((doc: Document) => {
+          const sizeInBytes = doc.file_size || 0;
+          const sizeInMB = sizeInBytes / (1024 * 1024);
+          const approximateProcessingTime = 2 + Math.floor(sizeInMB * 1.5);
+          return {
+            id: doc.id,
+            name: doc.original_filename || 'Untitled Document',
+            size: sizeInBytes,
+            processingTime: approximateProcessingTime
+          };
+        });
+
+        // Update all state at once
+        setDocuments(docs);
+        setDocumentTypes(types);
+        setDocumentActivityData(activity);
+        setStorageUsage(storage);
+        setResourceUsageData(resourceData);
+
+        // Cache the data
+        cacheInstance = {
+          data: {
+            documents: docs,
+            documentTypes: types,
+            activityData: activity,
+            storageUsage: storage,
+            resourceUsage: resourceData
+          },
+          timestamp: Date.now()
+        };
+
+        console.log('Dashboard data cached successfully');
+
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError('Failed to load dashboard data');
+      } finally {
+        setLoading(false);
+        setLoadingTypes(false);
+        setLoadingActivity(false);
+        setLoadingStorage(false);
+        setLoadingResourceUsage(false);
+      }
+    };
+
+    fetchAllDashboardData();
+  }, []); // Only run once on mount
 
   //*********************** */
+  // REMOVE OLD USEEFFECTS - Replaced by unified fetch above
   // Fetch document type distribution
-useEffect(() => {
+/*useEffect(() => {
   const fetchDocumentTypes = async () => {
     const token = getToken();
     if (!token) {
@@ -407,9 +575,10 @@ useEffect(() => {
   };
 
   fetchDocumentTypes();
-}, [documents]); // Re-fetch when documents change
+}, [documents]); // Re-fetch when documents change */
 
 // Process resource usage data from documents
+/* COMMENTED OUT - Now handled by unified fetch
 useEffect(() => {
   const processResourceUsageData = () => {
     try {
@@ -441,15 +610,25 @@ useEffect(() => {
   };
 
   processResourceUsageData();
-}, [documents]);
+}, [documents]); */
 
 // Pie Chart Component
 const renderPieChart = () => {
   if (documentTypes.length === 0) return null;
   
   const total = documentTypes.reduce((sum, item) => sum + item.count, 0);
-  const colors = ['#3b82f6', '#2563eb', '#1d4ed8', '#1e40af', '#1e3a8a', '#172554', '#0f172a', '#020617'];
-  
+  //const colors = ['#3b82f6', '#2563eb', '#1d4ed8', '#1e40af', '#1e3a8a', '#172554', '#0f172a', '#020617'];
+      const colors = [
+      '#3b82f6', // Blue
+      '#ef4444', // Red
+      '#10b981', // Green
+      '#f59e0b', // Amber
+      '#8b5cf6', // Purple
+      '#ec4899', // Pink
+      '#06b6d4', // Cyan
+      '#f97316'  // Orange
+    ];
+      
   let currentAngle = 0;
   const radius = 80;
   const centerX = 120;
@@ -594,7 +773,17 @@ const renderResourceUsageChart = () => {
     ? Math.max(...displayData.map(d => d.size))
     : Math.max(...displayData.map(d => d.processingTime));
 
-  const colors = ['#3b82f6', '#2563eb', '#1d4ed8', '#1e40af', '#1e3a8a', '#172554', '#0f172a', '#020617'];
+  //const colors = ['#3b82f6', '#2563eb', '#1d4ed8', '#1e40af', '#1e3a8a', '#172554', '#0f172a', '#020617'];
+        const colors = [
+        '#3b82f6', // Blue
+        '#ef4444', // Red
+        '#10b981', // Green
+        '#f59e0b', // Amber
+        '#8b5cf6', // Purple
+        '#ec4899', // Pink
+        '#06b6d4', // Cyan
+        '#f97316'  // Orange
+      ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '16px' }}>
@@ -698,6 +887,7 @@ const renderResourceUsageChart = () => {
   );
 };
 
+  /* COMMENTED OUT - Now handled by unified fetch
   // Fetch upload activity data
   useEffect(() => {
     const fetchUploadActivity = async () => {
@@ -739,7 +929,7 @@ const renderResourceUsageChart = () => {
     };
 
     fetchUploadActivity();
-  }, []);
+  }, []); */
   
   // Mock data fallback for development
   const mockStorageData = {
@@ -786,6 +976,7 @@ const renderResourceUsageChart = () => {
     setPreviewUrl(null)
   }
 
+  /* COMMENTED OUT - Now handled by unified fetch
   // Fetch storage usage data from API
   useEffect(() => {
     const fetchStorageUsage = async () => {
@@ -863,8 +1054,9 @@ const renderResourceUsageChart = () => {
     };
 
     fetchStorageUsage();
-  }, []);
+  }, []); */
 
+  /* COMMENTED OUT - Now handled by unified fetch
   // Fetch user documents with JWT authentication and fallback
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -929,7 +1121,7 @@ const renderResourceUsageChart = () => {
     }
 
     fetchDocuments()
-  }, [])
+  }, []) */
 
   // Format date to relative time
   const formatRelativeTime = (isoString: string): string => {
@@ -1268,13 +1460,14 @@ const renderResourceUsageChart = () => {
 }}>
   {/* Document Activity Chart */}
   <div style={{
-    backgroundColor: 'white',
+    backgroundColor: 'var(--bg-primary)',
     borderRadius: '8px',
-    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    boxShadow: 'var(--card-shadow)',
     padding: '16px',
     height: '400px',
     display: 'flex',
-    flexDirection: 'column'
+    flexDirection: 'column',
+    border: '1px solid var(--border-color)'
   }}>
     <DocumentActivityChart 
       data={documentActivityData} 
@@ -1285,16 +1478,17 @@ const renderResourceUsageChart = () => {
 
   {/* Document Type Distribution */}
   <div style={{
-    backgroundColor: 'white',
+    backgroundColor: 'var(--bg-primary)',
     borderRadius: '8px',
-    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    boxShadow: 'var(--card-shadow)',
     padding: '16px',
     height: '400px',
     display: 'flex',
-    flexDirection: 'column'
+    flexDirection: 'column',
+    border: '1px solid var(--border-color)'
   }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-      <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0, color: '#1a202c' }}>
+      <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>
         Document Types
       </h3>
       <button
@@ -1330,15 +1524,15 @@ const renderResourceUsageChart = () => {
       </button>
     </div>
     {loadingTypes ? (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#718096' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-secondary)' }}>
         Loading...
       </div>
     ) : typesError ? (
-      <div style={{ color: '#e53e3e', fontSize: '0.875rem', textAlign: 'center', marginTop: '1rem' }}>
+      <div style={{ color: 'var(--danger-color)', fontSize: '0.875rem', textAlign: 'center', marginTop: '1rem' }}>
         {typesError}
       </div>
     ) : documentTypes.length === 0 ? (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#a0aec0' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-tertiary)' }}>
         No data
       </div>
     ) : chartType === 'pie' ? (
@@ -1348,8 +1542,18 @@ const renderResourceUsageChart = () => {
         {documentTypes.slice(0, 8).map((item, index) => {
           const maxCount = documentTypes[0]?.count || 1;
           const width = maxCount > 0 ? (item.count / maxCount) * 100 : 0;
-          const blueShades = ['#3b82f6', '#2563eb', '#1d4ed8', '#1e40af', '#1e3a8a', '#172554'];
-          return (
+          // const blueShades = ['#3b82f6', '#2563eb', '#1d4ed8', '#1e40af', '#1e3a8a', '#172554'];
+          const colors = [
+                '#3b82f6', // Blue
+                '#ef4444', // Red
+                '#10b981', // Green
+                '#f59e0b', // Amber
+                '#8b5cf6', // Purple
+                '#ec4899', // Pink
+                '#06b6d4', // Cyan
+                '#f97316'  // Orange
+              ];
+                        return (
             <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{ 
                 width: '80px', 
@@ -1374,7 +1578,8 @@ const renderResourceUsageChart = () => {
                     left: 0,
                     height: '100%',
                     width: `${width}%`,
-                    backgroundColor: blueShades[index % blueShades.length],
+                    //backgroundColor: blueShades[index % blueShades.length],
+                    backgroundColor: colors[index % colors.length],
                     borderRadius: '4px',
                     display: 'flex',
                     alignItems: 'center',
@@ -1398,18 +1603,19 @@ const renderResourceUsageChart = () => {
 
         {/* Resource Usage Chart */}
         <div style={{
-          backgroundColor: 'white',
+          backgroundColor: 'var(--bg-primary)',
           borderRadius: '8px',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          boxShadow: 'var(--card-shadow)',
           padding: '16px',
           height: '400px',
           display: 'flex',
           flexDirection: 'column',
           marginBottom: '24px',
-          position: 'relative'
+          position: 'relative',
+          border: '1px solid var(--border-color)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0, color: '#1a202c' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>
               Resource Usage
             </h3>
             <div style={{ display: 'flex', gap: '8px' }}>
@@ -1472,15 +1678,15 @@ const renderResourceUsageChart = () => {
             </div>
           </div>
           {loadingResourceUsage ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#718096' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-secondary)' }}>
               Loading...
             </div>
           ) : resourceUsageError ? (
-            <div style={{ color: '#e53e3e', fontSize: '0.875rem', textAlign: 'center', marginTop: '1rem' }}>
+            <div style={{ color: 'var(--danger-color)', fontSize: '0.875rem', textAlign: 'center', marginTop: '1rem' }}>
               {resourceUsageError}
             </div>
           ) : resourceUsageData.length === 0 ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#a0aec0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-tertiary)' }}>
               No data available
             </div>
           ) : (
@@ -1522,7 +1728,7 @@ const renderResourceUsageChart = () => {
 
                   {documentsWithSummary.length === 0 ? (
                     <div className="text-center py-5">
-                      <i className="fas fa-file-alt" style={{fontSize: '4rem', color: '#dee2e6'}}></i>
+                      <i className="fas fa-file-alt empty-state-icon"></i>
                       <p className="mt-3 text-muted">No documents uploaded yet.</p>
                     </div>
                   ) : (
@@ -1537,9 +1743,9 @@ const renderResourceUsageChart = () => {
                               {doc.name}
                               <span className="doc-type-tag tag-invoice">{doc.type}</span>
                             </div>
-                            <div className="result-snippet">
+                            {/* <div className="result-snippet">
                               Financial summary for Q4 2023 showing a 12% increase in revenue compared to previous year...
-                            </div>
+                            </div> */}
                             <div className="result-meta">
                               PDF • 2.4 MB • Last accessed: {doc.uploadedAt}
                             </div>
@@ -1767,7 +1973,7 @@ const renderResourceUsageChart = () => {
         >
           <div 
             style={{
-              backgroundColor: 'white',
+              backgroundColor: 'var(--bg-primary)',
               borderRadius: '16px',
               maxWidth: '900px',
               width: '90%',
@@ -1780,17 +1986,17 @@ const renderResourceUsageChart = () => {
           >
             <div style={{ 
               padding: '1.5rem', 
-              borderBottom: '1px solid #e5e7eb', 
+              borderBottom: '1px solid var(--border-color)', 
               display: 'flex', 
               justifyContent: 'space-between', 
               alignItems: 'center',
-              background: 'linear-gradient(135deg, #f8fafc, #e2e8f0)'
+              background: 'var(--bg-tertiary)'
             }}>
               <div>
-                <h5 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '600', color: '#1a202c' }}>
+                <h5 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '600', color: 'var(--text-primary)' }}>
                   Document Summary
                 </h5>
-                <p style={{ margin: '4px 0 0 0', fontSize: '0.875rem', color: '#718096' }}>
+                <p style={{ margin: '4px 0 0 0', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                   {selectedDocumentForSummary.name}
                 </p>
               </div>
@@ -1801,7 +2007,7 @@ const renderResourceUsageChart = () => {
                   border: 'none', 
                   fontSize: '24px', 
                   cursor: 'pointer',
-                  color: '#718096',
+                  color: 'var(--text-secondary)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -2221,3 +2427,5 @@ const renderResourceUsageChart = () => {
 }
 
 export default Dashboard
+
+

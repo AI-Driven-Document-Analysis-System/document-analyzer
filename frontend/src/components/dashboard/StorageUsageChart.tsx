@@ -155,7 +155,7 @@ const StorageUsageChart: React.FC<StorageUsageChartProps> = ({
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            color: '#9ca3af',
+            color: 'var(--text-tertiary)',
             textAlign: 'center',
             padding: '20px 0'
           }}>
@@ -209,7 +209,8 @@ const StorageUsageChart: React.FC<StorageUsageChartProps> = ({
                     boxShadow: 'var(--card-shadow)',
                     padding: '8px 12px',
                     fontSize: '12px',
-                    fontWeight: 500
+                    fontWeight: 500,
+                    color: 'var(--text-secondary)'
                   }}
                 />
                 <text 

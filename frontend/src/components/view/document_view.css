@@ -13,8 +13,15 @@
 /* Main document view wrapper */
 .docview-main-wrapper {
     min-height: 100vh;
-    background-color: var(--bg-secondary);
+    background: var(--bg-secondary);
     color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* Main container with gradient background */
+.docview-page-background {
+    min-height: 100vh;
+    background: var(--bg-secondary);
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
@@ -23,10 +30,23 @@
     position: sticky;
     top: 0;
     z-index: 40;
-    background-color: var(--bg-primary);
+    background: rgba(var(--bg-primary-rgb), 0.85);
     backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--border-color);
     box-shadow: var(--card-shadow);
+}
+
+/* Glass header alternative */
+.docview-glass-header {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: rgba(var(--bg-primary-rgb), 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 /* Typography */
@@ -377,121 +397,140 @@
 .docview-search-input {
     width: 100%;
     padding: 0.875rem 1rem 0.875rem 3rem;
-    border: 1px solid #e5e7eb;
+    border: 2px solid var(--border-color);
     border-radius: 1rem;
-    background-color: rgba(249, 250, 251, 0.8);
-    color: #374151;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
     font-size: 0.875rem;
     transition: all 0.3s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+.docview-search-input::placeholder {
+    color: var(--text-tertiary);
 }
 .docview-search-input:focus {
     outline: none;
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
-    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    border-color: var(--accent-color);
 }
 .docview-search-icon {
     position: absolute;
     left: 1rem;
     top: 50%;
     transform: translateY(-50%);
-    color: #9ca3af;
+    color: var(--text-tertiary);
+    pointer-events: none;
 }
 .docview-search-clear {
     position: absolute;
     right: 1rem;
     top: 50%;
     transform: translateY(-50%);
-    color: #9ca3af;
+    color: var(--text-tertiary);
     cursor: pointer;
     transition: color 0.2s;
 }
 .docview-search-clear:hover {
-    color: #6b7280;
+    color: var(--text-secondary);
 }
 
 /* View Toggle */
 .docview-view-toggle {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    background-color: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(5px);
-    padding: 0.375rem;
+    gap: 0.25rem;
+    background: var(--bg-secondary);
+    backdrop-filter: blur(10px);
+    padding: 0.25rem;
     border-radius: 0.75rem;
-    border: 1px solid rgba(229, 231, 235, 0.5);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 .docview-view-button {
     padding: 0.625rem;
-    border-radius: 0.75rem;
+    border-radius: 0.5rem;
     cursor: pointer;
     transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #6b7280;
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
 }
 .docview-view-button.active {
-    background-color: #2563eb;
+    background: var(--accent-color);
     color: white;
     transform: scale(1.05);
-    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.25);
 }
 .docview-view-button:hover:not(.active) {
-    color: #374151;
-    background-color: #f3f4f6;
+    color: var(--text-primary);
+    background: var(--bg-tertiary);
 }
 
 /* Select Dropdowns */
 .docview-select {
-    padding: 0.625rem 1rem;
-    border: 1px solid #e5e7eb;
+    padding: 0.625rem 2.5rem 0.625rem 1rem;
+    border: 2px solid var(--border-color);
     border-radius: 0.75rem;
-    background-color: white;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
     font-size: 0.875rem;
+    font-weight: 500;
     min-width: 120px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     appearance: none;
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
     background-repeat: no-repeat;
     background-position: right 0.75rem center;
     background-size: 1em 1em;
-    transition: all 0.2s ease;
 }
 .docview-select:focus {
     outline: none;
-    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
-    border-color: #2563eb;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+    border-color: var(--accent-color);
 }
 
 /* Recent Files */
 .docview-recent-file {
     flex-shrink: 0;
-    width: 14rem;
-    background-color: white;
+    width: 20rem;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    background: var(--bg-primary);
+    backdrop-filter: blur(20px);
     border-radius: 1rem;
-    padding: 1.25rem;
-    border: 1px solid #f3f4f6;
-    transition: all 0.3s ease;
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--card-shadow);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .docview-recent-file:hover {
-    transform: scale(1.05);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
 }
 
 /* Document Grid Item */
 .docview-grid-item {
-    background-color: white;
+    background: var(--bg-primary);
     border-radius: 1rem;
-    border: 1px solid #f3f4f6;
+    border: 1px solid var(--border-color);
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
-    min-height: 240px; /* Ensures consistent height */
+    min-height: 240px;
     display: flex;
     flex-direction: column;
+    box-shadow: var(--card-shadow);
 }
 .docview-grid-item:hover {
     transform: translateY(-4px);
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    box-shadow: var(--card-shadow-hover);
+    border-color: var(--accent-color);
 }
 .docview-grid-item:hover .docview-accent-bar {
     height: 0.5rem;
@@ -586,9 +625,10 @@
     gap: 1.25rem;
     padding: 1.5rem;
     transition: all 0.3s ease;
+    border-bottom: 1px solid var(--border-color);
 }
 .docview-list-item:hover {
-    background-color: #f9fafb;
+    background: var(--bg-tertiary);
 }
 .docview-list-icon {
     width: 3.5rem;
@@ -731,10 +771,23 @@
 .docview-empty-state {
     text-align: center;
     padding: 5rem 2rem;
-    background-color: white;
+    background: var(--bg-primary);
     border-radius: 1.5rem;
-    border: 1px solid #f3f4f6;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--card-shadow);
+}
+
+/* Section headings */
+.docview-section-title {
+    font-size: 1.875rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.docview-section-subtitle {
+    color: var(--text-secondary);
+    font-size: 1rem;
 }
 .docview-empty-icon {
     width: 6rem;

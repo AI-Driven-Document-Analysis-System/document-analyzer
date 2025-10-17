@@ -2055,7 +2055,7 @@ body {
 
 .result-title {
   font-weight: 600;
-  color: #212529;
+  color: var(--text-primary);
   font-size: 1.1rem;
 }
 
@@ -2112,11 +2112,12 @@ body {
   font-size: 0.8rem;
   font-weight: 500;
   margin-left: 10px;
+  color: var(--text-primary);
 }
 
 .tag-invoice { 
   background-color: #d1ecf1; 
-  color: #0c5460; 
+  color: #cedfe2; 
 }
 
 /* Chat Messages */

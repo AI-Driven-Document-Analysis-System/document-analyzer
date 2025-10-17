@@ -224,7 +224,7 @@ async def get_storage_usage(
             raise HTTPException(status_code=400, detail="Invalid user token")
         
         user_id = str(current_user.id)
-        TOTAL_STORAGE = 2 * 1024 * 1024 * 1024  # 2GB in bytes
+        TOTAL_STORAGE = 300*1024*1024   # 2GB in bytes
         
         with db_manager.get_connection() as conn:
             with conn.cursor() as cursor:
