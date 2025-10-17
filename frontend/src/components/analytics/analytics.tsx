@@ -839,6 +839,7 @@ import SummaryCards from './SummaryCards';
 import LLMApiUsageChart from './LLMApiUsageChart';
 import DocumentUploadsChart from './DocumentUploadsChart';
 import TrendsCharts from './TrendsCharts';
+import DocumentSizeDistribution from './DocumentSizeDistribution';
 
 // 🎨 Vibrant Multi-Color Palette (same as Dashboard)
 const VIBRANT_COLORS = [
@@ -1615,6 +1616,9 @@ const Analytics: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Third Row - Document Size Distribution */}
+      <DocumentSizeDistribution />
 
       {/* Main Chart - Document Uploads Over Time */}
       <div className="chart-container">
