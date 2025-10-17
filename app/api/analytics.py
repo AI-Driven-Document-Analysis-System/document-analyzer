@@ -26,22 +26,22 @@ async def get_document_uploads_over_time(
         end_date = datetime.now()
         if period == "7d":
             start_date = end_date - timedelta(days=7)
-            group_by = "DATE(upload_timestamp)"
+            group_by = "DATE(upload_timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Colombo')"
         elif period == "30d":
             start_date = end_date - timedelta(days=30)
-            group_by = "DATE(upload_timestamp)"
+            group_by = "DATE(upload_timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Colombo')"
         elif period == "90d":
             start_date = end_date - timedelta(days=90)
-            group_by = "DATE_TRUNC('week', upload_timestamp)"
+            group_by = "DATE_TRUNC('week', upload_timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Colombo')"
         elif period == "1y":
             start_date = end_date - timedelta(days=365)
-            group_by = "DATE_TRUNC('month', upload_timestamp)"
+            group_by = "DATE_TRUNC('month', upload_timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Colombo')"
         else:
             raise HTTPException(status_code=400, detail="Invalid period. Use: 7d, 30d, 90d, or 1y")
         
         with db_manager.get_connection() as conn:
             with conn.cursor() as cursor:
-                # Get document uploads over time
+                # Get document uploads over time (Sri Lanka timezone)
                 query = f"""
                     SELECT 
                         {group_by} as date,
@@ -159,28 +159,28 @@ async def get_upload_trends(
         
         with db_manager.get_connection() as conn:
             with conn.cursor() as cursor:
-                # Get uploads by day of week
+                # Get uploads by day of week (Sri Lanka timezone)
                 day_of_week_query = """
                     SELECT 
-                        EXTRACT(DOW FROM upload_timestamp) as day_of_week,
+                        EXTRACT(DOW FROM upload_timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Colombo') as day_of_week,
                         COUNT(*) as count
                     FROM documents 
                     WHERE user_id = %s
-                    GROUP BY EXTRACT(DOW FROM upload_timestamp)
+                    GROUP BY EXTRACT(DOW FROM upload_timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Colombo')
                     ORDER BY day_of_week
                 """
                 
                 cursor.execute(day_of_week_query, (user_id,))
                 day_results = cursor.fetchall()
                 
-                # Get uploads by hour of day
+                # Get uploads by hour of day (Sri Lanka timezone)
                 hour_query = """
                     SELECT 
-                        EXTRACT(HOUR FROM upload_timestamp) as hour,
+                        EXTRACT(HOUR FROM upload_timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Colombo') as hour,
                         COUNT(*) as count
                     FROM documents 
                     WHERE user_id = %s
-                    GROUP BY EXTRACT(HOUR FROM upload_timestamp)
+                    GROUP BY EXTRACT(HOUR FROM upload_timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Colombo')
                     ORDER BY hour
                 """
                 
@@ -267,22 +267,22 @@ async def get_model_usage_over_time(
         end_date = datetime.now()
         if period == "7d":
             start_date = end_date - timedelta(days=7)
-            group_by = "DATE(ds.created_at)"
+            group_by = "DATE(ds.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Colombo')"
         elif period == "30d":
             start_date = end_date - timedelta(days=30)
-            group_by = "DATE(ds.created_at)"
+            group_by = "DATE(ds.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Colombo')"
         elif period == "90d":
             start_date = end_date - timedelta(days=90)
-            group_by = "DATE_TRUNC('week', ds.created_at)"
+            group_by = "DATE_TRUNC('week', ds.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Colombo')"
         elif period == "1y":
             start_date = end_date - timedelta(days=365)
-            group_by = "DATE_TRUNC('month', ds.created_at)"
+            group_by = "DATE_TRUNC('month', ds.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Colombo')"
         else:
             raise HTTPException(status_code=400, detail="Invalid period")
         
         with db_manager.get_connection() as conn:
             with conn.cursor() as cursor:
-                # Map facebook/bart-large-cnn to t5
+                # Map facebook/bart-large-cnn to t5 (Sri Lanka timezone)
                 query = f"""
                     SELECT 
                         {group_by} as date,
@@ -393,3 +393,74 @@ async def get_ocr_confidence_distribution(
     except Exception as e:
         logger.error(f"Error getting OCR confidence distribution: {e}")
         raise HTTPException(status_code=500, detail=f"Error retrieving OCR confidence distribution: {str(e)}")
+
+@router.get("/chat-distribution-by-day")
+async def get_chat_distribution_by_day(
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Get distribution of chat conversations by day for the current month."""
+    try:
+        if not hasattr(current_user, 'id') or current_user.id is None:
+            raise HTTPException(status_code=400, detail="Invalid user token")
+        
+        user_id = str(current_user.id)
+        
+        with db_manager.get_connection() as conn:
+            with conn.cursor() as cursor:
+                # Get chat MESSAGE count by day for the current month (Sri Lanka timezone)
+                # Divide by 2 since each message has 2 LLM calls (response + sources), use CEIL for odd numbers
+                query = """
+                    SELECT 
+                        DATE(cm.timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Colombo') as day,
+                        CEIL(COUNT(*)::decimal / 2) as chat_count
+                    FROM chat_messages cm
+                    JOIN conversations c ON cm.conversation_id = c.id
+                    WHERE c.user_id = %s
+                        AND DATE_TRUNC('month', cm.timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Colombo') = 
+                            DATE_TRUNC('month', NOW() AT TIME ZONE 'Asia/Colombo')
+                    GROUP BY DATE(cm.timestamp AT TIME ZONE 'UTC' AT TIME ZONE 'Asia/Colombo')
+                    ORDER BY day ASC
+                """
+                
+                cursor.execute(query, (user_id,))
+                results = cursor.fetchall()
+                
+                # Format data
+                daily_data = []
+                for row in results:
+                    day = row[0]
+                    count = row[1]
+                    daily_data.append({
+                        'day': day.strftime('%d') if day else 'Unknown',
+                        'full_date': day.strftime('%Y-%m-%d') if day else 'Unknown',
+                        'count': count
+                    })
+                
+                # Calculate statistics
+                counts = [item['count'] for item in daily_data]
+                if counts:
+                    avg_count = sum(counts) / len(counts)
+                    max_count = max(counts)
+                    min_count = min(counts)
+                    total_count = sum(counts)
+                else:
+                    avg_count = 0
+                    max_count = 0
+                    min_count = 0
+                    total_count = 0
+                
+                return {
+                    'daily_data': daily_data,
+                    'statistics': {
+                        'average': round(avg_count, 1),
+                        'max': max_count,
+                        'min': min_count,
+                        'total': total_count
+                    }
+                }
+                
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting chat distribution: {e}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving chat distribution: {str(e)}")
