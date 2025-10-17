@@ -841,6 +841,7 @@ import DocumentUploadsChart from './DocumentUploadsChart';
 import TrendsCharts from './TrendsCharts';
 import DocumentSizeDistribution from './DocumentSizeDistribution';
 import ModelUsageChart from './ModelUsageChart';
+import OCRConfidenceChart from './OCRConfidenceChart';
 
 // 🎨 Vibrant Multi-Color Palette (same as Dashboard)
 const VIBRANT_COLORS = [
@@ -1622,6 +1623,11 @@ const Analytics: React.FC = () => {
       <div style={{ display: 'flex', gap: '24px', marginBottom: '24px' }}>
         <DocumentSizeDistribution />
         <ModelUsageChart />
+      </div>
+
+      {/* Fourth Row - OCR Confidence Distribution */}
+      <div style={{ display: 'flex', gap: '24px', marginBottom: '24px' }}>
+        <OCRConfidenceChart />
       </div>
 
       {/* Main Chart - Document Uploads Over Time */}

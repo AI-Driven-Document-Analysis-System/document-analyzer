@@ -328,3 +328,68 @@ async def get_model_usage_over_time(
     except Exception as e:
         logger.error(f"Error getting model usage: {e}")
         raise HTTPException(status_code=500, detail=f"Error retrieving model usage: {str(e)}")
+
+@router.get("/ocr-confidence-distribution")
+async def get_ocr_confidence_distribution(
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Get OCR confidence score distribution for the current user."""
+    try:
+        if not hasattr(current_user, 'id') or current_user.id is None:
+            raise HTTPException(status_code=400, detail="Invalid user token")
+        
+        user_id = str(current_user.id)
+        
+        with db_manager.get_connection() as conn:
+            with conn.cursor() as cursor:
+                # Get OCR confidence scores from document_content table
+                query = """
+                    SELECT dc.ocr_confidence_score
+                    FROM document_content dc
+                    JOIN documents d ON dc.document_id = d.id
+                    WHERE d.user_id = %s
+                        AND dc.ocr_confidence_score IS NOT NULL
+                    ORDER BY dc.ocr_confidence_score ASC
+                """
+                
+                cursor.execute(query, (user_id,))
+                results = cursor.fetchall()
+                
+                scores = [row[0] for row in results if row[0] is not None]
+                
+                # Calculate statistics
+                if scores:
+                    avg_score = sum(scores) / len(scores)
+                    min_score = min(scores)
+                    max_score = max(scores)
+                    
+                    # Create bins for distribution (0-0.5, 0.5-0.7, 0.7-0.85, 0.85-0.95, 0.95-1.0)
+                    bins = {
+                        'low': len([s for s in scores if s < 0.5]),
+                        'medium': len([s for s in scores if 0.5 <= s < 0.7]),
+                        'good': len([s for s in scores if 0.7 <= s < 0.85]),
+                        'very_good': len([s for s in scores if 0.85 <= s < 0.95]),
+                        'excellent': len([s for s in scores if s >= 0.95])
+                    }
+                else:
+                    avg_score = 0
+                    min_score = 0
+                    max_score = 0
+                    bins = {'low': 0, 'medium': 0, 'good': 0, 'very_good': 0, 'excellent': 0}
+                
+                return {
+                    'scores': scores,
+                    'distribution': bins,
+                    'statistics': {
+                        'average': round(avg_score, 4),
+                        'min': round(min_score, 4),
+                        'max': round(max_score, 4),
+                        'total': len(scores)
+                    }
+                }
+                
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting OCR confidence distribution: {e}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving OCR confidence distribution: {str(e)}")
