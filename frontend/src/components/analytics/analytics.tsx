@@ -886,7 +886,17 @@ interface HourData {
   count: number;
 }
 
-// ... (Your helper functions remain unchanged)
+interface LLMUsageData {
+  model: string;
+  provider: string;
+  requests: number;
+  tokens: number;
+  avgResponseTime: number;
+  successRate: number;
+  color: string;
+}
+
+// Helper functions
 const formatFileSize = (bytes: number): string => {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
@@ -967,6 +977,22 @@ const Icons = {
       <path d="M21 12a9 9 0 0 1-9 9 9 9 0 0 1-9-9 9 9 0 0 1 9-9" />
       <path d="M21 12H12V3" />
     </svg>
+  ),
+  Brain: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z" />
+      <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z" />
+    </svg>
+  ),
+  Zap: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+    </svg>
+  ),
+  Activity: () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+      <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+    </svg>
   )
 };
 
@@ -980,6 +1006,7 @@ const Analytics: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [llmTab, setLlmTab] = useState<'tokens' | 'response' | 'cost'>('tokens');
 
   // Storage usage state
   const [storageUsage, setStorageUsage] = useState({ used: 0, total: 2048 });
@@ -1451,54 +1478,195 @@ const Analytics: React.FC = () => {
           </div>
         )}
       </div>
-
       {/* Document Types and Day of Week Charts */}
       <div className="two-column-grid">
-        {/* Document Types */}
+        {/* LLM API Usage Over Time */}
         <div className="doc-types-container">
           <div className="doc-types-header">
-            <h2><Icons.FileType /> Document Types</h2>
-            <p>Breakdown by file type</p>
+            <h2><Icons.Brain /> LLM API Usage Over Time</h2>
+            <p>API requests per day</p>
           </div>
           
-          {documentTypes.length === 0 ? (
-            <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <p style={{ color: '#6b7280' }}>No document types data available</p>
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {documentTypes.slice(0, 8).map((item, index) => {
-                const width = maxTypeCount > 0 ? (item.count / maxTypeCount) * 100 : 0;
+          {/* Model Toggle Tabs */}
+          <div style={{ 
+            display: 'flex', 
+            gap: '8px', 
+            marginTop: '16px',
+            marginBottom: '20px',
+            borderBottom: '2px solid #e5e7eb',
+            paddingBottom: '0'
+          }}>
+            <button
+              onClick={() => setLlmTab('tokens')}
+              style={{
+                padding: '10px 24px',
+                background: llmTab === 'tokens' ? '#3b82f6' : 'transparent',
+                color: llmTab === 'tokens' ? 'white' : '#6b7280',
+                border: 'none',
+                borderRadius: '8px 8px 0 0',
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                borderBottom: llmTab === 'tokens' ? '3px solid #2563eb' : 'none'
+              }}
+              onMouseEnter={(e) => {
+                if (llmTab !== 'tokens') e.currentTarget.style.background = '#f3f4f6';
+              }}
+              onMouseLeave={(e) => {
+                if (llmTab !== 'tokens') e.currentTarget.style.background = 'transparent';
+              }}
+            >
+              DeepSeek-V3
+            </button>
+            <button
+              onClick={() => setLlmTab('response')}
+              style={{
+                padding: '10px 24px',
+                background: llmTab === 'response' ? '#8b5cf6' : 'transparent',
+                color: llmTab === 'response' ? 'white' : '#6b7280',
+                border: 'none',
+                borderRadius: '8px 8px 0 0',
+                fontWeight: 600,
+                fontSize: '0.9rem',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                borderBottom: llmTab === 'response' ? '3px solid #7c3aed' : 'none'
+              }}
+              onMouseEnter={(e) => {
+                if (llmTab !== 'response') e.currentTarget.style.background = '#f3f4f6';
+              }}
+              onMouseLeave={(e) => {
+                if (llmTab !== 'response') e.currentTarget.style.background = 'transparent';
+              }}
+            >
+              Llama-3.1-8B
+            </button>
+          </div>
+
+          {/* GitHub-style Histogram */}
+          <div style={{ 
+            padding: '20px 0',
+            position: 'relative'
+          }}>
+            {/* Chart Container */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'flex-end',
+              gap: '2px',
+              height: '200px',
+              paddingRight: '40px',
+              position: 'relative'
+            }}>
+              {/* Y-axis labels on the right */}
+              <div style={{ position: 'absolute', right: '0px', top: '0px', fontSize: '0.7rem', color: '#9ca3af', fontWeight: 500 }}>100</div>
+              <div style={{ position: 'absolute', right: '0px', top: '40px', fontSize: '0.7rem', color: '#9ca3af', fontWeight: 500 }}>75</div>
+              <div style={{ position: 'absolute', right: '0px', top: '80px', fontSize: '0.7rem', color: '#9ca3af', fontWeight: 500 }}>50</div>
+              <div style={{ position: 'absolute', right: '0px', top: '120px', fontSize: '0.7rem', color: '#9ca3af', fontWeight: 500 }}>25</div>
+              <div style={{ position: 'absolute', right: '0px', bottom: '0px', fontSize: '0.7rem', color: '#9ca3af', fontWeight: 500 }}>0</div>
+              
+              {/* Dotted grid lines (GitHub style) */}
+              <div style={{ position: 'absolute', left: '0', right: '40px', top: '0px', height: '1px', borderTop: '1px dotted #e5e7eb' }}></div>
+              <div style={{ position: 'absolute', left: '0', right: '40px', top: '40px', height: '1px', borderTop: '1px dotted #e5e7eb' }}></div>
+              <div style={{ position: 'absolute', left: '0', right: '40px', top: '80px', height: '1px', borderTop: '1px dotted #e5e7eb' }}></div>
+              <div style={{ position: 'absolute', left: '0', right: '40px', top: '120px', height: '1px', borderTop: '1px dotted #e5e7eb' }}></div>
+              <div style={{ position: 'absolute', left: '0', right: '40px', bottom: '0px', height: '1px', borderTop: '1px dotted #e5e7eb' }}></div>
+              
+              {/* Histogram bars */}
+              {[
+                { date: 'Oct 10', deepseek: 45, llama: 32 },
+                { date: 'Oct 11', deepseek: 62, llama: 41 },
+                { date: 'Oct 12', deepseek: 38, llama: 28 },
+                { date: 'Oct 13', deepseek: 71, llama: 53 },
+                { date: 'Oct 14', deepseek: 89, llama: 67 },
+                { date: 'Oct 15', deepseek: 56, llama: 44 },
+                { date: 'Oct 16', deepseek: 78, llama: 61 }
+              ].map((day, index) => {
+                const maxRequests = 100;
+                const value = llmTab === 'tokens' ? day.deepseek : day.llama;
+                const barHeight = (value / maxRequests) * 200;
+                const barColor = llmTab === 'tokens' ? '#3b82f6' : '#8b5cf6';
+                
                 return (
-                  <div key={index} className="doc-type-item">
-                    <div className="doc-type-label">
-                      {item.type}
-                    </div>
-                    <div className="type-bar-container">
-                      <div 
-                        style={{
-                          width: `${width}%`,
-                          backgroundColor: VIBRANT_COLORS[index % VIBRANT_COLORS.length],
-                          borderRadius: '4px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'flex-end',
-                          paddingRight: '8px',
-                          color: 'white',
-                          fontSize: '0.75rem',
-                          fontWeight: 600
-                        }}
-                        className="type-bar"
-                        title={`${item.type}: ${item.count} files (avg: ${formatFileSize(item.avgSize)})`}
-                      >
-                        <span>{item.count}</span>
-                      </div>
-                    </div>
-                  </div>
+                  <div
+                    key={index}
+                    title={`${day.date}: ${value} requests`}
+                    style={{
+                      flex: 1,
+                      height: `${barHeight}px`,
+                      background: barColor,
+                      borderRadius: '2px 2px 0 0',
+                      transition: 'all 0.2s ease',
+                      cursor: 'pointer',
+                      position: 'relative'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.filter = 'brightness(1.2)';
+                      e.currentTarget.style.transform = 'scaleY(1.02)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.filter = 'brightness(1)';
+                      e.currentTarget.style.transform = 'scaleY(1)';
+                    }}
+                  />
                 );
               })}
             </div>
-          )}
+            
+            {/* X-axis dates */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginTop: '12px',
+              paddingRight: '40px'
+            }}>
+              {['Oct 10', 'Oct 11', 'Oct 12', 'Oct 13', 'Oct 14', 'Oct 15', 'Oct 16'].map((date, idx) => (
+                <div key={idx} style={{
+                  flex: 1,
+                  textAlign: 'center',
+                  fontSize: '0.7rem',
+                  color: '#9ca3af',
+                  fontWeight: 500
+                }}>
+                  {idx % 2 === 0 ? date : ''}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Summary Stats for Selected Model */}
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: '1fr 1fr 1fr', 
+            gap: '20px', 
+            marginTop: '20px',
+            padding: '20px',
+            background: '#1e293b',
+            borderRadius: '8px',
+            border: `2px solid ${llmTab === 'tokens' ? '#3b82f6' : '#8b5cf6'}`
+          }}>
+            <div>
+              <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginBottom: '8px', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.5px' }}>Total Requests</div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 600, color: '#ffffff', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                {llmTab === 'tokens' ? '439' : '326'}
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#cbd5e1', marginTop: '4px' }}>Last 7 days</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginBottom: '8px', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.5px' }}>Daily Average</div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 600, color: '#ffffff', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                {llmTab === 'tokens' ? '63' : '47'}
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#cbd5e1', marginTop: '4px' }}>Requests/day</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.7rem', color: '#94a3b8', marginBottom: '8px', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.5px' }}>Peak Day</div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 600, color: '#ffffff', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+                {llmTab === 'tokens' ? '89' : '67'}
+              </div>
+              <div style={{ fontSize: '0.75rem', color: '#cbd5e1', marginTop: '4px' }}>Oct {llmTab === 'tokens' ? '14' : '14'}</div>
+            </div>
+          </div>
         </div>
 
         {/* Day of Week */}
