@@ -40,7 +40,7 @@ const RecentChats: React.FC = () => {
       const userId = userData.id || userData.user_id;
 
       // Fetch conversations with user_id
-      const response = await fetch(`http://localhost:8000/api/chat/conversations?user_id=${userId}&limit=5`, {
+      const response = await fetch(`http://localhost:8000/api/chat/conversations?user_id=${userId}&limit=3`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -75,7 +75,7 @@ const RecentChats: React.FC = () => {
   return (
     <div className="feature-container" style={{ flex: '1' }}>
       <div className="tab-content-container">
-        <h5 className="mb-4"><i className="fas fa-comments me-2"></i>Recent Chats</h5>
+        <h5 className="mb-4"><i className="fas fa-thumbtack me-2"></i>Pinned Chats</h5>
 
         {loading ? (
           <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
@@ -88,20 +88,39 @@ const RecentChats: React.FC = () => {
           </div>
         ) : (
           <div>
-            {chats.slice(0, 5).map((chat) => (
+            {chats.slice(0, 3).map((chat) => (
               <div 
                 key={chat.id} 
                 className="result-item"
-                style={{ cursor: 'pointer' }}
-                onClick={() => window.location.href = `/chat/${chat.id}`}
               >
-                <div className="flex-grow-1">
-                  <div className="result-title" style={{ marginBottom: '0.5rem' }}>
-                    {chat.title || 'Untitled Chat'}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                  <div className="flex-grow-1">
+                    <div className="result-title" style={{ marginBottom: '0.5rem' }}>
+                      {chat.title || 'Untitled Chat'}
+                    </div>
+                    <div className="result-meta">
+                      {chat.message_count} messages • {formatDate(chat.created_at)}
+                    </div>
                   </div>
-                  <div className="result-meta">
-                    {chat.message_count} messages • {formatDate(chat.created_at)}
-                  </div>
+                  <button
+                    onClick={() => window.location.href = `/chat/${chat.id}`}
+                    style={{
+                      padding: '6px 12px',
+                      fontSize: '0.75rem',
+                      fontWeight: 500,
+                      backgroundColor: '#3b82f6',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      whiteSpace: 'nowrap'
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3b82f6'}
+                  >
+                    View Conversation
+                  </button>
                 </div>
               </div>
             ))}

@@ -3,6 +3,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import './Dashboard.css'; // Import the CSS file
 import RecentDocuments from './RecentDocuments';
 import RecentChats from './RecentChats';
+import PinnedSummaries from './PinnedSummaries';
 import DocumentActivityChart from './DocumentActivityChart';
 import StorageUsageChart from './StorageUsageChart';
 //import DocumentViewer from '../DocumentViewer/DocumentViewer';
@@ -606,15 +607,21 @@ useEffect(() => {
       setLoadingResourceUsage(false);
     }
   };
-
   processResourceUsageData();
 }, [documents]); */
 
 // Pie Chart Component
 const renderPieChart = () => {
-  if (documentTypes.length === 0) return null;
+  const hardcodedData = [
+    { type: 'Research Papers', count: 28 },
+    { type: 'Medical Documents', count: 15 },
+    { type: 'Legal Documents', count: 12 },
+    { type: 'Financial Documents', count: 18 },
+    { type: 'Invoices/Receipts', count: 22 },
+    { type: 'Other', count: 9 }
+  ];
   
-  const total = documentTypes.reduce((sum, item) => sum + item.count, 0);
+  const total = hardcodedData.reduce((sum, item) => sum + item.count, 0);
   //const colors = ['#3b82f6', '#2563eb', '#1d4ed8', '#1e40af', '#1e3a8a', '#172554', '#0f172a', '#020617'];
       const colors = [
       '#3b82f6', // Blue
@@ -636,7 +643,7 @@ const renderPieChart = () => {
     <div style={{ display: 'flex', alignItems: 'center', gap: '24px', height: '100%' }}>
       <div style={{ position: 'relative' }}>
         <svg width="240" height="240" style={{ transform: 'rotate(-90deg)' }}>
-          {documentTypes.slice(0, 8).map((item, index) => {
+          {hardcodedData.map((item, index) => {
             const percentage = (item.count / total) * 100;
             const angle = (item.count / total) * 360;
             const startAngle = currentAngle;
@@ -682,23 +689,10 @@ const renderPieChart = () => {
             );
           })}
         </svg>
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%) rotate(90deg)',
-          textAlign: 'center',
-          color: 'var(--text-primary)',
-          fontSize: '0.875rem',
-          fontWeight: 600
-        }}>
-          <div>{total}</div>
-          <div style={{ fontSize: '0.75rem', fontWeight: 400 }}>Total</div>
-        </div>
       </div>
       
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        {documentTypes.slice(0, 8).map((item, index) => {
+        {hardcodedData.map((item, index) => {
           const percentage = ((item.count / total) * 100).toFixed(1);
           return (
             <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1529,16 +1523,19 @@ const renderResourceUsageChart = () => {
       <div style={{ color: 'var(--danger-color)', fontSize: '0.875rem', textAlign: 'center', marginTop: '1rem' }}>
         {typesError}
       </div>
-    ) : documentTypes.length === 0 ? (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-tertiary)' }}>
-        No data
-      </div>
     ) : chartType === 'pie' ? (
       renderPieChart()
     ) : (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, overflowY: 'auto' }}>
-        {documentTypes.slice(0, 8).map((item, index) => {
-          const maxCount = documentTypes[0]?.count || 1;
+        {[
+          { type: 'Research Papers', count: 28 },
+          { type: 'Medical Documents', count: 15 },
+          { type: 'Legal Documents', count: 12 },
+          { type: 'Financial Documents', count: 18 },
+          { type: 'Invoices/Receipts', count: 22 },
+          { type: 'Other', count: 9 }
+        ].map((item, index) => {
+          const maxCount = 28;
           const width = maxCount > 0 ? (item.count / maxCount) * 100 : 0;
           // const blueShades = ['#3b82f6', '#2563eb', '#1d4ed8', '#1e40af', '#1e3a8a', '#172554'];
           const colors = [
@@ -1701,8 +1698,11 @@ const renderResourceUsageChart = () => {
             onPreview={previewDocumentHandler}
           />
                   
-          {/* Right side - Recent Chats (50% width) */}
-          <RecentChats />
+          {/* Right side - Pinned Chats and Summaries */}
+          <div style={{ flex: '1', display: 'flex', flexDirection: 'column', gap: '0' }}>
+            <RecentChats />
+            <PinnedSummaries />
+          </div>
         </div>
 
         {/* Document Preview Modal */}
