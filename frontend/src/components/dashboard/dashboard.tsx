@@ -6,6 +6,7 @@ import { useState, useEffect, useMemo, useCallback } from "react"
 import './Dashboard.css' // Import the CSS file
 import DocumentActivityChart from './DocumentActivityChart';
 import StorageUsageChart from './StorageUsageChart';
+import { c } from "framer-motion/dist/types.d-Cjd591yU";
 //import DocumentViewer from '../DocumentViewer/DocumentViewer';
 
 // Cache for dashboard data (5-minute TTL)
@@ -22,6 +23,7 @@ interface Document {
   processing_status: 'completed' | 'processing' | 'failed'
   upload_date: string
   user_id: string
+  document_type?: string | null
 }
 
 interface Summary {
@@ -330,28 +332,60 @@ function Dashboard() {
 
   // Helper function: Process documents for types (moved outside useEffect)
   const processDocumentsForTypes = useCallback((docs: Document[]) => {
+    console.log('Processing documents for types, received docs:', docs.length);
+    
+    // Predefined document categories
+    const predefinedCategories = [
+      'Research Paper',
+      'Financial Report', 
+      'Medical Record',
+      'Invoice or Receipt',
+      'Legal Document',
+      'Other'
+    ];
+
     const typeCounts: { [key: string]: { count: number; totalSize: number } } = {};
 
+    // Initialize all predefined categories with zero counts
+    predefinedCategories.forEach(category => {
+      typeCounts[category] = { count: 0, totalSize: 0 };
+    });
+
     docs.forEach(doc => {
-      let type = 'Unknown';
-      if (doc.original_filename) {
-        const ext = doc.original_filename.split('.').pop()?.toUpperCase();
-        type = ext || 'Unknown';
-      } else if (doc.content_type) {
-        const mimeMap: { [key: string]: string } = {
-          'application/pdf': 'PDF',
-          'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'DOCX',
-          'application/msword': 'DOC',
-          'text/plain': 'TXT',
-          'image/png': 'PNG',
-          'image/jpeg': 'JPG',
-          'image/jpg': 'JPG',
-          'application/vnd.ms-excel': 'XLS',
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'XLSX'
-        };
-        type = mimeMap[doc.content_type] || doc.content_type.split('/').pop()?.toUpperCase() || 'Unknown';
+      console.log('Processing document:', doc.original_filename, 'document_type:', doc.document_type);
+      
+      // Default to 'Other'
+      let type = 'Other';
+
+      // Prefer explicit classification if available
+      if (doc.document_type) {
+        const normalizedType = doc.document_type.toLowerCase().trim();
+        switch (normalizedType) {
+          case 'research paper':
+            type = 'Research Paper';
+            break;
+          case 'financial report':
+            type = 'Financial Report';
+            break;
+          case 'medical record':
+            type = 'Medical Record';
+            break;
+          case 'invoice or receipt':
+            type = 'Invoice or Receipt';
+            break;
+          case 'legal document':
+            type = 'Legal Document';
+            break;
+          default:
+            type = 'Other';
+            break;
+        }
+      } else {
+        // No classification available — keep as 'Other'
+        type = 'Other';
       }
 
+      // Safely increment counters
       if (!typeCounts[type]) {
         typeCounts[type] = { count: 0, totalSize: 0 };
       }
@@ -359,14 +393,24 @@ function Dashboard() {
       typeCounts[type].totalSize += doc.file_size || 0;
     });
 
-    return {
-      chartData: Object.entries(typeCounts).map(([type, data]) => ({
-        type,
+    // Build chart data using only the predefined categories
+    const chartData = predefinedCategories.map(category => {
+      const data = typeCounts[category] || { count: 0, totalSize: 0 };
+      return {
+        type: category,
         count: data.count,
         avgSize: data.count > 0 ? data.totalSize / data.count : 0
-      })).sort((a, b) => b.count - a.count)
+      };
+    });
+
+    console.log('Final chart data:', chartData);
+
+    // Return all predefined categories (including those with zero documents)
+    // Preserve the predefined order
+    return {
+      chartData
     };
-  }, []);
+    }, []);
 
   // UNIFIED DATA FETCHING with PARALLEL API CALLS
   useEffect(() => {
@@ -419,13 +463,8 @@ function Dashboard() {
         const docsData = documentsRes.ok ? await documentsRes.json() : { documents: [] };
         const docs = docsData.documents || [];
         
-        let types: DocumentTypeData[] = [];
-        if (typesRes.ok) {
-          const typesData = await typesRes.json();
-          types = typesData.chartData || [];
-        } else {
-          types = processDocumentsForTypes(docs).chartData;
-        }
+        // Always use local processing for document types to ensure predefined categories
+        let types: DocumentTypeData[] = processDocumentsForTypes(docs).chartData;
 
         let activity: Array<{ date: string; count: number }> = [];
         if (activityRes.ok) {
@@ -688,7 +727,7 @@ const renderPieChart = () => {
           position: 'absolute',
           top: '50%',
           left: '50%',
-          transform: 'translate(-50%, -50%) rotate(90deg)',
+          transform: 'translate(-50%, -50%)',
           textAlign: 'center',
           color: 'var(--text-primary)',
           fontSize: '0.875rem',
@@ -715,8 +754,8 @@ const renderPieChart = () => {
                 fontSize: '0.875rem', 
                 color: 'var(--text-primary)', 
                 fontWeight: 500,
-                textTransform: 'uppercase',
-                minWidth: '60px'
+                minWidth: '60px',
+                
               }}>
                 {item.type}
               </div>
@@ -1538,9 +1577,10 @@ const renderResourceUsageChart = () => {
     ) : chartType === 'pie' ? (
       renderPieChart()
     ) : (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, overflowY: 'auto' }}>
-        {documentTypes.slice(0, 8).map((item, index) => {
-          const maxCount = documentTypes[0]?.count || 1;
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, height: '100%', justifyContent: 'space-around' }}>
+        {documentTypes.map((item, index) => {
+          // Calculate max count from all document types for proper scaling
+          const maxCount = Math.max(...documentTypes.map(dt => dt.count));
           const width = maxCount > 0 ? (item.count / maxCount) * 100 : 0;
           // const blueShades = ['#3b82f6', '#2563eb', '#1d4ed8', '#1e40af', '#1e3a8a', '#172554'];
           const colors = [
@@ -1554,22 +1594,25 @@ const renderResourceUsageChart = () => {
                 '#f97316'  // Orange
               ];
                         return (
-            <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '30px' }}>
               <div style={{ 
-                width: '80px', 
-                fontSize: '0.875rem', 
+                width: '120px', 
+                fontSize: '0.8rem', 
                 color: '#4b5563', 
                 fontWeight: 500,
-                textTransform: 'uppercase'
+                flexShrink: 0,
+                textAlign: 'right',
+                paddingRight: '8px'
               }}>
                 {item.type}
               </div>
               <div style={{ 
                 flex: 1, 
-                height: '24px', 
+                height: '20px', 
                 backgroundColor: '#e2e8f0', 
                 borderRadius: '4px',
-                position: 'relative'
+                position: 'relative',
+                minWidth: '100px'
               }}>
                 <div
                   style={{
@@ -1578,20 +1621,30 @@ const renderResourceUsageChart = () => {
                     left: 0,
                     height: '100%',
                     width: `${width}%`,
-                    //backgroundColor: blueShades[index % blueShades.length],
                     backgroundColor: colors[index % colors.length],
                     borderRadius: '4px',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'flex-end',
-                    paddingRight: '8px',
+                    justifyContent: item.count > 0 ? 'flex-end' : 'center',
+                    paddingRight: item.count > 0 ? '6px' : '0',
                     color: 'white',
-                    fontSize: '0.75rem',
-                    fontWeight: 600
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    minWidth: item.count > 0 ? '20px' : '0',
+                    transition: 'width 0.3s ease'
                   }}
                 >
-                  {item.count}
+                  {item.count > 0 ? item.count : ''}
                 </div>
+              </div>
+              <div style={{ 
+                width: '40px', 
+                fontSize: '0.7rem', 
+                color: '#6b7280', 
+                textAlign: 'right',
+                flexShrink: 0
+              }}>
+                {item.count}
               </div>
             </div>
           );
