@@ -1399,9 +1399,9 @@ const Analytics: React.FC = () => {
       )}
 
       {/* Storage Usage, LLM API Usage, and Stats - Second Row */}
-      <div style={{ display: 'flex', gap: '24px', marginBottom: '24px' }}>
-        {/* Storage Usage - Square Box */}
-        <div style={{ width: '280px', height: '280px', flexShrink: 0 }}>
+      <div style={{ display: 'flex', gap: '24px', marginBottom: '24px', alignItems: 'stretch' }}>
+        {/* Storage Usage - Matched Height */}
+        <div style={{ width: '280px', flexShrink: 0 }}>
           <StorageUsageChart 
             used={storageUsage.used} 
             total={storageUsage.total} 
@@ -1411,7 +1411,7 @@ const Analytics: React.FC = () => {
           />
         </div>
 
-        {/* LLM API Usage - Expanded width */}
+        {/* LLM API Usage - Expanded to fill space */}
         <div style={{ flex: 1 }} className="doc-types-container">
           <div className="doc-types-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
@@ -1491,11 +1491,9 @@ const Analytics: React.FC = () => {
             </div>
           </div>
 
-          {/* Histogram and Stats Container */}
-          <div style={{ display: 'flex', gap: '16px', padding: '6px 0', alignItems: 'flex-start' }}>
-            {/* GitHub-style Histogram */}
+          {/* GitHub-style Histogram */}
+          <div style={{ padding: '6px 0' }}>
             <div style={{ 
-              flex: 1,
               position: 'relative'
             }}>
               {/* Chart Container */}
@@ -1503,7 +1501,7 @@ const Analytics: React.FC = () => {
                 display: 'flex',
                 alignItems: 'flex-end',
                 gap: '2px',
-                height: '120px',
+                height: '180px',
                 paddingRight: '40px',
                 position: 'relative'
               }}>
@@ -1527,7 +1525,7 @@ const Analytics: React.FC = () => {
                 ].map((day, index) => {
                   const maxRequests = 100;
                   const value = llmTab === 'tokens' ? day.deepseek : day.llama;
-                  const barHeight = (value / maxRequests) * 120;
+                  const barHeight = (value / maxRequests) * 180;
                   const barColor = llmTab === 'tokens' ? '#3b82f6' : '#8b5cf6';
                   
                   return (
@@ -1576,44 +1574,44 @@ const Analytics: React.FC = () => {
                 ))}
               </div>
             </div>
-
-            {/* Summary Stats Box - On the right side */}
-            <div style={{ 
-            width: '220px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '12px',
-            padding: '16px',
-            background: '#1e293b',
-            borderRadius: '6px',
-            border: `2px solid ${llmTab === 'tokens' ? '#3b82f6' : '#8b5cf6'}`,
-            flexShrink: 0,
-            marginLeft: '16px'
-          }}>
-            <div>
-              <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginBottom: '6px', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.5px' }}>Total Requests</div>
-              <div style={{ fontSize: '1.6rem', fontWeight: 600, color: '#ffffff', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-                {llmTab === 'tokens' ? '439' : '326'}
-              </div>
-              <div style={{ fontSize: '0.7rem', color: '#cbd5e1', marginTop: '4px' }}>Last 7 days</div>
-            </div>
-            <div style={{ height: '1px', background: '#334155' }}></div>
-            <div>
-              <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginBottom: '6px', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.5px' }}>Daily Average</div>
-              <div style={{ fontSize: '1.6rem', fontWeight: 600, color: '#ffffff', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-                {llmTab === 'tokens' ? '63' : '47'}
-              </div>
-              <div style={{ fontSize: '0.7rem', color: '#cbd5e1', marginTop: '4px' }}>Requests/day</div>
-            </div>
-            <div style={{ height: '1px', background: '#334155' }}></div>
-            <div>
-              <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginBottom: '6px', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.5px' }}>Peak Day</div>
-              <div style={{ fontSize: '1.6rem', fontWeight: 600, color: '#ffffff', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-                {llmTab === 'tokens' ? '89' : '67'}
-              </div>
-              <div style={{ fontSize: '0.7rem', color: '#cbd5e1', marginTop: '4px' }}>Oct {llmTab === 'tokens' ? '14' : '14'}</div>
-            </div>
           </div>
+        </div>
+
+        {/* Summary Stats Box - Separate Card */}
+        <div className="doc-types-container" style={{ 
+          width: '240px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          gap: '12px',
+          padding: '16px',
+          background: 'var(--bg-primary)',
+          borderRadius: '8px',
+          border: `2px solid ${llmTab === 'tokens' ? '#3b82f6' : '#8b5cf6'}`,
+          flexShrink: 0
+        }}>
+          <div>
+            <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginBottom: '6px', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.5px' }}>Total Requests</div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 600, color: '#ffffff', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+              {llmTab === 'tokens' ? '439' : '326'}
+            </div>
+            <div style={{ fontSize: '0.7rem', color: '#cbd5e1', marginTop: '4px' }}>Last 7 days</div>
+          </div>
+          <div style={{ height: '1px', background: '#334155' }}></div>
+          <div>
+            <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginBottom: '6px', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.5px' }}>Daily Average</div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 600, color: '#ffffff', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+              {llmTab === 'tokens' ? '63' : '47'}
+            </div>
+            <div style={{ fontSize: '0.7rem', color: '#cbd5e1', marginTop: '4px' }}>Requests/day</div>
+          </div>
+          <div style={{ height: '1px', background: '#334155' }}></div>
+          <div>
+            <div style={{ fontSize: '0.65rem', color: '#94a3b8', marginBottom: '6px', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '0.5px' }}>Peak Day</div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 600, color: '#ffffff', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
+              {llmTab === 'tokens' ? '89' : '67'}
+            </div>
+            <div style={{ fontSize: '0.7rem', color: '#cbd5e1', marginTop: '4px' }}>Oct {llmTab === 'tokens' ? '14' : '14'}</div>
           </div>
         </div>
       </div>
