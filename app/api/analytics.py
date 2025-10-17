@@ -250,3 +250,81 @@ async def get_storage_usage(
     except Exception as e:
         logger.error(f"Error getting storage usage: {e}")
         raise HTTPException(status_code=500, detail=f"Error retrieving storage usage: {str(e)}")
+
+@router.get("/model-usage-over-time")
+async def get_model_usage_over_time(
+    period: str = "30d",
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Get summarization model usage statistics over time."""
+    try:
+        if not hasattr(current_user, 'id') or current_user.id is None:
+            raise HTTPException(status_code=400, detail="Invalid user token")
+        
+        user_id = str(current_user.id)
+        
+        # Calculate date range
+        end_date = datetime.now()
+        if period == "7d":
+            start_date = end_date - timedelta(days=7)
+            group_by = "DATE(ds.created_at)"
+        elif period == "30d":
+            start_date = end_date - timedelta(days=30)
+            group_by = "DATE(ds.created_at)"
+        elif period == "90d":
+            start_date = end_date - timedelta(days=90)
+            group_by = "DATE_TRUNC('week', ds.created_at)"
+        elif period == "1y":
+            start_date = end_date - timedelta(days=365)
+            group_by = "DATE_TRUNC('month', ds.created_at)"
+        else:
+            raise HTTPException(status_code=400, detail="Invalid period")
+        
+        with db_manager.get_connection() as conn:
+            with conn.cursor() as cursor:
+                # Map facebook/bart-large-cnn to t5
+                query = f"""
+                    SELECT 
+                        {group_by} as date,
+                        CASE 
+                            WHEN ds.model_version = 'facebook/bart-large-cnn' THEN 't5'
+                            ELSE ds.model_version
+                        END as model,
+                        COUNT(*) as usage_count
+                    FROM document_summaries ds
+                    JOIN documents d ON ds.document_id = d.id
+                    WHERE d.user_id = %s
+                        AND ds.created_at >= %s
+                        AND ds.created_at <= %s
+                    GROUP BY date, model
+                    ORDER BY date ASC, model
+                """
+                
+                cursor.execute(query, (user_id, start_date, end_date))
+                results = cursor.fetchall()
+                
+                # Transform data into time series format
+                data_by_model = {}
+                for row in results:
+                    date_str = row[0].strftime('%Y-%m-%d') if hasattr(row[0], 'strftime') else str(row[0])
+                    model = row[1] or 'unknown'
+                    count = row[2]
+                    
+                    if model not in data_by_model:
+                        data_by_model[model] = []
+                    
+                    data_by_model[model].append({
+                        'date': date_str,
+                        'count': count
+                    })
+                
+                return {
+                    'models': data_by_model,
+                    'period': period
+                }
+                
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting model usage: {e}")
+        raise HTTPException(status_code=500, detail=f"Error retrieving model usage: {str(e)}")

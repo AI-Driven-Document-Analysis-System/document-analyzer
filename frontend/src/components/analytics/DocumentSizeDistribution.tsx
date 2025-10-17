@@ -34,18 +34,18 @@ const DocumentSizeDistribution: React.FC<DocumentSizeDistributionProps> = () => 
   const maxCount = Math.max(...bins.map(b => b.count));
 
   return (
-    <div className="chart-container" style={{ marginBottom: '24px', width: '50%' }}>
+    <div className="chart-container" style={{ width: '50%' }}>
       <div className="chart-header">
         <h2><Icons.BarChart /> Document Size Distribution</h2>
       </div>
 
-      <div style={{ padding: '24px 16px' }}>
+      <div style={{ padding: '24px 16px', paddingBottom: '16px' }}>
         {/* Histogram */}
         <div style={{ 
           display: 'flex', 
           alignItems: 'flex-end', 
           gap: '0',
-          height: '250px',
+          height: '130px',
           position: 'relative',
           paddingLeft: '40px'
         }}>
@@ -76,7 +76,7 @@ const DocumentSizeDistribution: React.FC<DocumentSizeDistributionProps> = () => 
 
           {/* Histogram bars */}
           {bins.map((bin, index) => {
-            const barHeight = maxCount > 0 ? (bin.count / maxCount) * 250 : 0;
+            const barHeight = maxCount > 0 ? (bin.count / maxCount) * 130 : 0;
             // Blue gradient from light to dark
             const lightness = 70 - (index / bins.length) * 30; // 70% to 40%
             const color = `hsl(210, 80%, ${lightness}%)`;
@@ -161,7 +161,7 @@ const DocumentSizeDistribution: React.FC<DocumentSizeDistributionProps> = () => 
         {/* X-axis label */}
         <div style={{
           textAlign: 'center',
-          marginTop: '12px',
+          marginTop: '8px',
           fontSize: '0.75rem',
           color: '#9ca3af',
           fontWeight: 600

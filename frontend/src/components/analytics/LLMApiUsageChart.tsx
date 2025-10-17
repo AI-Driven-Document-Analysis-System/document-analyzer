@@ -8,7 +8,7 @@ const LLMApiUsageChart: React.FC = () => {
     <div style={{ flex: 1 }} className="doc-types-container">
       <div className="doc-types-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h2><Icons.Brain /> LLM API Usage Over Time</h2>
+          <h2><Icons.Brain /> LLM API Usage</h2>
           <p>API requests per day</p>
         </div>
         

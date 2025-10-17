@@ -840,6 +840,7 @@ import LLMApiUsageChart from './LLMApiUsageChart';
 import DocumentUploadsChart from './DocumentUploadsChart';
 import TrendsCharts from './TrendsCharts';
 import DocumentSizeDistribution from './DocumentSizeDistribution';
+import ModelUsageChart from './ModelUsageChart';
 
 // 🎨 Vibrant Multi-Color Palette (same as Dashboard)
 const VIBRANT_COLORS = [
@@ -1416,7 +1417,7 @@ const Analytics: React.FC = () => {
         <div style={{ flex: 1 }} className="doc-types-container">
           <div className="doc-types-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
-              <h2><Icons.Brain /> LLM API Usage Over Time</h2>
+              <h2><Icons.Brain /> LLM API Usage</h2>
               <p>API requests per day</p>
             </div>
             
@@ -1617,8 +1618,11 @@ const Analytics: React.FC = () => {
         </div>
       </div>
 
-      {/* Third Row - Document Size Distribution */}
-      <DocumentSizeDistribution />
+      {/* Third Row - Document Size Distribution and Model Usage */}
+      <div style={{ display: 'flex', gap: '24px', marginBottom: '24px' }}>
+        <DocumentSizeDistribution />
+        <ModelUsageChart />
+      </div>
 
       {/* Main Chart - Document Uploads Over Time */}
       <div className="chart-container">
