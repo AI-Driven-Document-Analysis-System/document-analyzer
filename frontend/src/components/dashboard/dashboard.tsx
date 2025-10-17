@@ -1,15 +1,13 @@
-
-
-
 //****************************CSS */
-import { useState, useEffect, useMemo, useCallback } from "react"
-import './Dashboard.css' // Import the CSS file
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import './Dashboard.css'; // Import the CSS file
+import RecentDocuments from './RecentDocuments';
+import RecentChats from './RecentChats';
 import DocumentActivityChart from './DocumentActivityChart';
 import StorageUsageChart from './StorageUsageChart';
 //import DocumentViewer from '../DocumentViewer/DocumentViewer';
 
 // Cache for dashboard data (5-minute TTL)
-const dashboardCache: { data: any; timestamp: number } | null = null;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 let cacheInstance: { data: any; timestamp: number } | null = null;
 
@@ -1695,85 +1693,16 @@ const renderResourceUsageChart = () => {
         </div>
 
         {/* Search and Chat Feature */}
-        <div style={{ display: 'flex', gap: '1.5rem', position: 'relative', minHeight: '600px' }}>
-          {/* Left side - Search and Recent Documents (50% width) */}
-          <div className="feature-container" style={{ flex: '0 0 50%', borderRight: '2px solid var(--border-color)' }}>
-            <div className="tab-content-container">
-                    <div className="search-input-group">
-                      <span className="search-icon"><i className="fas fa-search"></i></span>
-                      <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Search across all your documents..."
-                      />
-                    </div>
-
-                    <h5 className="mb-4"><i className="fas fa-history me-2"></i>Recent Documents</h5>
-
-                    {documentsWithSummary.length === 0 ? (
-                      <div className="text-center py-5">
-                        <i className="fas fa-file-alt empty-state-icon"></i>
-                        <p className="mt-3 text-muted">No documents uploaded yet.</p>
-                      </div>
-                    ) : (
-                      <div>
-                        {documentsWithSummary.slice(0, 5).map((doc) => (
-                        <div key={doc.id} className="result-item">
-                          <div className="d-flex">
-                          <div className="result-icon">
-                            <i className="fas fa-file-invoice"></i>
-                          </div>
-                          <div className="flex-grow-1">
-                            <div className="result-title">
-                              {doc.name}
-                              <span className="doc-type-tag tag-invoice">{doc.type}</span>
-                            </div>
-                            {/* <div className="result-snippet">
-                              Financial summary for Q4 2023 showing a 12% increase in revenue compared to previous year...
-                            </div> */}
-                            <div className="result-meta">
-                              PDF • 2.4 MB • Last accessed: {doc.uploadedAt}
-                            </div>
-                            <div className="result-actions">
-                              <button
-                                className="btn summarize-btn"
-                                onClick={() => handleSummarizeDoc(doc)}
-                              >
-                                <i className="fas fa-file-contract me-1"></i>Summarize
-                              </button>
-                              <button
-                                className="btn chat-doc-btn"
-                                onClick={() => handleChatWithDoc(doc)}
-                              >
-                                <i className="fas fa-comments me-1"></i>Chat with Doc
-                              </button>
-                              <button
-                                className="btn preview-btn"
-                                onClick={() => previewDocumentHandler(doc)}
-                              >
-                                <i className="fas fa-eye me-1"></i>Preview
-                              </button>
-                            </div>
-                          </div>
-                          </div>
-                        </div>
-                        ))}
-                      </div>
-                    )}
-            </div>
-          </div>
+        <div style={{ display: 'flex', gap: '1.5rem', position: 'relative' }}>
+          <RecentDocuments 
+            documents={documentsWithSummary}
+            onSummarize={handleSummarizeDoc}
+            onChatWithDoc={handleChatWithDoc}
+            onPreview={previewDocumentHandler}
+          />
                   
-          {/* Right side - Charts area (50% width) */}
-          <div style={{ flex: '1', paddingLeft: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            {/* Top chart placeholder */}
-            <div style={{ flex: '1', minHeight: '250px' }}>
-              {/* Add your top chart here */}
-            </div>
-            {/* Bottom chart placeholder */}
-            <div style={{ flex: '1', minHeight: '250px' }}>
-              {/* Add your bottom chart here */}
-            </div>
-          </div>
+          {/* Right side - Recent Chats (50% width) */}
+          <RecentChats />
         </div>
 
         {/* Document Preview Modal */}
