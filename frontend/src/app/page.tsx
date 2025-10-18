@@ -189,28 +189,47 @@ export default function Page() {
             </div>
           </div>
           <div className="header-right">
-            <button className="header-btn" title="Search">
+            {/* <button className="header-btn" title="Search">
               <i className="fas fa-search"></i>
-            </button>
+            </button> */}
             <button className="upload-btn" onClick={() => handleNavigation('/upload')}>
               <i className="fas fa-cloud-upload-alt"></i>
               <span>Upload Document</span>
             </button>
             <div className="header-actions">
-              <button className="header-btn" title="Notifications">
+              {/* <button className="header-btn" title="Notifications">
                 <i className="fas fa-bell"></i>
                 <span className="notification-badge">3</span>
+              </button> */}
+              <button 
+                  className="header-btn" 
+                  title="Settings"
+                  onClick={() => handleNavigation('/settings')}
+                >
+                  <i className="fas fa-cog"></i>
               </button>
-              <button className="header-btn" title="Settings">
-                <i className="fas fa-cog"></i>
-              </button>
-              <div className="user-profile">
+
+              <div className="user-profile" onClick={() => handleNavigation('/profile')}>
                 <div className="user-avatar">
                   <i className="fas fa-user"></i>
                 </div>
                 <span className="user-name">{user?.username || 'User'}</span>
                 <i className="fas fa-chevron-down"></i>
               </div>
+
+              {/* <button className="header-btn" title="Settings">
+                <i className="fas fa-cog"></i>
+              </button> */}
+              {/* <div className="user-profile">
+                <div className="user-avatar">
+                  <i className="fas fa-user"></i>
+                </div>
+                <span className="user-name">{user?.username || 'User'}</span>
+                <i className="fas fa-chevron-down"></i>
+              </div> */}
+
+              
+              
             </div>
           </div>
         </header>

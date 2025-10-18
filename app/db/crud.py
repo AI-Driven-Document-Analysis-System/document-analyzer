@@ -357,6 +357,44 @@ class DocumentCRUD:
         except Exception as e:
             logger.error(f"Error saving document content: {e}")
             raise
+    
+    def save_document_classification(self, document_id: UUID, document_type: str, confidence_score: float = 1.0, model_version: str = None) -> bool:
+        """Insert or update document classification for a document."""
+        from datetime import datetime
+        try:
+            # Check if classification exists
+            existing = self.db.execute_one(
+                "SELECT id FROM document_classifications WHERE document_id = %s",
+                (document_id,)
+            )
+            now = datetime.utcnow()
+            if existing:
+                query = (
+                    """
+                    UPDATE document_classifications
+                    SET document_type = %s,
+                        confidence_score = %s,
+                        model_version = %s,
+                        classified_at = %s
+                    WHERE document_id = %s
+                    """
+                )
+                params = (document_type, confidence_score, model_version, now, document_id)
+            else:
+                query = (
+                    """
+                    INSERT INTO document_classifications (
+                        id, document_id, document_type, confidence_score, model_version, classified_at
+                    ) VALUES (%s, %s, %s, %s, %s, %s)
+                    """
+                )
+                from uuid import uuid4
+                params = (str(uuid4()), document_id, document_type, confidence_score, model_version, now)
+            self.db.execute_query(query, params)
+            return True
+        except Exception as e:
+            logger.error(f"Error saving document classification: {e}")
+            return False
 
 # Initialize CRUD instances
 def get_user_crud():

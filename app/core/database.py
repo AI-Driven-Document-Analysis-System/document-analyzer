@@ -51,8 +51,8 @@ class DatabaseManager:
                     raise
 
                 self.connection_pool = ThreadedConnectionPool(
-                    minconn=3,   # Conservative minimum for Aiven 20-connection limit
-                    maxconn=18,  # Use 18 of 20 available (leave 2 for admin/monitoring)
+                    minconn=1,   # START WITH JUST 1 CONNECTION  
+                    maxconn=2,   # ONLY 2 CONNECTION PER TEAM MEMBER
                     dsn=database_url,
                     # Add connection timeout and keepalive settings
                     connect_timeout=5,

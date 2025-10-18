@@ -40,7 +40,17 @@ const DocumentTypesChart: React.FC<Props> = ({ documentTypes, formatFileSize }) 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           {documentTypes.slice(0, 8).map((item, index) => {
             const width = maxTypeCount > 0 ? (item.count / maxTypeCount) * 100 : 0;
-            const blueShades = ['#3b82f6', '#2563eb', '#1d4ed8', '#1e40af', '#1e3a8a', '#172554'];
+            //const blueShades = ['#3b82f6', '#2563eb', '#1d4ed8', '#1e40af', '#1e3a8a', '#172554'];
+            const colors = [
+                '#3b82f6', // Blue
+                '#ef4444', // Red
+                '#10b981', // Green
+                '#f59e0b', // Amber
+                '#8b5cf6', // Purple
+                '#ec4899', // Pink
+                '#06b6d4', // Cyan
+                '#f97316'  // Orange
+              ];
             return (
               <div key={index} className="doc-type-item">
                 <div className="doc-type-label">{item.type}</div>
@@ -48,7 +58,8 @@ const DocumentTypesChart: React.FC<Props> = ({ documentTypes, formatFileSize }) 
                   <div 
                     style={{
                       width: `${width}%`,
-                      backgroundColor: blueShades[index % blueShades.length]
+                      //backgroundColor: blueShades[index % blueShades.length]
+                      backgroundColor: colors[index % colors.length]
                     }}
                     className="type-bar"
                     title={`${item.type}: ${item.count} files (avg: ${formatFileSize(item.avgSize)})`}
@@ -66,3 +77,5 @@ const DocumentTypesChart: React.FC<Props> = ({ documentTypes, formatFileSize }) 
 };
 
 export default DocumentTypesChart;
+
+

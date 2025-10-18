@@ -105,7 +105,7 @@ export function MarkdownRenderer({ content, className = '', isDarkMode = false }
     return (
       <code
         style={{
-          backgroundColor: isDarkMode ? '#4a5568' : '#f1f5f9',
+          backgroundColor: isDarkMode ? '#1f2937' : '#f1f5f9',
           padding: '2px 6px',
           borderRadius: '4px',
           fontSize: '0.9em',
@@ -132,7 +132,7 @@ export function MarkdownRenderer({ content, className = '', isDarkMode = false }
               fontWeight: '700',
               marginBottom: '16px',
               marginTop: '24px',
-              color: isDarkMode ? '#f7fafc' : '#1f2937',
+              color: isDarkMode ? '#3b82f6' : '#1f2937',
               borderBottom: `2px solid ${isDarkMode ? '#4a5568' : '#e5e7eb'}`,
               paddingBottom: '8px'
             }}>
@@ -145,7 +145,7 @@ export function MarkdownRenderer({ content, className = '', isDarkMode = false }
               fontWeight: '600',
               marginBottom: '12px',
               marginTop: '20px',
-              color: isDarkMode ? '#f7fafc' : '#1f2937'
+              color: isDarkMode ? '#3b82f6' : '#1f2937'
             }}>
               {children}
             </h2>
@@ -156,7 +156,7 @@ export function MarkdownRenderer({ content, className = '', isDarkMode = false }
               fontWeight: '600',
               marginBottom: '10px',
               marginTop: '16px',
-              color: isDarkMode ? '#f7fafc' : '#374151'
+              color: isDarkMode ? '#3b82f6' : '#374151'
             }}>
               {children}
             </h3>

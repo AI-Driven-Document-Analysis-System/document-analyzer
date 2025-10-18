@@ -39,7 +39,7 @@ export function Sidebar({ isOpen, onNavigate, currentRoute, onToggle, user, onLo
           <div className="sidebar-logo-icon">
             <i className="fas fa-brain"></i>
           </div>
-          <span className="sidebar-logo-text">DocuMind AI</span>
+          <span className="sidebar-logo-text">DocAnalyzer</span>
         </div>
       </div>
 

@@ -22,8 +22,8 @@ export function ChatInput({ inputValue, setInputValue, onSendMessage, isTyping, 
 
   // Available models
   const availableModels = [
-    { provider: 'groq', model: 'llama-3.1-8b-instant', name: 'Groq Llama 3.1 8B' },
-    { provider: 'deepseek', model: 'deepseek-chat', name: 'DeepSeek Chat' }
+    { provider: 'groq', model: 'llama-3.1-8b-instant', name: 'Llama-3.1-8b-instant' },
+    { provider: 'deepseek', model: 'deepseek-chat', name: 'Deepseek-v3' }
   ]
 
   // Close dropdowns when clicking outside
@@ -85,8 +85,8 @@ export function ChatInput({ inputValue, setInputValue, onSendMessage, isTyping, 
             }}
           >
             {searchMode === 'standard' ? 'Standard search' : 
-             searchMode === 'rephrase' ? 'Enhanced search - Rephrase' : 
-             'Enhanced search - Multiple queries'}
+             searchMode === 'rephrase' ? 'Rephrase' : 
+             'Multiple queries'}
           </button>
           
           {isDropdownOpen && (
@@ -112,10 +112,10 @@ export function ChatInput({ inputValue, setInputValue, onSendMessage, isTyping, 
                   cursor: 'pointer',
                   fontSize: '12px',
                   color: isDarkMode ? '#f9fafb' : '#374151',
-                  backgroundColor: searchMode === 'standard' ? (isDarkMode ? '#4b5563' : '#f3f4f6') : 'transparent'
+                  backgroundColor: searchMode === 'standard' ? (isDarkMode ? '#1f2937' : '#e5e7eb') : 'transparent'
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isDarkMode ? '#4b5563' : '#f9fafb'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = searchMode === 'standard' ? (isDarkMode ? '#4b5563' : '#f3f4f6') : 'transparent'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = searchMode === 'standard' ? (isDarkMode ? '#1f2937' : '#e5e7eb') : 'transparent'}
               >
                 <div style={{ fontWeight: '500', marginBottom: '2px' }}>Standard search</div>
                 <div style={{ fontSize: '10px', color: isDarkMode ? '#9ca3af' : '#6b7280', lineHeight: '1.2' }}>
@@ -132,13 +132,13 @@ export function ChatInput({ inputValue, setInputValue, onSendMessage, isTyping, 
                   cursor: 'pointer',
                   fontSize: '12px',
                   color: isDarkMode ? '#f9fafb' : '#374151',
-                  backgroundColor: searchMode === 'rephrase' ? (isDarkMode ? '#4b5563' : '#f3f4f6') : 'transparent',
+                  backgroundColor: searchMode === 'rephrase' ? (isDarkMode ? '#1f2937' : '#e5e7eb') : 'transparent',
                   borderTop: `1px solid ${isDarkMode ? '#4b5563' : '#e5e7eb'}`
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isDarkMode ? '#4b5563' : '#f9fafb'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = searchMode === 'rephrase' ? (isDarkMode ? '#4b5563' : '#f3f4f6') : 'transparent'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = searchMode === 'rephrase' ? (isDarkMode ? '#1f2937' : '#e5e7eb') : 'transparent'}
               >
-                <div style={{ fontWeight: '500', marginBottom: '2px' }}>Enhanced search - Rephrase</div>
+                <div style={{ fontWeight: '500', marginBottom: '2px' }}>Rephrase</div>
                 <div style={{ fontSize: '10px', color: isDarkMode ? '#9ca3af' : '#6b7280', lineHeight: '1.2' }}>
                   Better clarity for unclear questions (adds ~1-3 seconds)
                 </div>
@@ -153,13 +153,13 @@ export function ChatInput({ inputValue, setInputValue, onSendMessage, isTyping, 
                   cursor: 'pointer',
                   fontSize: '12px',
                   color: isDarkMode ? '#f9fafb' : '#374151',
-                  backgroundColor: searchMode === 'multiple_queries' ? (isDarkMode ? '#4b5563' : '#f3f4f6') : 'transparent',
+                  backgroundColor: searchMode === 'multiple_queries' ? (isDarkMode ? '#1f2937' : '#e5e7eb') : 'transparent',
                   borderTop: `1px solid ${isDarkMode ? '#4b5563' : '#e5e7eb'}`
                 }}
                 onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isDarkMode ? '#4b5563' : '#f9fafb'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = searchMode === 'multiple_queries' ? (isDarkMode ? '#4b5563' : '#f3f4f6') : 'transparent'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = searchMode === 'multiple_queries' ? (isDarkMode ? '#1f2937' : '#e5e7eb') : 'transparent'}
               >
-                <div style={{ fontWeight: '500', marginBottom: '2px' }}>Enhanced search - Multiple queries</div>
+                <div style={{ fontWeight: '500', marginBottom: '2px' }}>Multiple queries</div>
                 <div style={{ fontSize: '10px', color: isDarkMode ? '#9ca3af' : '#6b7280', lineHeight: '1.2' }}>
                   Comprehensive answers for complex topics (adds ~3-8 seconds)
                 </div>
@@ -195,7 +195,7 @@ export function ChatInput({ inputValue, setInputValue, onSendMessage, isTyping, 
                 width: '6px', 
                 height: '6px', 
                 borderRadius: '50%', 
-                backgroundColor: selectedModel?.provider === 'groq' ? '#10b981' : '#3b82f6',
+                backgroundColor: selectedModel?.provider === 'groq' ? '#9e42f5' : '#3b82f6',
                 flexShrink: 0
               }}></span>
               <span style={{ 
@@ -204,7 +204,7 @@ export function ChatInput({ inputValue, setInputValue, onSendMessage, isTyping, 
                 whiteSpace: 'nowrap',
                 flex: 1
               }}>
-                {selectedModel?.provider === 'groq' ? 'Groq' : selectedModel?.provider === 'deepseek' ? 'DeepSeek' : 'Default'}
+                {selectedModel?.provider === 'groq' ? 'Llama-3.1-8b-instant' : selectedModel?.provider === 'deepseek' ? 'Deepseek-v3' : 'Default'}
               </span>
             </button>
 
@@ -234,30 +234,30 @@ export function ChatInput({ inputValue, setInputValue, onSendMessage, isTyping, 
                       cursor: 'pointer',
                       fontSize: '12px',
                       color: isDarkMode ? '#f9fafb' : '#374151',
-                      backgroundColor: selectedModel?.provider === model.provider ? (isDarkMode ? '#4b5563' : '#f3f4f6') : 'transparent',
+                      backgroundColor: selectedModel?.provider === model.provider ? (isDarkMode ? '#1f2937' : '#e5e7eb') : 'transparent',
                       borderTop: index > 0 ? `1px solid ${isDarkMode ? '#4b5563' : '#e5e7eb'}` : 'none',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px'
                     }}
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = isDarkMode ? '#4b5563' : '#f9fafb'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = selectedModel?.provider === model.provider ? (isDarkMode ? '#4b5563' : '#f3f4f6') : 'transparent'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = selectedModel?.provider === model.provider ? (isDarkMode ? '#1f2937' : '#e5e7eb') : 'transparent'}
                   >
                     <span style={{ 
                       width: '8px', 
                       height: '8px', 
                       borderRadius: '50%', 
-                      backgroundColor: model.provider === 'groq' ? '#10b981' : '#3b82f6',
+                      backgroundColor: model.provider === 'groq' ? '#9e42f5' : '#3b82f6',
                       flexShrink: 0
                     }}></span>
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: '500', marginBottom: '2px' }}>{model.provider === 'groq' ? 'Groq' : 'DeepSeek'}</div>
+                      <div style={{ fontWeight: '500', marginBottom: '2px' }}>{model.provider === 'groq' ? 'Llama-3.1-8b-instant' : 'Deepseek-v3'}</div>
                       <div style={{ fontSize: '10px', color: isDarkMode ? '#9ca3af' : '#6b7280', lineHeight: '1.2' }}>
                         {model.provider === 'groq' ? 'Fast responses, free tier' : 'High quality, reliable'}
                       </div>
                     </div>
                     {selectedModel?.provider === model.provider && (
-                      <i className="fas fa-check" style={{ fontSize: '10px', color: '#10b981' }}></i>
+                      <i className="fas fa-check" style={{ fontSize: '10px', color: '#9e42f5' }}></i>
                     )}
                   </div>
                 ))}

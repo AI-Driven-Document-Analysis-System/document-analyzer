@@ -15,6 +15,7 @@ export const useDocumentManagement = () => {
   const [showRestoredNotification, setShowRestoredNotification] = useState(false)
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [clearingDocuments, setClearingDocuments] = useState(false)
   
   const [documentFilter, setDocumentFilter] = useState('all')
   const [documentSearch, setDocumentSearch] = useState('')
@@ -126,6 +127,7 @@ export const useDocumentManagement = () => {
 
   const clearAllDocuments = async () => {
     try {
+      setClearingDocuments(true)
       const token = localStorage.getItem('token')
       if (!token) return
 
@@ -140,6 +142,8 @@ export const useDocumentManagement = () => {
       setSelectedDocuments([])
     } catch (error) {
       console.error('Error clearing document selection:', error)
+    } finally {
+      setClearingDocuments(false)
     }
   }
 
@@ -166,6 +170,7 @@ export const useDocumentManagement = () => {
     clearPersistedSelection,
     showRestoredNotification,
     setShowRestoredNotification,
-    isLoading
+    isLoading,
+    clearingDocuments
   }
 }

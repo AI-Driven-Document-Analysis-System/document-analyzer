@@ -17,6 +17,7 @@
 :root {
   /* Light Mode Colors */
   --bg-primary: #ffffff;
+  --bg-primary-rgb: 255, 255, 255;
   --bg-secondary: #f8fafc;
   --bg-tertiary: #f1f5f9;
   --text-primary: #1e293b;
@@ -51,6 +52,7 @@
 /* Dark Mode Colors - Dark Blue & Black Theme */
 [data-theme='dark'] {
   --bg-primary: #0f172a;
+  --bg-primary-rgb: 15, 23, 42;
   --bg-secondary: #1e293b;
   --bg-tertiary: #334155;
   --text-primary: #f1f5f9;
@@ -2055,7 +2057,7 @@ body {
 
 .result-title {
   font-weight: 600;
-  color: #212529;
+  color: var(--text-primary);
   font-size: 1.1rem;
 }
 
@@ -2112,11 +2114,12 @@ body {
   font-size: 0.8rem;
   font-weight: 500;
   margin-left: 10px;
+  color: var(--text-primary);
 }
 
 .tag-invoice { 
   background-color: #d1ecf1; 
-  color: #0c5460; 
+  color: #cedfe2; 
 }
 
 /* Chat Messages */

@@ -1,12 +1,17 @@
-
-
-
 //****************************CSS */
-import { useState, useEffect, useMemo } from "react"
-import './Dashboard.css' // Import the CSS file
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import './Dashboard.css'; // Import the CSS file
+import RecentDocuments from './RecentDocuments';
+import RecentChats from './RecentChats';
+import PinnedSummaries from './PinnedSummaries';
 import DocumentActivityChart from './DocumentActivityChart';
 import StorageUsageChart from './StorageUsageChart';
+import { c } from "framer-motion/dist/types.d-Cjd591yU";
 //import DocumentViewer from '../DocumentViewer/DocumentViewer';
+
+// Cache for dashboard data (5-minute TTL)
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+let cacheInstance: { data: any; timestamp: number } | null = null;
 
 // TypeScript interfaces
 interface Document {
@@ -17,6 +22,7 @@ interface Document {
   processing_status: 'completed' | 'processing' | 'failed'
   upload_date: string
   user_id: string
+  document_type?: string | null
 }
 
 interface Summary {
@@ -257,7 +263,7 @@ function Dashboard() {
   const [documentsWithSummary, setDocumentsWithSummary] = useState<DocumentWithSummary[]>([])
   
   // Storage usage state
-  const [storageUsage, setStorageUsage] = useState({ used: 0, total: 2048 }) // Default to 2GB
+  const [storageUsage, setStorageUsage] = useState({ used: 0, total: 1024 }) // Default to 2GB
   const [loadingStorage, setLoadingStorage] = useState(true)
   const [storageError, setStorageError] = useState<string | null>(null)
   
@@ -323,10 +329,210 @@ function Dashboard() {
   const [loadingActivity, setLoadingActivity] = useState(true);
   const [activityError, setActivityError] = useState<string | null>(null);
 
+  // Helper function: Process documents for types (moved outside useEffect)
+  const processDocumentsForTypes = useCallback((docs: Document[]) => {
+    console.log('Processing documents for types, received docs:', docs.length);
+    
+    // Predefined document categories
+    const predefinedCategories = [
+      'Research Paper',
+      'Financial Report', 
+      'Medical Record',
+      'Invoice or Receipt',
+      'Legal Document',
+      'Other'
+    ];
+
+    const typeCounts: { [key: string]: { count: number; totalSize: number } } = {};
+
+    // Initialize all predefined categories with zero counts
+    predefinedCategories.forEach(category => {
+      typeCounts[category] = { count: 0, totalSize: 0 };
+    });
+
+    docs.forEach(doc => {
+      console.log('Processing document:', doc.original_filename, 'document_type:', doc.document_type);
+      
+      // Default to 'Other'
+      let type = 'Other';
+
+      // Prefer explicit classification if available
+      if (doc.document_type) {
+        const normalizedType = doc.document_type.toLowerCase().trim();
+        switch (normalizedType) {
+          case 'research paper':
+            type = 'Research Paper';
+            break;
+          case 'financial report':
+            type = 'Financial Report';
+            break;
+          case 'medical record':
+            type = 'Medical Record';
+            break;
+          case 'invoice or receipt':
+            type = 'Invoice or Receipt';
+            break;
+          case 'legal document':
+            type = 'Legal Document';
+            break;
+          default:
+            type = 'Other';
+            break;
+        }
+      } else {
+        // No classification available — keep as 'Other'
+        type = 'Other';
+      }
+
+      // Safely increment counters
+      if (!typeCounts[type]) {
+        typeCounts[type] = { count: 0, totalSize: 0 };
+      }
+      typeCounts[type].count += 1;
+      typeCounts[type].totalSize += doc.file_size || 0;
+    });
+
+    // Build chart data using only the predefined categories
+    const chartData = predefinedCategories.map(category => {
+      const data = typeCounts[category] || { count: 0, totalSize: 0 };
+      return {
+        type: category,
+        count: data.count,
+        avgSize: data.count > 0 ? data.totalSize / data.count : 0
+      };
+    });
+
+    console.log('Final chart data:', chartData);
+
+    // Return all predefined categories (including those with zero documents)
+    // Preserve the predefined order
+    return {
+      chartData
+    };
+    }, []);
+
+  // UNIFIED DATA FETCHING with PARALLEL API CALLS
+  useEffect(() => {
+    const fetchAllDashboardData = async () => {
+      // Check cache first
+      if (cacheInstance && Date.now() - cacheInstance.timestamp < CACHE_TTL) {
+        console.log('Using cached dashboard data');
+        const cached = cacheInstance.data;
+        setDocuments(cached.documents || []);
+        setDocumentTypes(cached.documentTypes || []);
+        setDocumentActivityData(cached.activityData || []);
+        setStorageUsage(cached.storageUsage || { used: 0, total: 2048 });
+        setResourceUsageData(cached.resourceUsage || []);
+        setLoading(false);
+        setLoadingTypes(false);
+        setLoadingActivity(false);
+        setLoadingStorage(false);
+        setLoadingResourceUsage(false);
+        return;
+      }
+
+      const token = getToken();
+      if (!token) {
+        console.warn('No token found');
+        setLoading(false);
+        setLoadingTypes(false);
+        setLoadingActivity(false);
+        setLoadingStorage(false);
+        setLoadingResourceUsage(false);
+        return;
+      }
+
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      };
+
+      try {
+        console.log('Fetching all dashboard data in parallel...');
+        
+        // PARALLEL FETCH - All API calls happen at once
+        const [documentsRes, typesRes, activityRes, storageRes] = await Promise.all([
+          fetch('http://localhost:8000/api/documents/?limit=100', { headers }), // Limit to 100 for faster load
+          fetch('http://localhost:8000/api/analytics/document-types-distribution', { headers }),
+          fetch('http://localhost:8000/api/profile/me', { headers }),
+          fetch('http://localhost:8000/api/analytics/document-uploads-over-time?period=30d', { headers })
+        ]);
+
+        // Process responses
+        const docsData = documentsRes.ok ? await documentsRes.json() : { documents: [] };
+        const docs = docsData.documents || [];
+        
+        // Always use local processing for document types to ensure predefined categories
+        let types: DocumentTypeData[] = processDocumentsForTypes(docs).chartData;
+
+        let activity: Array<{ date: string; count: number }> = [];
+        if (activityRes.ok) {
+          const actData = await activityRes.json();
+          activity = actData.upload_activity || [];
+        }
+
+        let storage: { used: number; total: number } = { used: 0, total: 2048 };
+        if (storageRes.ok) {
+          const storData = await storageRes.json();
+          if (storData.summary) {
+            const usedMB = Math.round((storData.summary.totalSize || 0) / (1024 * 1024));
+            storage = { used: usedMB, total: 5 * 1024 };
+          }
+        }
+
+        // Process resource usage from documents
+        const resourceData: ResourceUsageData[] = docs.map((doc: Document) => {
+          const sizeInBytes = doc.file_size || 0;
+          const sizeInMB = sizeInBytes / (1024 * 1024);
+          const approximateProcessingTime = 2 + Math.floor(sizeInMB * 1.5);
+          return {
+            id: doc.id,
+            name: doc.original_filename || 'Untitled Document',
+            size: sizeInBytes,
+            processingTime: approximateProcessingTime
+          };
+        });
+
+        // Update all state at once
+        setDocuments(docs);
+        setDocumentTypes(types);
+        setDocumentActivityData(activity);
+        setStorageUsage(storage);
+        setResourceUsageData(resourceData);
+
+        // Cache the data
+        cacheInstance = {
+          data: {
+            documents: docs,
+            documentTypes: types,
+            activityData: activity,
+            storageUsage: storage,
+            resourceUsage: resourceData
+          },
+          timestamp: Date.now()
+        };
+
+        console.log('Dashboard data cached successfully');
+
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError('Failed to load dashboard data');
+      } finally {
+        setLoading(false);
+        setLoadingTypes(false);
+        setLoadingActivity(false);
+        setLoadingStorage(false);
+        setLoadingResourceUsage(false);
+      }
+    };
+
+    fetchAllDashboardData();
+  }, []); // Only run once on mount
 
   //*********************** */
+  // REMOVE OLD USEEFFECTS - Replaced by unified fetch above
   // Fetch document type distribution
-useEffect(() => {
+/*useEffect(() => {
   const fetchDocumentTypes = async () => {
     const token = getToken();
     if (!token) {
@@ -407,9 +613,10 @@ useEffect(() => {
   };
 
   fetchDocumentTypes();
-}, [documents]); // Re-fetch when documents change
+}, [documents]); // Re-fetch when documents change */
 
 // Process resource usage data from documents
+/* COMMENTED OUT - Now handled by unified fetch
 useEffect(() => {
   const processResourceUsageData = () => {
     try {
@@ -439,17 +646,26 @@ useEffect(() => {
       setLoadingResourceUsage(false);
     }
   };
-
   processResourceUsageData();
-}, [documents]);
+}, [documents]); */
 
 // Pie Chart Component
 const renderPieChart = () => {
   if (documentTypes.length === 0) return null;
   
   const total = documentTypes.reduce((sum, item) => sum + item.count, 0);
-  const colors = ['#3b82f6', '#2563eb', '#1d4ed8', '#1e40af', '#1e3a8a', '#172554', '#0f172a', '#020617'];
-  
+  //const colors = ['#3b82f6', '#2563eb', '#1d4ed8', '#1e40af', '#1e3a8a', '#172554', '#0f172a', '#020617'];
+      const colors = [
+      '#3b82f6', // Blue
+      '#ef4444', // Red
+      '#10b981', // Green
+      '#f59e0b', // Amber
+      '#8b5cf6', // Purple
+      '#ec4899', // Pink
+      '#06b6d4', // Cyan
+      '#f97316'  // Orange
+    ];
+      
   let currentAngle = 0;
   const radius = 80;
   const centerX = 120;
@@ -505,19 +721,6 @@ const renderPieChart = () => {
             );
           })}
         </svg>
-        <div style={{
-          position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%) rotate(90deg)',
-          textAlign: 'center',
-          color: 'var(--text-primary)',
-          fontSize: '0.875rem',
-          fontWeight: 600
-        }}>
-          <div>{total}</div>
-          <div style={{ fontSize: '0.75rem', fontWeight: 400 }}>Total</div>
-        </div>
       </div>
       
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -536,8 +739,8 @@ const renderPieChart = () => {
                 fontSize: '0.875rem', 
                 color: 'var(--text-primary)', 
                 fontWeight: 500,
-                textTransform: 'uppercase',
-                minWidth: '60px'
+                minWidth: '60px',
+                
               }}>
                 {item.type}
               </div>
@@ -594,7 +797,17 @@ const renderResourceUsageChart = () => {
     ? Math.max(...displayData.map(d => d.size))
     : Math.max(...displayData.map(d => d.processingTime));
 
-  const colors = ['#3b82f6', '#2563eb', '#1d4ed8', '#1e40af', '#1e3a8a', '#172554', '#0f172a', '#020617'];
+  //const colors = ['#3b82f6', '#2563eb', '#1d4ed8', '#1e40af', '#1e3a8a', '#172554', '#0f172a', '#020617'];
+        const colors = [
+        '#3b82f6', // Blue
+        '#ef4444', // Red
+        '#10b981', // Green
+        '#f59e0b', // Amber
+        '#8b5cf6', // Purple
+        '#ec4899', // Pink
+        '#06b6d4', // Cyan
+        '#f97316'  // Orange
+      ];
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '16px' }}>
@@ -698,6 +911,7 @@ const renderResourceUsageChart = () => {
   );
 };
 
+  /* COMMENTED OUT - Now handled by unified fetch
   // Fetch upload activity data
   useEffect(() => {
     const fetchUploadActivity = async () => {
@@ -739,7 +953,7 @@ const renderResourceUsageChart = () => {
     };
 
     fetchUploadActivity();
-  }, []);
+  }, []); */
   
   // Mock data fallback for development
   const mockStorageData = {
@@ -786,6 +1000,7 @@ const renderResourceUsageChart = () => {
     setPreviewUrl(null)
   }
 
+  /* COMMENTED OUT - Now handled by unified fetch
   // Fetch storage usage data from API
   useEffect(() => {
     const fetchStorageUsage = async () => {
@@ -863,8 +1078,9 @@ const renderResourceUsageChart = () => {
     };
 
     fetchStorageUsage();
-  }, []);
+  }, []); */
 
+  /* COMMENTED OUT - Now handled by unified fetch
   // Fetch user documents with JWT authentication and fallback
   useEffect(() => {
     const fetchDocuments = async () => {
@@ -929,7 +1145,7 @@ const renderResourceUsageChart = () => {
     }
 
     fetchDocuments()
-  }, [])
+  }, []) */
 
   // Format date to relative time
   const formatRelativeTime = (isoString: string): string => {
@@ -1268,13 +1484,14 @@ const renderResourceUsageChart = () => {
 }}>
   {/* Document Activity Chart */}
   <div style={{
-    backgroundColor: 'white',
+    backgroundColor: 'var(--bg-primary)',
     borderRadius: '8px',
-    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    boxShadow: 'var(--card-shadow)',
     padding: '16px',
     height: '400px',
     display: 'flex',
-    flexDirection: 'column'
+    flexDirection: 'column',
+    border: '1px solid var(--border-color)'
   }}>
     <DocumentActivityChart 
       data={documentActivityData} 
@@ -1285,16 +1502,17 @@ const renderResourceUsageChart = () => {
 
   {/* Document Type Distribution */}
   <div style={{
-    backgroundColor: 'white',
+    backgroundColor: 'var(--bg-primary)',
     borderRadius: '8px',
-    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    boxShadow: 'var(--card-shadow)',
     padding: '16px',
     height: '400px',
     display: 'flex',
-    flexDirection: 'column'
+    flexDirection: 'column',
+    border: '1px solid var(--border-color)'
   }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-      <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0, color: '#1a202c' }}>
+      <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>
         Document Types
       </h3>
       <button
@@ -1330,42 +1548,52 @@ const renderResourceUsageChart = () => {
       </button>
     </div>
     {loadingTypes ? (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#718096' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-secondary)' }}>
         Loading...
       </div>
     ) : typesError ? (
-      <div style={{ color: '#e53e3e', fontSize: '0.875rem', textAlign: 'center', marginTop: '1rem' }}>
+      <div style={{ color: 'var(--danger-color)', fontSize: '0.875rem', textAlign: 'center', marginTop: '1rem' }}>
         {typesError}
-      </div>
-    ) : documentTypes.length === 0 ? (
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#a0aec0' }}>
-        No data
       </div>
     ) : chartType === 'pie' ? (
       renderPieChart()
     ) : (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, overflowY: 'auto' }}>
-        {documentTypes.slice(0, 8).map((item, index) => {
-          const maxCount = documentTypes[0]?.count || 1;
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, height: '100%', justifyContent: 'space-around' }}>
+        {documentTypes.map((item, index) => {
+          // Calculate max count from all document types for proper scaling
+          const maxCount = Math.max(...documentTypes.map(dt => dt.count));
           const width = maxCount > 0 ? (item.count / maxCount) * 100 : 0;
-          const blueShades = ['#3b82f6', '#2563eb', '#1d4ed8', '#1e40af', '#1e3a8a', '#172554'];
-          return (
-            <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          // const blueShades = ['#3b82f6', '#2563eb', '#1d4ed8', '#1e40af', '#1e3a8a', '#172554'];
+          const colors = [
+                '#3b82f6', // Blue
+                '#ef4444', // Red
+                '#10b981', // Green
+                '#f59e0b', // Amber
+                '#8b5cf6', // Purple
+                '#ec4899', // Pink
+                '#06b6d4', // Cyan
+                '#f97316'  // Orange
+              ];
+                        return (
+            <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '12px', minHeight: '30px' }}>
               <div style={{ 
-                width: '80px', 
-                fontSize: '0.875rem', 
+                width: '120px', 
+                fontSize: '0.8rem', 
                 color: '#4b5563', 
                 fontWeight: 500,
-                textTransform: 'uppercase'
+                flexShrink: 0,
+                textAlign: 'right',
+                paddingRight: '8px'
               }}>
                 {item.type}
               </div>
               <div style={{ 
                 flex: 1, 
-                height: '24px', 
+                height: '20px', 
                 backgroundColor: '#e2e8f0', 
                 borderRadius: '4px',
-                position: 'relative'
+                position: 'relative',
+                minWidth: '100px'
               }}>
                 <div
                   style={{
@@ -1374,19 +1602,30 @@ const renderResourceUsageChart = () => {
                     left: 0,
                     height: '100%',
                     width: `${width}%`,
-                    backgroundColor: blueShades[index % blueShades.length],
+                    backgroundColor: colors[index % colors.length],
                     borderRadius: '4px',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'flex-end',
-                    paddingRight: '8px',
+                    justifyContent: item.count > 0 ? 'flex-end' : 'center',
+                    paddingRight: item.count > 0 ? '6px' : '0',
                     color: 'white',
-                    fontSize: '0.75rem',
-                    fontWeight: 600
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    minWidth: item.count > 0 ? '20px' : '0',
+                    transition: 'width 0.3s ease'
                   }}
                 >
-                  {item.count}
+                  {item.count > 0 ? item.count : ''}
                 </div>
+              </div>
+              <div style={{ 
+                width: '40px', 
+                fontSize: '0.7rem', 
+                color: '#6b7280', 
+                textAlign: 'right',
+                flexShrink: 0
+              }}>
+                {item.count}
               </div>
             </div>
           );
@@ -1398,18 +1637,19 @@ const renderResourceUsageChart = () => {
 
         {/* Resource Usage Chart */}
         <div style={{
-          backgroundColor: 'white',
+          backgroundColor: 'var(--bg-primary)',
           borderRadius: '8px',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          boxShadow: 'var(--card-shadow)',
           padding: '16px',
           height: '400px',
           display: 'flex',
           flexDirection: 'column',
           marginBottom: '24px',
-          position: 'relative'
+          position: 'relative',
+          border: '1px solid var(--border-color)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0, color: '#1a202c' }}>
+            <h3 style={{ fontSize: '1.1rem', fontWeight: 600, margin: 0, color: 'var(--text-primary)' }}>
               Resource Usage
             </h3>
             <div style={{ display: 'flex', gap: '8px' }}>
@@ -1472,15 +1712,15 @@ const renderResourceUsageChart = () => {
             </div>
           </div>
           {loadingResourceUsage ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#718096' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-secondary)' }}>
               Loading...
             </div>
           ) : resourceUsageError ? (
-            <div style={{ color: '#e53e3e', fontSize: '0.875rem', textAlign: 'center', marginTop: '1rem' }}>
+            <div style={{ color: 'var(--danger-color)', fontSize: '0.875rem', textAlign: 'center', marginTop: '1rem' }}>
               {resourceUsageError}
             </div>
           ) : resourceUsageData.length === 0 ? (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#a0aec0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'var(--text-tertiary)' }}>
               No data available
             </div>
           ) : (
@@ -1489,158 +1729,18 @@ const renderResourceUsageChart = () => {
         </div>
 
         {/* Search and Chat Feature */}
-        <div className="feature-container">
-          <div className="tabs-container d-flex">
-            <button
-              className={`tab-btn ${activeView === 'documents' ? 'active' : ''}`}
-              onClick={() => setActiveView('documents')}
-            >
-              <i className="fas fa-search me-2"></i>Search Documents
-            </button>
-            <button
-              className={`tab-btn ${activeView === 'chat' ? 'active' : ''}`}
-              onClick={() => alert('🚧 Ask DocuMind AI feature is coming soon!')}
-            >
-              <i className="fas fa-robot me-2"></i>Ask DocuMind AI
-            </button>
-          </div>
-
-          <div className="tab-content-container">
-            {activeView === 'documents' && (
-              <div id="search-tab" className="tab-content active">
-                <div className="search-input-group">
-                  <span className="search-icon"><i className="fas fa-search"></i></span>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Search across all your documents..."
-                  />
-                </div>
-
-                <div id="searchResults">
-                  <h5 className="mb-4"><i className="fas fa-history me-2"></i>Recent Documents</h5>
-
-                  {documentsWithSummary.length === 0 ? (
-                    <div className="text-center py-5">
-                      <i className="fas fa-file-alt" style={{fontSize: '4rem', color: '#dee2e6'}}></i>
-                      <p className="mt-3 text-muted">No documents uploaded yet.</p>
-                    </div>
-                  ) : (
-                    documentsWithSummary.slice(0, 10).map((doc) => (
-                      <div key={doc.id} className="result-item">
-                        <div className="d-flex">
-                          <div className="result-icon">
-                            <i className="fas fa-file-invoice"></i>
-                          </div>
-                          <div className="flex-grow-1">
-                            <div className="result-title">
-                              {doc.name}
-                              <span className="doc-type-tag tag-invoice">{doc.type}</span>
-                            </div>
-                            <div className="result-snippet">
-                              Financial summary for Q4 2023 showing a 12% increase in revenue compared to previous year...
-                            </div>
-                            <div className="result-meta">
-                              PDF • 2.4 MB • Last accessed: {doc.uploadedAt}
-                            </div>
-                            <div className="result-actions">
-                              <button
-                                className="btn summarize-btn"
-                                onClick={() => handleSummarizeDoc(doc)}
-                              >
-                                <i className="fas fa-file-contract me-1"></i>Summarize
-                              </button>
-                              <button
-                                className="btn chat-doc-btn"
-                                onClick={() => handleChatWithDoc(doc)}
-                              >
-                                <i className="fas fa-comments me-1"></i>Chat with Doc
-                              </button>
-                              <button
-                                className="btn preview-btn"
-                                onClick={() => previewDocumentHandler(doc)}
-                              >
-                                <i className="fas fa-eye me-1"></i>Preview
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-                <div className="chat-input-group" style={{display: 'none'}}>
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder={selectedDocument
-                      ? `Ask about ${selectedDocument.name}...`
-                      : "Search functionality coming soon..."
-                    }
-                  />
-                  <button className="btn btn-primary">
-                    <i className="fas fa-paper-plane"></i>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Chat Tab */}
-            {activeView === 'chat' && (
-              <div className="tab-content active">
-                {selectedDocument && (
-                  <div className="selected-document-context">
-                    <div className="context-header">
-                      <i className="fas fa-file-alt"></i>
-                      <span>Chatting about: {selectedDocument.name}</span>
-                      <button 
-                        className="btn btn-sm btn-outline-secondary"
-                        onClick={() => setSelectedDocument(null)}
-                      >
-                        <i className="fas fa-times"></i>
-                      </button>
-                    </div>
-                  </div>
-                )}
-                <div className="chat-messages">
-                  <div className="message bot">
-                    <div className="message-content">
-                      {selectedDocument 
-                        ? `Hello! I'm ready to help you with "${selectedDocument.name}". What would you like to know about this document?`
-                        : "Hello! I'm DocuMind AI. I can help you analyze and understand your documents. What would you like to know?"
-                      }
-                    </div>
-                  </div>
-                  {selectedDocument && (
-                    <div className="message bot">
-                      <div className="message-content">
-                        I can see you've selected "{selectedDocument.name}". I can help you:
-                        <ul>
-                          <li>Summarize key points</li>
-                          <li>Answer specific questions about the content</li>
-                          <li>Extract important data or insights</li>
-                          <li>Compare with other documents</li>
-                        </ul>
-                        What would you like to explore?
-                      </div>
-                    </div>
-                  )}
-                </div>
-                <div className="chat-input-group" style={{display: 'none'}}>
-                  <input 
-                    type="text" 
-                    className="form-control" 
-                    placeholder={selectedDocument 
-                      ? `Ask about ${selectedDocument.name}...` 
-                      : "Search functionality coming soon..."
-                    } 
-                  />
-                  <button className="btn btn-primary">
-                    <i className="fas fa-paper-plane"></i>
-                  </button>
-                </div>
-              </div>
-            )}
+        <div style={{ display: 'flex', gap: '1.5rem', position: 'relative' }}>
+          <RecentDocuments 
+            documents={documentsWithSummary}
+            onSummarize={handleSummarizeDoc}
+            onChatWithDoc={handleChatWithDoc}
+            onPreview={previewDocumentHandler}
+          />
+                  
+          {/* Right side - Pinned Chats and Summaries */}
+          <div style={{ flex: '1', display: 'flex', flexDirection: 'column', gap: '0' }}>
+            <RecentChats />
+            <PinnedSummaries />
           </div>
         </div>
 
@@ -1767,7 +1867,7 @@ const renderResourceUsageChart = () => {
         >
           <div 
             style={{
-              backgroundColor: 'white',
+              backgroundColor: 'var(--bg-primary)',
               borderRadius: '16px',
               maxWidth: '900px',
               width: '90%',
@@ -1780,17 +1880,17 @@ const renderResourceUsageChart = () => {
           >
             <div style={{ 
               padding: '1.5rem', 
-              borderBottom: '1px solid #e5e7eb', 
+              borderBottom: '1px solid var(--border-color)', 
               display: 'flex', 
               justifyContent: 'space-between', 
               alignItems: 'center',
-              background: 'linear-gradient(135deg, #f8fafc, #e2e8f0)'
+              background: 'var(--bg-tertiary)'
             }}>
               <div>
-                <h5 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '600', color: '#1a202c' }}>
+                <h5 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '600', color: 'var(--text-primary)' }}>
                   Document Summary
                 </h5>
-                <p style={{ margin: '4px 0 0 0', fontSize: '0.875rem', color: '#718096' }}>
+                <p style={{ margin: '4px 0 0 0', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
                   {selectedDocumentForSummary.name}
                 </p>
               </div>
@@ -1801,7 +1901,7 @@ const renderResourceUsageChart = () => {
                   border: 'none', 
                   fontSize: '24px', 
                   cursor: 'pointer',
-                  color: '#718096',
+                  color: 'var(--text-secondary)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -2221,3 +2321,5 @@ const renderResourceUsageChart = () => {
 }
 
 export default Dashboard
+
+
