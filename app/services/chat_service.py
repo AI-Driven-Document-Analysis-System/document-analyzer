@@ -2,6 +2,7 @@ from typing import Optional, Dict, Any, List
 import logging
 from datetime import datetime
 import uuid
+import os
 
 from .chatbot.vector_db.langchain_chroma import LangChainChromaStore
 from .chatbot.vector_db.chunking import DocumentChunker
@@ -11,6 +12,8 @@ from .chatbot.llm.llm_factory import LLMFactory
 from .chatbot.chains.universal_citation_chain import UniversalCitationChain
 from .chatbot.rag.chat_engine import LangChainChatEngine
 from .chatbot.rag.conversation_manager import ConversationManager
+from .chatbot.search.bm25_retriever import BM25Retriever
+from .chatbot.search.hybrid_retriever import HybridRetriever
 from ..core.langfuse_config import get_langfuse_callbacks
 
 
@@ -50,9 +53,25 @@ class ChatbotService:
         self._embedding_generator = None
         self._conversation_manager = None
         self._chat_engines = {}  # Cache chat engines per user/session
+        
+        # BM25 hybrid search components (optional, based on .env flag)
+        self._bm25_retriever = None
+        self._hybrid_retriever = None
+        self._use_hybrid_search = self._get_hybrid_search_flag()
 
         # Component initialization flags
         self._initialized = False
+    
+    def _get_hybrid_search_flag(self) -> bool:
+        """
+        Get hybrid search flag from environment variable.
+        
+        Returns:
+            True if ENABLE_HYBRID_SEARCH=true in .env, False otherwise
+        """
+        env_value = os.getenv('ENABLE_HYBRID_SEARCH', 'false').lower()
+        is_enabled = env_value in ('true', '1', 'yes', 'on')
+        return is_enabled
 
     def initialize(self) -> None:
         """
@@ -88,6 +107,13 @@ class ChatbotService:
             self._conversation_manager = ConversationManager(
                 max_history_length=self.config.get('max_history_length', 10)
             )
+            
+            # Initialize BM25 if hybrid search is enabled
+            if self._use_hybrid_search:
+                self.logger.info("🔍 Hybrid search ENABLED - Initializing BM25...")
+                self._initialize_bm25()
+            else:
+                self.logger.info("🔍 Hybrid search DISABLED - Using semantic search only")
 
             self._initialized = True
             self.logger.info("ChatbotService initialized successfully")
@@ -382,11 +408,57 @@ class ChatbotService:
                 callbacks=llm_config.get('callbacks')
             )
 
+    def _initialize_bm25(self) -> None:
+        """
+        Initialize BM25 retriever from existing ChromaDB documents.
+        """
+        try:
+            # Check for cached BM25 index
+            cache_path = os.path.join(self.config['vector_db_path'], 'bm25_index.pkl')
+            
+            if os.path.exists(cache_path):
+                self.logger.info(f"Loading BM25 index from cache: {cache_path}")
+                self._bm25_retriever = BM25Retriever.load(cache_path)
+            else:
+                self.logger.info("Building BM25 index from ChromaDB...")
+                self._bm25_retriever = BM25Retriever()
+                
+                # Get all documents from ChromaDB
+                try:
+                    # Perform a dummy search to get documents
+                    all_docs = self._vectorstore.similarity_search("", k=10000)
+                    
+                    if all_docs:
+                        self._bm25_retriever.build_index(all_docs)
+                        # Save to cache
+                        self._bm25_retriever.save(cache_path)
+                    else:
+                        self.logger.warning("No documents found in ChromaDB for BM25 indexing")
+                except Exception as e:
+                    self.logger.warning(f"Could not retrieve documents for BM25: {e}")
+            
+            # Create hybrid retriever
+            if self._bm25_retriever and self._bm25_retriever.is_built():
+                self._hybrid_retriever = HybridRetriever(
+                    vectorstore=self._vectorstore,
+                    bm25_retriever=self._bm25_retriever
+                )
+                self.logger.info("Hybrid retriever initialized successfully")
+            else:
+                self.logger.warning("BM25 index not built, hybrid search will fall back to semantic only")
+                
+        except Exception as e:
+            self.logger.error(f"Failed to initialize BM25: {e}")
+            self.logger.warning("Falling back to semantic search only")
+    
     def _create_retriever(self, user_id: Optional[str] = None):
         """Create retriever with user filtering.
 
         Apply a metadata filter {"user_id": user_id} for all valid user IDs to ensure
         proper document isolation between users.
+        
+        NOTE: This returns a standard LangChain retriever. Hybrid search is handled
+        in the EnhancedSearchEngine which has access to both retrievers.
         """
         search_kwargs: Dict[str, Any] = {"k": 4}
 
@@ -395,11 +467,23 @@ class ChatbotService:
             search_kwargs["filter"] = {"user_id": user_id}
 
         return self._vectorstore.as_retriever(search_kwargs=search_kwargs)
+    
+    def get_hybrid_retriever(self):
+        """
+        Get the hybrid retriever if available.
+        
+        Returns:
+            HybridRetriever or None
+        """
+        return self._hybrid_retriever if self._use_hybrid_search else None
+    
+    def is_hybrid_search_enabled(self) -> bool:
+        """Check if hybrid search is enabled."""
+        return self._use_hybrid_search
 
 
 # Singleton instance for global access
 _chatbot_service_instance: Optional[ChatbotService] = None
-
 
 def get_chatbot_service() -> ChatbotService:
     """
