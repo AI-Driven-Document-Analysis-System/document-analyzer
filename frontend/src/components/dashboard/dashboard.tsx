@@ -612,16 +612,9 @@ useEffect(() => {
 
 // Pie Chart Component
 const renderPieChart = () => {
-  const hardcodedData = [
-    { type: 'Research Papers', count: 28 },
-    { type: 'Medical Documents', count: 15 },
-    { type: 'Legal Documents', count: 12 },
-    { type: 'Financial Documents', count: 18 },
-    { type: 'Invoices/Receipts', count: 22 },
-    { type: 'Other', count: 9 }
-  ];
+  if (documentTypes.length === 0) return null;
   
-  const total = hardcodedData.reduce((sum, item) => sum + item.count, 0);
+  const total = documentTypes.reduce((sum, item) => sum + item.count, 0);
   //const colors = ['#3b82f6', '#2563eb', '#1d4ed8', '#1e40af', '#1e3a8a', '#172554', '#0f172a', '#020617'];
       const colors = [
       '#3b82f6', // Blue
@@ -643,7 +636,7 @@ const renderPieChart = () => {
     <div style={{ display: 'flex', alignItems: 'center', gap: '24px', height: '100%' }}>
       <div style={{ position: 'relative' }}>
         <svg width="240" height="240" style={{ transform: 'rotate(-90deg)' }}>
-          {hardcodedData.map((item, index) => {
+          {documentTypes.slice(0, 8).map((item, index) => {
             const percentage = (item.count / total) * 100;
             const angle = (item.count / total) * 360;
             const startAngle = currentAngle;
@@ -692,7 +685,7 @@ const renderPieChart = () => {
       </div>
       
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
-        {hardcodedData.map((item, index) => {
+        {documentTypes.slice(0, 8).map((item, index) => {
           const percentage = ((item.count / total) * 100).toFixed(1);
           return (
             <div key={index} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1527,15 +1520,8 @@ const renderResourceUsageChart = () => {
       renderPieChart()
     ) : (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1, overflowY: 'auto' }}>
-        {[
-          { type: 'Research Papers', count: 28 },
-          { type: 'Medical Documents', count: 15 },
-          { type: 'Legal Documents', count: 12 },
-          { type: 'Financial Documents', count: 18 },
-          { type: 'Invoices/Receipts', count: 22 },
-          { type: 'Other', count: 9 }
-        ].map((item, index) => {
-          const maxCount = 28;
+        {documentTypes.slice(0, 8).map((item, index) => {
+          const maxCount = documentTypes[0]?.count || 1;
           const width = maxCount > 0 ? (item.count / maxCount) * 100 : 0;
           // const blueShades = ['#3b82f6', '#2563eb', '#1d4ed8', '#1e40af', '#1e3a8a', '#172554'];
           const colors = [
