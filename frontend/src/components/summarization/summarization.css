@@ -621,6 +621,7 @@
   background-clip: padding-box; /* Prevents background bleed */
   transition: all 0.2s ease;
   appearance: none;
+  color-scheme: Dark; /* Ensures dropdown arrow matches dark mode */
 
   /* Custom dropdown arrow — uses theme-compatible color */
   background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='rgba(156, 163, 175, 0.8)' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");

@@ -914,7 +914,7 @@ ${generatedSummary.summary_text}`;
       <div className="layout-grid">
         <div className="left-panel">
           {/* Document Selection */}
-          <div className="card">
+          <div className="card" style={{ backgroundColor: "var(--bg-primary)", borderColor: "var(--border-color)" }} >
             <div className="card-header">
               <h2>Select Document</h2>
             </div>
@@ -1007,24 +1007,34 @@ ${generatedSummary.summary_text}`;
           </div>
 
           {/* Summary Options — NOW A DROPDOWN */}
-          <div className="card">
-            <div className="card-header">
+          <div className="card" style={{ backgroundColor: "var(--bg-primary)", borderColor: "var(--border-color)" }}>
+            <div className="card-header" style={{ backgroundColor: "var(--bg-primary)", borderColor: "var(--border-color)" }}>
               <h2>Summary Options</h2>
             </div>
-            <div className="card-body">
+            <div className="card-body" style={{ backgroundColor: "var(--bg-primary)", borderColor: "var(--border-color)" }}>
               <div className="model-select">
                 <select
                   value={summaryType}
                   onChange={(e) => setSummaryType(e.target.value)}
                   className="form-select"
+                  style={{
+                    backgroundColor: "var(--input-bg)",
+                    color: "var(--text-primary)",
+                    borderColor: "var(--input-border)",
+                    colorScheme: "dark",
+                  }}
                 >
-                
-                  {summaryOptions.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.name} – {option.model}
-                    </option>
-                  ))}
-                </select>
+                  
+                {/* <option value="" disabled >
+                  Select a summary type
+                </option> */}
+                <option value="">Select a summery type  from the list</option>
+                {summaryOptions.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.name} – {option.model}
+                  </option>
+                ))}
+              </select>
               </div>
 
               <button
@@ -1240,3 +1250,4 @@ ${generatedSummary.summary_text}`;
     </div>
   );
 }
+
