@@ -257,9 +257,10 @@ async def get_document(
                     SELECT 
                         d.id, d.original_filename, d.file_size, d.upload_timestamp, 
                         d.mime_type, d.user_id, d.file_path_minio,
-                        dp.processing_status, dp.processing_errors
+                        dp.processing_status, dp.processing_errors, dc.document_type
                     FROM documents d
                     LEFT JOIN document_processing dp ON d.id = dp.document_id
+                    LEFT JOIN document_classifications dc ON d.id = dc.document_id
                     WHERE d.id = %s AND d.user_id = %s
                 """
                 cursor.execute(query, (document_id, user_id))
@@ -277,7 +278,8 @@ async def get_document(
                     "user_id": doc[5],
                     "file_path": doc[6],
                     "processing_status": doc[7] or "unknown",
-                    "processing_errors": doc[8]
+                    "processing_errors": doc[8],
+                    "document_type": doc[9] or "Other"
                 }
                 
     except HTTPException:
@@ -658,9 +660,11 @@ async def update_document_content(
         # Parse request body
         body = await request.json()
         extracted_text = body.get("extracted_text")
+        document_type = body.get("document_type")
         
         if extracted_text is None:
             raise HTTPException(status_code=400, detail="extracted_text is required")
+        
         
         with db_manager.get_connection() as conn:
             with conn.cursor() as cursor:
@@ -680,7 +684,7 @@ async def update_document_content(
                     SET extracted_text = %s
                     WHERE document_id = %s
                 """, (extracted_text, document_id))
-                
+
                 # If no rows were updated, the document_content entry doesn't exist
                 if cursor.rowcount == 0:
                     # Insert new entry
@@ -688,12 +692,26 @@ async def update_document_content(
                         INSERT INTO document_content (document_id, extracted_text, last_modified)
                         VALUES (%s, %s, NOW())
                     """, (document_id, extracted_text))
-                
+
+                cursor.execute("""
+                    UPDATE document_classifications
+                    SET document_type = %s
+                    WHERE document_id = %s
+                """, (document_type, document_id))
+
+                # If no rows were updated, the document_content entry doesn't exist
+                if cursor.rowcount == 0:
+                    # Insert new entry
+                    cursor.execute("""
+                        INSERT INTO document_content (document_id, extracted_text, last_modified)
+                        VALUES (%s, %s, NOW())
+                    """, (document_id, extracted_text))
+
                 conn.commit()
                 
                 return {
                     "success": True,
-                    "message": "Document content updated successfully",
+                    "message": "Document content and classification updated successfully",
                     "document_id": document_id,
                 }
                 
