@@ -94,10 +94,22 @@ class ChatbotService:
                 chunk_size=self.config.get('chunk_size', 1000),
                 chunk_overlap=self.config.get('chunk_overlap', 200)
             )
+            
+            augmentation_llm = None
+            try:
+                augmentation_llm = LLMFactory.create_deepseek_llm(
+                    api_key=os.getenv('DEEPSEEK_API_KEY'),
+                    model='deepseek-chat',
+                    temperature=0.3,
+                    streaming=False
+                )
+            except Exception as e:
+                self.logger.warning(f"Failed to initialize augmentation LLM: {e}")
 
             self._indexer = LangChainDocumentIndexer(
                 vectorstore=self._vectorstore,
-                chunker=self._chunker
+                chunker=self._chunker,
+                llm=augmentation_llm
             )
 
             self._embedding_generator = EmbeddingGenerator(
