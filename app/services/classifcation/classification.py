@@ -101,12 +101,16 @@ class DocumentClassifier:
             # Open the document (PDF or image)
             if file_path.lower().endswith('.pdf'):
                 logger.info("Converting PDF to image...")
+                # Set poppler path for Windows
+                poppler_path = os.path.join(os.getcwd(), 'poppler', 'poppler-23.01.0', 'Library', 'bin')
+                
                 images = pdf2image.convert_from_path(
                     file_path,
                     dpi=120,
                     fmt="RGB",
                     first_page=1,
-                    last_page=1
+                    last_page=1,
+                    poppler_path=poppler_path if os.path.exists(poppler_path) else None
                 )
                 if not images:
                     raise ValueError("No images extracted from PDF")

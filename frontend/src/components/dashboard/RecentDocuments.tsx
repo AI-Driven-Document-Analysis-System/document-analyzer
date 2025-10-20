@@ -5,6 +5,7 @@ interface Document {
   name: string;
   type: string;
   uploadedAt: string;
+  document_type?: string;
 }
 
 interface RecentDocumentsProps {
@@ -47,7 +48,11 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
                   <div className="flex-grow-1">
                     <div className="result-title">
                       {doc.name}
-                      <span className="doc-type-tag tag-invoice">{doc.type}</span>
+                      {doc.document_type && (
+                        <span className={`classification-label classification-${doc.document_type.toLowerCase().replace(/\s+/g, '-')}`}>
+                          {doc.document_type}
+                        </span>
+                      )}
                     </div>
                     <div className="result-meta">
                       PDF • 2.4 MB • Last accessed: {doc.uploadedAt}

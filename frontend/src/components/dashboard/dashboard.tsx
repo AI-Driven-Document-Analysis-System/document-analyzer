@@ -56,6 +56,7 @@ interface SummaryOption {
 }
 
 interface DocumentWithSummary extends FormattedDocument {
+  document_type?: string | null
   showSummaryOptions: boolean
   selectedModel: string | null
   currentSummary: Summary | null
@@ -1220,6 +1221,7 @@ const renderResourceUsageChart = () => {
                 doc.processing_status === "processing" ? "Processing" : "Failed",
         uploadedAt: formatRelativeTime(doc.upload_date),
         confidence: doc.processing_status === "completed" ? 95 : null,
+        document_type: doc.document_type,
         showSummaryOptions: false,
         selectedModel: null,
         currentSummary: null,
