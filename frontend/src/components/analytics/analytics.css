@@ -588,26 +588,39 @@
 
 /* Error State */
 .error-container {
-  padding: 24px;
+  padding: 48px 24px;
   text-align: center;
+  background-color: var(--bg-primary);
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .error-text {
-  color: #dc2626;
-  margin: 0 0 16px 0;
+  color: #ef4444;
+  margin: 0 0 24px 0;
   font-size: 16px;
+  font-weight: 500;
 }
 
 .error-btn {
-  padding: 8px 16px;
+  padding: 12px 24px;
   background-color: #3b82f6;
   color: white;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s ease;
 }
 
 .error-btn:hover {
   background-color: #2563eb;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
