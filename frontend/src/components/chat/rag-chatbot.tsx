@@ -197,7 +197,6 @@ function RAGChatbotContent() {
   }
 
 
-
   // Initialize user ID and load user-specific data
   useEffect(() => {
     const initializeUser = async () => {
@@ -286,6 +285,9 @@ function RAGChatbotContent() {
     }
   }, [conversationId, currentUserId])
 
+
+  
+
   // Fetch chat history from database on component mount
   useEffect(() => {
     const fetchChatHistory = async () => {
@@ -370,6 +372,10 @@ function RAGChatbotContent() {
   useEffect(() => {
     scrollChatToBottom()
   }, [messages])
+
+  
+
+
 
   // Reset page to top and disable body scroll when component mounts
   useEffect(() => {
