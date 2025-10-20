@@ -24,6 +24,7 @@ export interface ChatHistory {
   title: string
   timestamp: string
   messageCount?: number
+  is_pinned?: boolean
 }
 
 export interface ExpandedSections {

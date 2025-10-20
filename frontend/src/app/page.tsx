@@ -139,7 +139,6 @@ export default function Page() {
   if (!isAuthenticated && !isVerifyingAuth) {
     return (
       <ThemeProvider>
-        <LandingPage onShowAuth={() => setShowAuthModal(true)} />
         {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onAuthSuccess={handleAuthSuccess} />}
       </ThemeProvider>
     )
@@ -148,14 +147,19 @@ export default function Page() {
   const CurrentComponent = routes[currentRoute as keyof typeof routes]?.component || Dashboard
   const breadcrumb = routes[currentRoute as keyof typeof routes]?.breadcrumb || ["Dashboard"]
 
-  const handleNavigation = (path: string) => {
+  const handleNavigation = (path: string, params?: Record<string, string>) => {
     setCurrentRoute(path)
+    // Store navigation params for the target component
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        sessionStorage.setItem(`nav_${key}`, value)
+      })
+    }
   }
 
   return (
     <ThemeProvider>
       <div className="app-container">
-      {/* IMPROVED: Show subtle loading indicator while verifying auth */}
       {isVerifyingAuth && (
         <div className="auth-verifying-overlay">
           <div className="auth-verifying-spinner"></div>

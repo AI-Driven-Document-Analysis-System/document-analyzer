@@ -295,12 +295,6 @@ interface Message {
   timestamp: string
 }
 
-// Cache with TTL
-const CHATS_CACHE_KEY = 'recent_chats_cache'
-const CHATS_CACHE_TTL = 5 * 60 * 1000 // 5 minutes
-const MESSAGES_CACHE_KEY = 'chat_messages_cache'
-const MESSAGES_CACHE_TTL = 10 * 60 * 1000 // 10 minutes
-
 const RecentChats: React.FC = () => {
   const [chats, setChats] = useState<Chat[]>([])
   const [loading, setLoading] = useState(true)
@@ -308,96 +302,56 @@ const RecentChats: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([])
   const [messagesLoading, setMessagesLoading] = useState(false)
 
-  // Check cache validity
-  const getCachedData = (key: string, ttl: number) => {
-    try {
-      const cached = sessionStorage.getItem(key)
-      if (!cached) return null
-      
-      const { data, timestamp } = JSON.parse(cached)
-      if (Date.now() - timestamp > ttl) {
-        sessionStorage.removeItem(key)
-        return null
-      }
-      return data
-    } catch {
-      return null
-    }
-  }
-
-  // Set cache
-  const setCacheData = (key: string, data: any) => {
-    try {
-      sessionStorage.setItem(key, JSON.stringify({ data, timestamp: Date.now() }))
-    } catch {
-      // Silently fail if storage unavailable
-    }
-  }
-
   useEffect(() => {
     fetchRecentChats()
   }, [])
 
   const fetchRecentChats = async () => {
     try {
-      // Check cache first
-      const cached = getCachedData(CHATS_CACHE_KEY, CHATS_CACHE_TTL)
-      if (cached) {
-        setChats(cached)
-        setLoading(false)
-        return
-      }
-
       const token = localStorage.getItem("token")
       if (!token) {
         setLoading(false)
         return
       }
 
-      // Fetch user info and chats in parallel
-      const [userRes, chatsRes] = await Promise.all([
-        fetch("http://localhost:8000/api/auth/me", {
+      // Fetch user info first
+      const userRes = await fetch("http://localhost:8000/api/auth/me", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (!userRes.ok) {
+        setLoading(false)
+        return
+      }
+
+      const userData = await userRes.json()
+      const userId = userData.id || userData.user_id
+
+      // Fetch pinned conversations
+      const pinnedRes = await fetch(
+        `http://localhost:8000/api/chat/conversations/pinned?user_id=${userId}&limit=3`,
+        {
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
-        }),
-        // Try direct chats fetch first (might not need user_id)
-        fetch(`http://localhost:8000/api/chat/conversations?limit=3`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        })
-      ])
-
-      // If direct fetch worked, use it
-      if (chatsRes.ok) {
-        const data = await chatsRes.json()
-        const chatsData = data.conversations || []
-        setCacheData(CHATS_CACHE_KEY, chatsData)
-        setChats(chatsData)
-      } else if (userRes.ok) {
-        // Fallback: fetch with user_id
-        const userData = await userRes.json()
-        const userId = userData.id || userData.user_id
-
-        const fallbackRes = await fetch(
-          `http://localhost:8000/api/chat/conversations?user_id=${userId}&limit=3`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        )
-
-        if (fallbackRes.ok) {
-          const data = await fallbackRes.json()
-          const chatsData = data.conversations || []
-          setCacheData(CHATS_CACHE_KEY, chatsData)
-          setChats(chatsData)
         }
+      )
+
+      if (pinnedRes.ok) {
+        const data = await pinnedRes.json()
+        console.log('📌 Pinned chats from API:', data)
+        const chatsData = data.conversations || []
+        console.log('📌 Total pinned chats:', chatsData.length, chatsData)
+        setChats(chatsData)
+      } else {
+        const errorText = await pinnedRes.text()
+        console.error('❌ Failed to fetch pinned chats:', pinnedRes.status, errorText)
+        setLoading(false)
+        return
       }
     } catch (error) {
       console.error("Error fetching chats:", error)
@@ -410,15 +364,6 @@ const RecentChats: React.FC = () => {
     try {
       setMessagesLoading(true)
       const token = localStorage.getItem("token")
-
-      // Check cache first
-      const cacheKey = `${MESSAGES_CACHE_KEY}_${chatId}`
-      const cached = getCachedData(cacheKey, MESSAGES_CACHE_TTL)
-      if (cached) {
-        setMessages(cached)
-        setMessagesLoading(false)
-        return
-      }
 
       const response = await fetch(
         `http://localhost:8000/api/chat/conversations/${chatId}/history`,
@@ -433,7 +378,6 @@ const RecentChats: React.FC = () => {
       if (response.ok) {
         const data = await response.json()
         const messagesData = data.messages || []
-        setCacheData(cacheKey, messagesData)
         setMessages(messagesData)
       }
     } catch (error) {
@@ -444,8 +388,12 @@ const RecentChats: React.FC = () => {
   }
 
   const handleViewConversation = (chat: Chat) => {
-    setSelectedChat(chat)
-    fetchChatMessages(chat.id)
+    // Store conversation ID for the chat component to pick up
+    sessionStorage.setItem('nav_conversation_id', chat.id)
+    // Navigate to chat route
+    localStorage.setItem('currentRoute', '/chat')
+    // Trigger page reload to navigate
+    window.location.reload()
   }
 
   const formatDate = (dateString: string) => {
@@ -557,7 +505,7 @@ const RecentChats: React.FC = () => {
     <div className="feature-container" style={{ flex: "1" }}>
       <div className="tab-content-container">
         <h5 className="mb-4">
-          <i className="fas fa-thumbtack me-2"></i>Recent Chats
+          <i className="fas fa-thumbtack me-2"></i>Pinned Chats
         </h5>
 
         {loading ? (
@@ -566,8 +514,8 @@ const RecentChats: React.FC = () => {
           </div>
         ) : chats.length === 0 ? (
           <div style={{ textAlign: "center", padding: "2rem", color: "#94a3b8" }}>
-            <i className="fas fa-comments" style={{ fontSize: "2rem", marginBottom: "1rem", opacity: 0.3 }}></i>
-            <p>No recent chats</p>
+            <i className="fas fa-thumbtack" style={{ fontSize: "2rem", marginBottom: "1rem", opacity: 0.3 }}></i>
+            <p>No pinned chats</p>
           </div>
         ) : (
           <div>

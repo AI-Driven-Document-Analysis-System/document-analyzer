@@ -112,6 +112,7 @@ class Conversation:
     id: UUID
     user_id: UUID
     title: Optional[str] = None
+    is_pinned: bool = False
     created_at: datetime = None
     updated_at: datetime = None
 

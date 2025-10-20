@@ -298,23 +298,24 @@ function RAGChatbotContent() {
         if (response.conversations && Array.isArray(response.conversations)) {
           // Backend now filters empty conversations efficiently
           const transformedHistory: ChatHistory[] = response.conversations.map((conv: any) => ({
-            id: conv.id,
-            title: conv.title || 'Untitled Chat',
-            timestamp: conv.created_at ? new Date(conv.created_at + 'Z').toLocaleString([], {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            }) : new Date().toLocaleString([], {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            }),
-            messageCount: conv.message_count || 0
-          }))
+              id: conv.id,
+              title: conv.title || 'Untitled Chat',
+              timestamp: conv.created_at ? new Date(conv.created_at + 'Z').toLocaleString([], {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) : new Date().toLocaleString([], {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              }),
+              messageCount: conv.message_count || 0,
+              is_pinned: conv.is_pinned || false
+            }))
           
           setChatHistory(transformedHistory)
         }
@@ -328,6 +329,17 @@ function RAGChatbotContent() {
 
     fetchChatHistory()
   }, [])
+
+  // Load conversation from session storage (set by dashboard navigation)
+  useEffect(() => {
+    const conversationIdParam = sessionStorage.getItem('nav_conversation_id')
+    if (conversationIdParam && !isLoadingHistory) {
+      // Load this conversation after history is loaded
+      handleChatHistoryClick(conversationIdParam)
+      // Clear the param so it doesn't load again on next visit
+      sessionStorage.removeItem('nav_conversation_id')
+    }
+  }, [isLoadingHistory])
 
   // Document management using custom hook
   const {
@@ -687,6 +699,41 @@ function RAGChatbotContent() {
     }
   }
 
+  const handlePinChat = async (chatId: string) => {
+    try {
+      console.log('🔥 PIN CLICKED - Chat ID:', chatId)
+      const token = localStorage.getItem('token')
+      if (!token) {
+        console.error('❌ No token found')
+        return
+      }
+
+      console.log('📡 Sending pin request to:', `http://localhost:8000/api/chat/conversations/${chatId}/pin`)
+      const response = await fetch(`http://localhost:8000/api/chat/conversations/${chatId}/pin`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      console.log('📥 Response status:', response.status)
+      if (response.ok) {
+        const data = await response.json()
+        console.log('✅ Pin response data:', data)
+        setChatHistory(prev => prev.map(chat => 
+          chat.id === chatId ? { ...chat, is_pinned: data.is_pinned } : chat
+        ))
+        console.log('✅ Chat history updated')
+      } else {
+        const errorText = await response.text()
+        console.error('❌ Pin request failed:', response.status, errorText)
+      }
+    } catch (error) {
+      console.error('❌ Error toggling pin status:', error)
+    }
+  }
+
   const cancelDeleteChat = () => {
     setShowDeleteConfirm(false)
     setChatToDelete(null)
@@ -866,6 +913,7 @@ function RAGChatbotContent() {
           onNewChat={handleNewChat}
           onChatHistoryClick={handleChatHistoryClick}
           onDeleteChat={handleDeleteChat}
+          onPinChat={handlePinChat}
           selectedChatId={conversationId || undefined}
           documentsLoading={documentsLoading}
           documentsError={documentsError}
