@@ -160,14 +160,56 @@ export default function Page() {
     }
   }
 
+  // Show loading overlay before everything else
+  if (isVerifyingAuth) {
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        backgroundColor: '#0f172a',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 99999
+      }}>
+        <div style={{
+          width: '80px',
+          height: '80px',
+          border: '6px solid #1e293b',
+          borderTop: '6px solid #3b82f6',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+          marginBottom: '24px'
+        }}></div>
+        <p style={{
+          color: '#f1f5f9',
+          fontSize: '18px',
+          fontWeight: '500',
+          marginBottom: '8px',
+          textAlign: 'center'
+        }}>Loading your workspace...</p>
+        <p style={{
+          color: '#94a3b8',
+          fontSize: '14px',
+          textAlign: 'center'
+        }}>Please wait</p>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+
   return (
     <ThemeProvider>
-      <div className="app-container">
-      {isVerifyingAuth && (
-        <div className="auth-verifying-overlay">
-          <div className="auth-verifying-spinner"></div>
-        </div>
-      )}
+      <div className="app-container" style={{ backgroundColor: '#0f172a', minHeight: '100vh' }}>
 
       <Sidebar
         isOpen={sidebarOpen}
