@@ -301,6 +301,9 @@ const RecentChats: React.FC = () => {
   const [selectedChat, setSelectedChat] = useState<Chat | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [messagesLoading, setMessagesLoading] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<Chat[]>([])
+  const [isSearching, setIsSearching] = useState(false)
 
   useEffect(() => {
     fetchRecentChats()
@@ -394,6 +397,63 @@ const RecentChats: React.FC = () => {
     localStorage.setItem('currentRoute', '/chat')
     // Trigger page reload to navigate
     window.location.reload()
+  }
+
+  const handleSearch = async (query: string) => {
+    setSearchQuery(query)
+    
+    if (query.trim().length === 0) {
+      setSearchResults([])
+      return
+    }
+
+    setIsSearching(true)
+    try {
+      const token = localStorage.getItem('token')
+      
+      // Get user ID first
+      const userRes = await fetch("http://localhost:8000/api/auth/me", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      })
+
+      if (!userRes.ok) {
+        setIsSearching(false)
+        return
+      }
+
+      const userData = await userRes.json()
+      const userId = userData.id || userData.user_id
+
+      // Fetch ALL conversations for this user
+      const response = await fetch(
+        `http://localhost:8000/api/chat/conversations?user_id=${userId}&limit=100`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      )
+
+      if (response.ok) {
+        const data = await response.json()
+        const allChats = data.conversations || []
+        
+        // Filter chats based on search query
+        const filtered = allChats.filter((chat: Chat) => 
+          chat.title?.toLowerCase().includes(query.toLowerCase())
+        )
+        
+        setSearchResults(filtered)
+      }
+    } catch (error) {
+      console.error('Error searching chats:', error)
+    } finally {
+      setIsSearching(false)
+    }
   }
 
   const formatDate = (dateString: string) => {
@@ -501,25 +561,82 @@ const RecentChats: React.FC = () => {
     )
   }
 
+  // Use search results if searching, otherwise show pinned chats
+  const displayedChats = searchQuery ? searchResults : chats
+
   return (
     <div className="feature-container" style={{ flex: "1" }}>
       <div className="tab-content-container">
+        <div className="search-input-group" style={{ marginBottom: '1.5rem' }}>
+          <span className="search-icon"><i className="fas fa-search"></i></span>
+          <input
+            type="text"
+            className="form-control"
+            placeholder="Search all your chats..."
+            value={searchQuery}
+            onChange={(e) => handleSearch(e.target.value)}
+            style={{
+              background: 'var(--bg-primary)',
+              border: '2px solid #3b82f6',
+              borderRadius: '12px',
+              padding: '12px 12px 12px 45px',
+              fontSize: '15px',
+              color: 'var(--text-primary)',
+              width: '100%',
+              transition: 'all 0.3s ease',
+              boxShadow: searchQuery ? '0 0 0 3px rgba(59, 130, 246, 0.1)' : 'none'
+            }}
+          />
+          {searchQuery && (
+            <button
+              onClick={() => {
+                setSearchQuery('')
+                setSearchResults([])
+              }}
+              style={{
+                position: 'absolute',
+                right: '12px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                color: '#9ca3af',
+                cursor: 'pointer',
+                fontSize: '16px',
+                padding: '4px 8px'
+              }}
+            >
+              <i className="fas fa-times"></i>
+            </button>
+          )}
+        </div>
+
         <h5 className="mb-4">
-          <i className="fas fa-thumbtack me-2"></i>Pinned Chats
+          <i className={`fas ${searchQuery ? 'fa-search' : 'fa-thumbtack'} me-2`}></i>
+          {searchQuery ? `Search Results (${displayedChats.length})` : 'Pinned Chats'}
         </h5>
 
-        {loading ? (
+        {loading || isSearching ? (
           <div style={{ textAlign: "center", padding: "2rem", color: "#94a3b8" }}>
-            <p>Loading chats...</p>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              border: '4px solid var(--border-color)',
+              borderTop: '4px solid #3b82f6',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              margin: '0 auto 16px'
+            }}></div>
+            <p>{isSearching ? 'Searching...' : 'Loading chats...'}</p>
           </div>
-        ) : chats.length === 0 ? (
+        ) : displayedChats.length === 0 ? (
           <div style={{ textAlign: "center", padding: "2rem", color: "#94a3b8" }}>
-            <i className="fas fa-thumbtack" style={{ fontSize: "2rem", marginBottom: "1rem", opacity: 0.3 }}></i>
-            <p>No pinned chats</p>
+            <i className="fas fa-search" style={{ fontSize: "2rem", marginBottom: "1rem", opacity: 0.3 }}></i>
+            <p>{searchQuery ? `No chats found matching "${searchQuery}"` : 'No pinned chats'}</p>
           </div>
         ) : (
           <div>
-            {chats.slice(0, 3).map((chat) => (
+            {displayedChats.map((chat) => (
               <div key={chat.id} className="result-item">
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
                   <div className="flex-grow-1">

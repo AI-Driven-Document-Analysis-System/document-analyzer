@@ -92,7 +92,7 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
   return (
     <div className="feature-container" style={{ flex: '0 0 50%', borderRight: '2px solid var(--border-color)' }}>
       <div className="tab-content-container">
-        <div className="search-input-group">
+        <div className="search-input-group" style={{ marginBottom: '1.5rem' }}>
           <span className="search-icon"><i className="fas fa-search"></i></span>
           <input
             type="text"
@@ -100,6 +100,17 @@ const RecentDocuments: React.FC<RecentDocumentsProps> = ({
             placeholder="Search across all your documents..."
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
+            style={{
+              background: 'var(--bg-primary)',
+              border: '2px solid #3b82f6',
+              borderRadius: '12px',
+              padding: '12px 12px 12px 45px',
+              fontSize: '15px',
+              color: 'var(--text-primary)',
+              width: '100%',
+              transition: 'all 0.3s ease',
+              boxShadow: searchQuery ? '0 0 0 3px rgba(59, 130, 246, 0.1)' : 'none'
+            }}
           />
           {searchQuery && (
             <button
