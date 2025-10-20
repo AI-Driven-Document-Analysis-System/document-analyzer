@@ -5,6 +5,7 @@ import RecentDocuments from './RecentDocuments';
 import RecentChats from './RecentChats';
 import PinnedSummaries from './PinnedSummaries';
 import DocumentActivityChart from './DocumentActivityChart';
+
 import StorageUsageChart from './StorageUsageChart';
 import { c } from "framer-motion/dist/types.d-Cjd591yU";
 //import DocumentViewer from '../DocumentViewer/DocumentViewer';
@@ -328,6 +329,8 @@ function Dashboard() {
   const [documentActivityData, setDocumentActivityData] = useState<Array<{ date: string; count: number }>>([]);
   const [loadingActivity, setLoadingActivity] = useState(true);
   const [activityError, setActivityError] = useState<string | null>(null);
+
+  
 
   // Helper function: Process documents for types (moved outside useEffect)
   const processDocumentsForTypes = useCallback((docs: Document[]) => {
@@ -1740,6 +1743,7 @@ const renderResourceUsageChart = () => {
           {/* Right side - Pinned Chats and Summaries */}
           <div style={{ flex: '1', display: 'flex', flexDirection: 'column', gap: '0' }}>
             <RecentChats />
+            
             <PinnedSummaries />
           </div>
         </div>

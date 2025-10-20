@@ -870,3 +870,65 @@ async def get_document_summaries(
 
 
 
+@router.get("/user/recent")
+async def get_user_recent_summaries(
+    limit: int = 5,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """
+    Get recent summaries for the current user across all documents.
+    
+    Args:
+        limit: Maximum number of summaries to return (default: 5)
+        current_user: Authenticated user (injected by dependency)
+    
+    Returns:
+        dict: Success status and list of recent summaries with document details
+    """
+    try:
+        with db_manager.get_connection() as conn:
+            with conn.cursor() as cursor:
+                # Query to get recent summaries with document details
+                query = """
+                    SELECT 
+                        ds.id,
+                        ds.summary_text,
+                        ds.model_version,
+                        ds.word_count,
+                        ds.created_at,
+                        d.id as document_id,
+                        d.original_filename as document_name,
+                        d.created_at as document_created_at
+                    FROM document_summaries ds
+                    JOIN documents d ON ds.document_id = d.id
+                    WHERE d.user_id = %s
+                    ORDER BY ds.created_at DESC
+                    LIMIT %s
+                """
+                cursor.execute(query, (str(current_user.id), limit))
+                results = cursor.fetchall()
+                
+                summaries = []
+                for result in results:
+                    summaries.append({
+                        "id": result[0],
+                        "summary_text": result[1],
+                        "model_used": result[2],
+                        "word_count": result[3],
+                        "created_at": result[4].isoformat() if result[4] else None,
+                        "document_id": result[5],
+                        "document_name": result[6],
+                        "document_created_at": result[7].isoformat() if result[7] else None,
+                        "summary_type": "Summary",
+                        "from_cache": True
+                    })
+                
+                return {
+                    "success": True,
+                    "summaries": summaries,
+                    "count": len(summaries)
+                }
+                
+    except Exception as e:
+        logger.error(f"Error fetching user recent summaries: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch recent summaries")
