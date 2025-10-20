@@ -75,14 +75,16 @@ export default function Page() {
           setUser(userData);
           setIsAuthenticated(true);
         } else {
+          // No token - show login modal
           setIsAuthenticated(false);
+          setShowAuthModal(true);
         }
       } catch (error) {
-        // Token is invalid, clear it and redirect to landing
+        // Token is invalid, clear it and show login
         authService.logout();
         setUser(null);
         setIsAuthenticated(false);
-        setCurrentRoute("/dashboard");
+        setShowAuthModal(true);
       } finally {
         setIsVerifyingAuth(false); // Done verifying
       }
@@ -135,10 +137,11 @@ export default function Page() {
     );
   }
 
-  // Show landing page only if we're sure user is not authenticated
+  // Show landing page if not authenticated
   if (!isAuthenticated && !isVerifyingAuth) {
     return (
       <ThemeProvider>
+        <LandingPage onShowAuth={() => setShowAuthModal(true)} />
         {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onAuthSuccess={handleAuthSuccess} />}
       </ThemeProvider>
     )
