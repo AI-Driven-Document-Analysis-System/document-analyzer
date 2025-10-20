@@ -81,7 +81,7 @@ export function ChatHistorySection({ expandedSections, toggleSection, chatHistor
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: chat.is_pinned ? '#f59e0b' : '#9ca3af',
+                    color: chat.is_pinned ? '#3b82f6' : '#9ca3af',
                     cursor: 'pointer',
                     padding: '4px',
                     borderRadius: '4px',
@@ -97,7 +97,7 @@ export function ChatHistorySection({ expandedSections, toggleSection, chatHistor
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.opacity = '1';
-                    e.currentTarget.style.backgroundColor = chat.is_pinned ? 'rgba(245, 158, 11, 0.1)' : 'rgba(156, 163, 175, 0.1)';
+                    e.currentTarget.style.backgroundColor = chat.is_pinned ? 'rgba(59, 130, 246, 0.1)' : 'rgba(156, 163, 175, 0.1)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.opacity = '0.7';
@@ -105,7 +105,11 @@ export function ChatHistorySection({ expandedSections, toggleSection, chatHistor
                   }}
                   title={chat.is_pinned ? "Unpin conversation" : "Pin conversation"}
                 >
-                  <i className={`fas ${chat.is_pinned ? 'fa-thumbtack' : 'fa-thumbtack'}`} style={{ fontSize: '10px' }}></i>
+                  <i className={`fas fa-thumbtack`} style={{ 
+                    fontSize: '10px',
+                    transform: chat.is_pinned ? 'rotate(45deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.2s ease'
+                  }}></i>
                 </button>
                 <button
                   className="delete-btn"

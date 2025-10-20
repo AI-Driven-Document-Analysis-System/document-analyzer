@@ -1417,10 +1417,12 @@ const renderResourceUsageChart = () => {
 
   // Other handler functions
   const handleChatWithDoc = (doc: DocumentWithSummary) => {
-    // MVP: Disable chat functionality
-    // MVP: Chat functionality disabled
-    // setSelectedDocument(doc)
-    // MVP: Chat functionality disabled - show alert instead
+    // Store document ID for chat to pick up
+    sessionStorage.setItem('chat_with_document_id', doc.id)
+    // Navigate to chat route
+    localStorage.setItem('currentRoute', '/chat')
+    // Trigger page reload to navigate
+    window.location.reload()
   }
 
   const handleSummarizeDoc = (doc: DocumentWithSummary) => {

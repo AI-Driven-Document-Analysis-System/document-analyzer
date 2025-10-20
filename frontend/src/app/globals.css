@@ -1938,16 +1938,17 @@ body {
 
 /* Qwen Dashboard Styles */
 .feature-container {
-  background: white;
+  background: var(--bg-primary);
   border-radius: 12px;
   box-shadow: 0 6px 15px rgba(0,0,0,0.1);
   margin-bottom: 25px;
   overflow: hidden;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--border-color);
 }
 
 .tabs-container {
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-primary);
 }
 
 .tab-btn {
@@ -1956,7 +1957,7 @@ body {
   border: none;
   background: transparent;
   font-weight: 500;
-  color: #6c757d;
+  color: var(--text-secondary);
   font-size: 1.1rem;
 }
 
@@ -1965,14 +1966,15 @@ body {
 }
 
 .tab-btn.active {
-  color: #0d6efd;
-  border-bottom: 4px solid #0d6efd;
-  background-color: #f8f9fa;
+  color: var(--accent-color);
+  border-bottom: 4px solid var(--accent-color);
+  background-color: var(--bg-primary);
 }
 
 .tab-content {
   display: none;
   padding: 25px;
+  background: var(--bg-primary);
 }
 
 .tab-content.active {

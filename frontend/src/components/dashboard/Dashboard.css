@@ -294,6 +294,7 @@
   transition: var(--transition);
   border: 1px solid var(--border-color);
   position: relative;
+  min-height: 200px;
 }
 
 .document-card:hover {
@@ -1020,13 +1021,11 @@ body.modal-open {
   border-radius: 16px;
   overflow: hidden;
   box-shadow: var(--card-shadow);
-  margin-bottom: 2rem;
-  max-width: 100%;
-  height: fit-content;
+  transition: var(--transition);
 }
 
 .tabs-container {
-  background: var(--bg-tertiary);
+  background: var(--bg-primary);
   border-bottom: 1px solid var(--border-color);
   padding: 0;
 }

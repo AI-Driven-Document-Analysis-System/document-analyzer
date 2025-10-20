@@ -459,7 +459,7 @@ const PinnedSummaries: React.FC = () => {
             <i className="fas fa-bookmark me-2"></i>Recent Summaries
           </h5>
 
-          <div>
+          <div style={{ background: 'transparent' }}>
             {summaries.map((summary) => (
               <div key={summary.id} className="result-item">
                 <div
