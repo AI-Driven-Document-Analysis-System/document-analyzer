@@ -3,6 +3,14 @@ import { authService } from "../../services/authService"
 import { useTheme } from "../../contexts/ThemeContext"
 
 // Define TypeScript interfaces
+interface LayoutSection {
+  text: string;
+  confidence: number;
+  page_number: number;
+  bounding_box: number[];
+  element_type: string;
+}
+
 interface Document {
   documentId: string;
   content: string;
@@ -14,6 +22,7 @@ interface Document {
   wordCount?: number;
   documentType?: string;
   classification?: string;
+  layoutSections?: LayoutSection[];
 }
 
 interface DocumentEditorProps {
@@ -46,6 +55,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ documentId, onClose, au
   const [authToken, setAuthToken] = useState<string | null>(null)
   const [selectedClassification, setSelectedClassification] = useState<string>('');
   const [classificationChanged, setClassificationChanged] = useState(false);
+  const [displayMode, setDisplayMode] = useState<'structured' | 'raw'>('structured');
 
   // Predefined document categories
   const documentCategories = [
@@ -138,6 +148,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ documentId, onClose, au
           wordCount: contentData.word_count,
           documentType: metadataData.document_type,
           classification: metadataData.document_type || metadataData.classification,
+          layoutSections: contentData.layout_sections || [],
         });
 
         // Set initial classification
@@ -178,6 +189,265 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ documentId, onClose, au
         documentType: newClassification
       });
     }
+  };
+
+  // Function to get element type styling
+  const getElementTypeStyle = (elementType: string) => {
+    const baseStyle = {
+      marginBottom: '12px',
+      padding: '8px 12px',
+      borderRadius: '6px',
+      border: '1px solid',
+      fontSize: '14px',
+      lineHeight: '1.6',
+    };
+
+    switch (elementType) {
+      case 'LAYOUT_TITLE':
+        return {
+          ...baseStyle,
+          fontSize: '24px',
+          fontWeight: '700',
+          color: isDarkMode ? '#f1f5f9' : '#1f2937',
+          backgroundColor: isDarkMode ? '#1e40af' : '#dbeafe',
+          borderColor: isDarkMode ? '#3b82f6' : '#60a5fa',
+          marginBottom: '20px',
+        };
+      case 'LAYOUT_SECTION_HEADER':
+        return {
+          ...baseStyle,
+          fontSize: '18px',
+          fontWeight: '600',
+          color: isDarkMode ? '#f1f5f9' : '#1f2937',
+          backgroundColor: isDarkMode ? '#0f766e' : '#ccfbf1',
+          borderColor: isDarkMode ? '#14b8a6' : '#5eead4',
+          marginBottom: '16px',
+          marginTop: '24px',
+        };
+      case 'LAYOUT_HEADER':
+        return {
+          ...baseStyle,
+          fontSize: '12px',
+          fontStyle: 'italic',
+          color: isDarkMode ? '#94a3b8' : '#6b7280',
+          backgroundColor: isDarkMode ? '#374151' : '#f9fafb',
+          borderColor: isDarkMode ? '#4b5563' : '#e5e7eb',
+        };
+      case 'LAYOUT_FOOTER':
+        return {
+          ...baseStyle,
+          fontSize: '12px',
+          fontStyle: 'italic',
+          color: isDarkMode ? '#94a3b8' : '#6b7280',
+          backgroundColor: isDarkMode ? '#374151' : '#f9fafb',
+          borderColor: isDarkMode ? '#4b5563' : '#e5e7eb',
+        };
+      case 'LAYOUT_LIST':
+        return {
+          ...baseStyle,
+          backgroundColor: isDarkMode ? '#422006' : '#fef3c7',
+          borderColor: isDarkMode ? '#d97706' : '#f59e0b',
+          color: isDarkMode ? '#fbbf24' : '#92400e',
+          paddingLeft: '20px',
+        };
+      case 'LAYOUT_TABLE':
+        return {
+          ...baseStyle,
+          backgroundColor: isDarkMode ? '#312e81' : '#ede9fe',
+          borderColor: isDarkMode ? '#6366f1' : '#a78bfa',
+          color: isDarkMode ? '#c4b5fd' : '#5b21b6',
+          fontFamily: 'monospace',
+        };
+      case 'LAYOUT_FIGURE':
+        return {
+          ...baseStyle,
+          textAlign: 'center' as const,
+          backgroundColor: isDarkMode ? '#0f172a' : '#f8fafc',
+          borderColor: isDarkMode ? '#4b5563' : '#e5e7eb',
+          color: isDarkMode ? '#cbd5e1' : '#374151',
+        };
+      case 'LAYOUT_KEY_VALUE':
+        return {
+          ...baseStyle,
+          backgroundColor: isDarkMode ? '#1f2937' : '#f3f4f6',
+          borderColor: isDarkMode ? '#4b5563' : '#9ca3af',
+          color: isDarkMode ? '#e5e7eb' : '#374151',
+          fontFamily: 'monospace',
+        };
+      case 'LAYOUT_PAGE_NUMBER':
+        return {
+          ...baseStyle,
+          fontSize: '11px',
+          textAlign: 'center' as const,
+          color: isDarkMode ? '#94a3b8' : '#6b7280',
+          backgroundColor: isDarkMode ? '#374151' : '#f9fafb',
+          borderColor: isDarkMode ? '#4b5563' : '#e5e7eb',
+        };
+      default: // LAYOUT_TEXT
+        return {
+          ...baseStyle,
+          backgroundColor: isDarkMode ? '#334155' : 'white',
+          borderColor: isDarkMode ? '#64748b' : '#e5e7eb',
+          color: isDarkMode ? '#f1f5f9' : '#374151',
+        };
+    }
+  };
+
+  // Function to get element type label
+  const getElementTypeLabel = (elementType: string) => {
+    switch (elementType) {
+      case 'layout_title': return 'Title';
+      case 'layout_section_header': return 'Section Header';
+      case 'layout_header': return 'Page Header';
+      case 'layout_footer': return 'Page Footer';
+      case 'layout_list': return 'List';
+      case 'layout_table': return 'Table';
+      case 'layout_figure': return 'Figure';
+      case 'layout_key_value': return 'Key-Value';
+      case 'layout_page_number': return 'Page Number';
+      case 'layout_text': return 'Text';
+      default: return 'Text';
+    }
+  };
+
+  // Function to handle structured text editing
+  const handleStructuredTextEdit = (pageNum: number, sectionIndex: number, newText: string) => {
+    if (!document?.layoutSections) return;
+    
+    const sections = document.layoutSections!;
+    const updatedSections = [...sections];
+    const flatIndex = sections.findIndex((section, idx) => {
+      const page = section.page_number || 1;
+      const currentPageSections = sections.filter(s => (s.page_number || 1) === page);
+      const sectionInPageIndex = currentPageSections.indexOf(section);
+      return page === pageNum && sectionInPageIndex === sectionIndex;
+    });
+    
+    if (flatIndex !== -1) {
+      updatedSections[flatIndex] = { ...updatedSections[flatIndex], text: newText };
+      
+      // Also update the raw content by combining all sections
+      const combinedText = updatedSections.map(section => section.text).join('\n\n');
+      
+      setDocument({
+        ...document,
+        layoutSections: updatedSections,
+        content: combinedText
+      });
+    }
+  };
+
+  // Function to render structured content
+  const renderStructuredContent = () => {
+    if (!document?.layoutSections || document.layoutSections.length === 0) {
+      return (
+        <div style={{
+          padding: '20px',
+          textAlign: 'center',
+          color: isDarkMode ? '#94a3b8' : '#6b7280',
+          backgroundColor: isDarkMode ? '#334155' : '#f9fafb',
+          borderRadius: '8px',
+          border: isDarkMode ? '1px solid #64748b' : '1px solid #e5e7eb',
+        }}>
+          <p>No structured layout data available for this document.</p>
+          <p style={{ fontSize: '12px', marginTop: '8px' }}>
+            Switch to "Raw Text" mode to view the extracted text.
+          </p>
+        </div>
+      );
+    }
+
+    // Group sections by page
+    const sectionsByPage = document.layoutSections.reduce((acc, section) => {
+      const page = section.page_number || 1;
+      if (!acc[page]) {
+        acc[page] = [];
+      }
+      acc[page].push(section);
+      return acc;
+    }, {} as Record<number, LayoutSection[]>);
+
+    return (
+      <div style={{ fontSize: '14px', lineHeight: '1.6' }}>
+        {Object.entries(sectionsByPage)
+          .sort(([a], [b]) => parseInt(a) - parseInt(b))
+          .map(([pageNum, sections]) => (
+            <div key={pageNum} style={{ marginBottom: '32px' }}>
+              {parseInt(pageNum) >= 1 && (
+                <div style={{
+                  fontSize: '16px',
+                  fontWeight: '600',
+                  color: isDarkMode ? '#60a5fa' : '#3b82f6',
+                  marginBottom: '16px',
+                  paddingBottom: '8px',
+                  borderBottom: isDarkMode ? '2px solid #475569' : '2px solid #e5e7eb',
+                }}>
+                  Page {pageNum}
+                </div>
+              )}
+              {sections.map((section, index) => {
+                const sectionStyle = getElementTypeStyle(section.element_type);
+                return (
+                  <div key={`${pageNum}-${index}`} style={sectionStyle}>
+                    <div style={{
+                      fontSize: '10px',
+                      fontWeight: '500',
+                      marginBottom: '4px',
+                      opacity: 0.7,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                    }}>
+                      {getElementTypeLabel(section.element_type)}
+                      {section.confidence && (
+                        <span style={{ marginLeft: '8px' }}>
+                          ({Math.round(section.confidence * 100)}% confidence)
+                        </span>
+                      )}
+                    </div>
+                    <textarea
+                      value={section.text}
+                      onChange={(e) => handleStructuredTextEdit(parseInt(pageNum), index, e.target.value)}
+                      style={{
+                        width: '100%',
+                        minHeight: Math.max(60, Math.ceil(section.text.length / 80) * 20 + 40) + 'px',
+                        padding: '8px',
+                        border: 'none',
+                        borderRadius: '4px',
+                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                        color: 'inherit',
+                        fontSize: 'inherit',
+                        fontFamily: 'inherit',
+                        fontWeight: 'inherit',
+                        fontStyle: 'inherit',
+                        textAlign: 'inherit',
+                        lineHeight: 'inherit',
+                        resize: 'none',
+                        outline: 'none',
+                        boxSizing: 'border-box',
+                        overflow: 'hidden',
+                      }}
+                      onFocus={(e) => {
+                        e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.05)';
+                        e.currentTarget.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.3)';
+                      }}
+                      onBlur={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                      onInput={(e) => {
+                        // Auto-resize textarea to fit content without scrollbars
+                        const target = e.currentTarget;
+                        target.style.height = 'auto';
+                        target.style.height = Math.max(60, target.scrollHeight) + 'px';
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+      </div>
+    );
   };
 
   // Save document content (you'll need to implement a PUT endpoint for this)
@@ -434,14 +704,8 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ documentId, onClose, au
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '8px'
+                    gap: '12px'
                   }}>
-                    {/* <div style={{
-                      width: '8px',
-                      height: '8px',
-                      backgroundColor: '#10b981',
-                      borderRadius: '50%'
-                    }}></div> */}
                     <label style={{
                       fontSize: '14px',
                       fontWeight: '600',
@@ -449,40 +713,100 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ documentId, onClose, au
                     }}>
                       Extracted Text
                     </label>
+                    
+                    {/* Display Mode Toggle */}
+                    <div style={{
+                      display: 'flex',
+                      backgroundColor: isDarkMode ? '#475569' : '#f3f4f6',
+                      borderRadius: '6px',
+                      padding: '2px',
+                      border: isDarkMode ? '1px solid #64748b' : '1px solid #e5e7eb',
+                    }}>
+                      <button
+                        onClick={() => setDisplayMode('structured')}
+                        style={{
+                          padding: '4px 8px',
+                          fontSize: '11px',
+                          fontWeight: '500',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          backgroundColor: displayMode === 'structured' ? '#3b82f6' : 'transparent',
+                          color: displayMode === 'structured' ? 'white' : (isDarkMode ? '#cbd5e1' : '#374151'),
+                        }}
+                      >
+                        Structured
+                      </button>
+                      <button
+                        onClick={() => setDisplayMode('raw')}
+                        style={{
+                          padding: '4px 8px',
+                          fontSize: '11px',
+                          fontWeight: '500',
+                          border: 'none',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          backgroundColor: displayMode === 'raw' ? '#3b82f6' : 'transparent',
+                          color: displayMode === 'raw' ? 'white' : (isDarkMode ? '#cbd5e1' : '#374151'),
+                        }}
+                      >
+                        Raw Text
+                      </button>
+                    </div>
                   </div>
                   <div style={{ display: 'flex', gap: '16px', fontSize: '12px', color: isDarkMode ? '#94a3b8' : '#6b7280' }}>
                     {document.wordCount && <span><strong>{document.wordCount}</strong> words</span>}
                     <span><strong>{document.content.length}</strong> characters</span>
+                    {document.layoutSections && document.layoutSections.length > 0 && (
+                      <span><strong>{document.layoutSections.length}</strong> sections</span>
+                    )}
                   </div>
                 </div>
-                <textarea
-                  value={document.content}
-                  onChange={handleContentChange}
-                  style={{
+                {displayMode === 'structured' ? (
+                  <div style={{
                     width: '100%',
                     flex: 1,
                     padding: '16px',
-                    fontSize: '14px',
-                    lineHeight: '1.6',
                     border: isDarkMode ? '1px solid #64748b' : '1px solid #e5e7eb',
                     borderRadius: '8px',
-                    color: isDarkMode ? '#f1f5f9' : '#111827',
                     backgroundColor: isDarkMode ? '#334155' : 'white',
-                    resize: 'none',
                     boxSizing: 'border-box',
-                    outline: 'none',
-                    fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
-                  }}
-                  placeholder="No text content extracted from this document..."
-                  onFocus={(e) => {
-                    e.currentTarget.style.borderColor = '#3b82f6';
-                    e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
-                  }}
-                  onBlur={(e) => {
-                    e.currentTarget.style.borderColor = isDarkMode ? '#64748b' : '#e5e7eb';
-                    e.currentTarget.style.boxShadow = 'none';
-                  }}
-                />
+                    overflowY: 'auto',
+                  }}>
+                    {renderStructuredContent()}
+                  </div>
+                ) : (
+                  <textarea
+                    value={document.content}
+                    onChange={handleContentChange}
+                    style={{
+                      width: '100%',
+                      flex: 1,
+                      padding: '16px',
+                      fontSize: '14px',
+                      lineHeight: '1.6',
+                      border: isDarkMode ? '1px solid #64748b' : '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      color: isDarkMode ? '#f1f5f9' : '#111827',
+                      backgroundColor: isDarkMode ? '#334155' : 'white',
+                      resize: 'none',
+                      boxSizing: 'border-box',
+                      outline: 'none',
+                      fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace'
+                    }}
+                    placeholder="No text content extracted from this document..."
+                    onFocus={(e) => {
+                      e.currentTarget.style.borderColor = '#3b82f6';
+                      e.currentTarget.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
+                    }}
+                    onBlur={(e) => {
+                      e.currentTarget.style.borderColor = isDarkMode ? '#64748b' : '#e5e7eb';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
+                  />
+                )}
               </div>
 
               {/* Right Side - Document Preview */}
@@ -648,7 +972,10 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ documentId, onClose, au
                 Cancel
               </button>
               <button
-                onClick={handleSave}
+                onClick={async () => {
+                  await handleSave();
+                  onClose();
+                }}
                 disabled={isSaving}
                 style={{
                   padding: '7px 20px',
