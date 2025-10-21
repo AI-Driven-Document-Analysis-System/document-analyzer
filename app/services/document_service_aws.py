@@ -195,14 +195,10 @@ class DocumentServiceAWS:
                 f.write(file_content)
             
             # Run classification in thread pool
-            loop = asyncio.get_event_loop()
-            doc_type = await loop.run_in_executor(
-                None,
-                self.classifier.classify_document,
-                local_path
-            )
+            result = await self.classifier.classify_document(local_path)
 
-            if doc_type and doc_type != "unknown":
+            if result and result[0] != "unknown":
+                doc_type = result[0]
                 print(f"[Classification] Document {document_id} classified as: {doc_type}")
                 
                 # Save classification to database

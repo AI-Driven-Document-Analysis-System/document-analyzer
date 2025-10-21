@@ -1,135 +1,106 @@
-from PIL import Image
-import pdf2image
-from transformers import LayoutLMv3FeatureExtractor, LayoutLMv3TokenizerFast, LayoutLMv3Processor, LayoutLMv3ForSequenceClassification
-import torch
-import logging
-import traceback
-import pytesseract
+import asyncio
 import os
-
-# Set Tesseract path for Windows
-if os.name == 'nt':  # Windows
-    pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from typing import Optional, Tuple, Dict
+from gradio_client import Client, handle_file
 
 class DocumentClassifier:
-    """Class to classify document types based on layout and text content"""
-    def __init__(self):
-        try:
-            self.feature_extractor = LayoutLMv3FeatureExtractor()
-            self.tokenizer = LayoutLMv3TokenizerFast.from_pretrained(
-                "microsoft/layoutlmv3-base"
-            )
-            self.processor = LayoutLMv3Processor(self.feature_extractor, self.tokenizer)
-            self.model = LayoutLMv3ForSequenceClassification.from_pretrained(
-                "RavindiG/layoutlmv3-document-classification-v2"
-            )
-            self.model.eval()  # Set to evaluation mode
-
-            self.id2label = { 
-                0: 'Financial Report', 
-                1: 'Invoice or Receipt',
-                2: 'Legal Document', 
-                3: 'Medical Record',
-                4: 'Research Paper'
-            }
-
-            logger.info("DocumentClassifier initialized successfully.")
-        except Exception as e:
-            logger.error(f"Error during initialization: {e}")
-            logger.error(traceback.format_exc())
-            raise
-
     
-    def predict_document_class(self, image):
+    def __init__(self):
+        """Initialize the classifier client"""
+        self.space_name = "RavindiG/document_classification"
+        self.client = None
+        print(f"[Classification] Initialized for Space: {self.space_name}")
+    
+    def initialize_sync_client(self):
+        """Initialize Gradio client (call once at startup)"""
         try:
-            logger.info(f"Image size: {image.size}, mode: {image.mode}")
-            
-            # Convert image to RGB if needed
-            if image.mode != 'RGB':
-                logger.info(f"Converting image from {image.mode} to RGB")
-                image = image.convert('RGB')
-            
-            # Prepare image for the model
-            logger.info("Processing image...")
-            encoded_inputs = self.processor(image, max_length=512, return_tensors="pt")
-
-            # Move inputs to same device as model
-            device = next(self.model.parameters()).device
-            
-            for k, v in encoded_inputs.items():
-                encoded_inputs[k] = v.to(device)
-
-            # Forward pass
-            logger.info("Running model inference...")
-            with torch.no_grad():  # Disable gradient computation for inference
-                outputs = self.model(**encoded_inputs)
-
-            logits = outputs.logits
-            logger.info(f"Logits shape: {logits.shape}, values: {logits}")
-
-            # Use instance threshold if provided, otherwise default to 1.0
-            threshold = getattr(self, "confidence_threshold", 1.0)
-
-            max_logit = logits.max().item()
-            logger.info(f"Max logit: {max_logit}, threshold: {threshold}")
-
-            if max_logit < threshold:
-                logger.info("Max logit below threshold, returning 'Other'")
-                predicted_label = "Other"
-            else:
-                predicted_class_idx = logits.argmax(-1).item()
-                logger.info(f"Predicted index: {predicted_class_idx}")
-
-                predicted_label = self.id2label.get(predicted_class_idx, "Other")
-                logger.info(f"Predicted label: {predicted_label}")
-            
-            return predicted_label
-            
+            self.client = Client(self.space_name)
+            print(f"[Classification] Gradio client initialized successfully")
+            return True
         except Exception as e:
-            logger.error(f"Error in predict_document_class: {e}")
-            logger.error(traceback.format_exc())
-            raise
+            print(f"[Classification] Failed to initialize client: {e}")
+            return False
 
-    def classify_document(self, file_path):
-        """Classify document type based on layout and extracted text"""
-        try:
-            logger.info(f"Processing file: {file_path}")
-            
-            # Open the document (PDF or image)
-            if file_path.lower().endswith('.pdf'):
-                logger.info("Converting PDF to image...")
-                # Set poppler path for Windows
-                poppler_path = os.path.join(os.getcwd(), 'poppler', 'poppler-23.01.0', 'Library', 'bin')
-                
-                images = pdf2image.convert_from_path(
-                    file_path,
-                    dpi=120,
-                    fmt="RGB",
-                    first_page=1,
-                    last_page=1,
-                    poppler_path=poppler_path if os.path.exists(poppler_path) else None
-                )
-                if not images:
-                    raise ValueError("No images extracted from PDF")
-                image = images[0]
-                logger.info(f"PDF converted successfully, image size: {image.size}")
-            else:
-                logger.info("Opening image file...")
-                image = Image.open(file_path)
-                logger.info(f"Image opened successfully, size: {image.size}")
-            
-            # Predict document type
-            doc_type = self.predict_document_class(image)
-            
-            logger.info(f"Classification successful: {doc_type}")
-            return doc_type
+    async def classify_document(self, file_path: str) -> Optional[Tuple[str, Dict]]:
+        """
+        Classify document directly from file path
         
+        Args:
+            file_path: Path to the document file
+            
+        Returns:
+            Tuple of (document_type, confidence_scores) or None if failed
+        """
+        try:
+            if not os.path.exists(file_path):
+                print(f"[Classification] File not found: {file_path}")
+                return None
+                
+            print(f"[Classification] Calling API for {file_path}")
+            
+            # Call Gradio API in executor
+            loop = asyncio.get_event_loop()
+            result = await loop.run_in_executor(
+                None,
+                self._call_gradio_predict,
+                file_path
+            )
+            
+            if result:
+                doc_type = result[0]  # Document type string
+                confidence = result[1]  # Confidence scores dict
+                # result[2] is the image, which we can ignore
+                print(f"[Classification] Success - Type: {doc_type}")
+                print(f"[Classification] Confidence: {confidence}")
+                return (doc_type, confidence)
+            else:
+                print(f"[Classification] No result returned")
+                return None
+                
         except Exception as e:
-            logger.error(f"Error classifying document {file_path}: {e}")
-            logger.error(traceback.format_exc())
-            return "Other"
-
-
+            print(f"[Classification] Error: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
+    
+    def _call_gradio_predict(self, file_path: str):
+        """Synchronous Gradio API call"""
+        try:
+            # Initialize client if needed
+            if self.client is None:
+                if not self.initialize_sync_client():
+                    return None
+            
+            # Method 1: Using handle_file (recommended for gradio_client >= 0.10.0)
+            try:
+                result = self.client.predict(
+                    file=handle_file(file_path),
+                    api_name="/classify_upload"  # This matches the function name
+                )
+                return result
+            except Exception as e:
+                print(f"[Classification] Method 1 failed: {e}")
+                
+                # Method 2: Direct file path (for older versions or different setup)
+                try:
+                    result = self.client.predict(
+                        file_path,
+                        api_name="/classify_upload"
+                    )
+                    return result
+                except Exception as e2:
+                    print(f"[Classification] Method 2 failed: {e2}")
+                    
+                    # Method 3: Without explicit api_name (auto-detect)
+                    try:
+                        result = self.client.predict(handle_file(file_path))
+                        return result
+                    except Exception as e3:
+                        print(f"[Classification] Method 3 failed: {e3}")
+                        return None
+            
+        except Exception as e:
+            print(f"[Classification] Gradio API error: {e}")
+            import traceback
+            traceback.print_exc()
+            return None

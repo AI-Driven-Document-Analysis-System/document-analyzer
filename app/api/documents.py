@@ -301,7 +301,7 @@ async def get_document_content(
         with db_manager.get_connection() as conn:
             with conn.cursor() as cursor:
                 query = """
-                    SELECT d.original_filename, dc.extracted_text, dc.entities_extracted, 
+                    SELECT d.original_filename, dc.extracted_text, dc.entities_extracted, dc.layout_sections,
                            dp.processing_status, d.page_count
                     FROM documents d
                     LEFT JOIN document_content dc ON d.id = dc.document_id
@@ -314,7 +314,7 @@ async def get_document_content(
                 if not result:
                     raise HTTPException(status_code=404, detail="Document not found")
                 
-                filename, extracted_text, entities, processing_status, page_count = result
+                filename, extracted_text, entities, layout_sections, processing_status, page_count = result
                 
                 if processing_status != "completed":
                     return {
@@ -322,8 +322,26 @@ async def get_document_content(
                         "filename": filename,
                         "processing_status": processing_status,
                         "extracted_text": None,
+                        "layout_sections": None,
                         "message": f"Document is still being processed. Status: {processing_status}"
                     }
+                
+                # Helper function to safely handle JSON data that might already be parsed
+                def safe_json_parse(data):
+                    if data is None:
+                        return None
+                    # If it's already a list or dict (parsed), return as-is
+                    if isinstance(data, (list, dict)):
+                        return data
+                    # If it's a string, try to parse it
+                    if isinstance(data, str):
+                        try:
+                            return json.loads(data)
+                        except (json.JSONDecodeError, TypeError):
+                            logger.warning(f"Failed to parse JSON data: {data}")
+                            return None
+                    # For any other type, return None
+                    return None
                 
                 if not extracted_text:
                     return {
@@ -331,6 +349,7 @@ async def get_document_content(
                         "filename": filename,
                         "processing_status": processing_status,
                         "extracted_text": None,
+                        "layout_sections": safe_json_parse(layout_sections),
                         "message": "No text content extracted from this document"
                     }
                 
@@ -339,7 +358,8 @@ async def get_document_content(
                     "filename": filename,
                     "processing_status": processing_status,
                     "extracted_text": extracted_text,
-                    "entities": json.loads(entities) if entities else None,
+                    "layout_sections": safe_json_parse(layout_sections),
+                    "entities": safe_json_parse(entities),
                     "page_count": page_count,
                     "character_count": len(extracted_text),
                     "word_count": len(extracted_text.split()) if extracted_text else 0
