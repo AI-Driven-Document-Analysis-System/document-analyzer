@@ -551,9 +551,23 @@ def resolve_domain_specific_model(document_type: str):
     logger.warning(f"No specific model found for document type: {document_type}, using default BART")
     return "facebook/bart-large-cnn"
 
+# def calculate_word_count(text: str) -> int:
+#     """
+#     Calculate the word count of a text string.
+    
+#     Args:
+#         text: The text to count words in
+        
+#     Returns:
+#         int: Number of words in the text
+#     """
+#     if not text or not text.strip():
+#         return 0
+#     return len(text.strip().split())
+
 def calculate_word_count(text: str) -> int:
     """
-    Calculate the word count of a text string.
+    Calculate the word count of a text string with proper handling of edge cases.
     
     Args:
         text: The text to count words in
@@ -561,9 +575,17 @@ def calculate_word_count(text: str) -> int:
     Returns:
         int: Number of words in the text
     """
-    if not text or not text.strip():
+    if not text or not isinstance(text, str):
         return 0
-    return len(text.strip().split())
+    
+    # Strip whitespace and check if empty
+    text = text.strip()
+    if not text:
+        return 0
+    
+    # Split by whitespace and filter out empty strings
+    words = [word for word in text.split() if word]
+    return len(words)
 
 def check_existing_summary(document_id: str, model_name: str):
     """
