@@ -642,6 +642,54 @@ type GeneratedSummary = {
   summary_type?: string;
 };
 
+// Storage keys for persistence
+const STORAGE_KEYS = {
+  PROCESSING_STATE: 'summarization_processing_state',
+  SELECTED_DOCUMENT: 'summarization_selected_document',
+  SUMMARY_TYPE: 'summarization_summary_type',
+  GENERATED_SUMMARY: 'summarization_generated_summary'
+};
+
+// Helper functions for localStorage
+const saveToStorage = (key: string, value: any) => {
+  try {
+    localStorage.setItem(key, JSON.stringify({
+      data: value,
+      timestamp: Date.now()
+    }));
+  } catch (error) {
+    console.warn('Failed to save to localStorage:', error);
+  }
+};
+
+const loadFromStorage = (key: string, maxAge: number = 30 * 60 * 1000) => { // 30 minutes default
+  try {
+    const stored = localStorage.getItem(key);
+    if (!stored) return null;
+    
+    const parsed = JSON.parse(stored);
+    const age = Date.now() - parsed.timestamp;
+    
+    if (age > maxAge) {
+      localStorage.removeItem(key);
+      return null;
+    }
+    
+    return parsed.data;
+  } catch (error) {
+    console.warn('Failed to load from localStorage:', error);
+    return null;
+  }
+};
+
+const clearFromStorage = (key: string) => {
+  try {
+    localStorage.removeItem(key);
+  } catch (error) {
+    console.warn('Failed to clear from localStorage:', error);
+  }
+};
+
 export default function Summarization() {
   const [documents, setDocuments] = useState<any[]>([]);
   const [selectedDocument, setSelectedDocument] = useState("");
@@ -652,6 +700,10 @@ export default function Summarization() {
   const [error, setError] = useState("");
   const [progress, setProgress] = useState("");
   const [copySuccess, setCopySuccess] = useState(false);
+  
+  // AbortController for cancelling requests
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   // Preview states
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -664,9 +716,83 @@ export default function Summarization() {
     { id: "domain_specific", name: "Domain Specific", desc: "Specialized summary using T5 model", model: "Domain Specific Model" },
   ];
 
+  // Cancel current processing
+  const cancelProcessing = () => {
+    setIsCancelling(true);
+    setProgress("Cancelling request...");
+    
+    if (abortController) {
+      abortController.abort();
+    }
+    
+    // Clear states after a short delay to show cancellation feedback
+    setTimeout(() => {
+      setIsGenerating(false);
+      setProgress("");
+      setError("");
+      setIsCancelling(false);
+      setAbortController(null);
+      clearFromStorage(STORAGE_KEYS.PROCESSING_STATE);
+    }, 500);
+  };
+
+  // Cleanup stale processing states
+  const cleanupStaleProcessingState = () => {
+    const savedProcessingState = loadFromStorage(STORAGE_KEYS.PROCESSING_STATE, 10 * 60 * 1000); // 10 minutes
+    if (savedProcessingState && savedProcessingState.isGenerating) {
+      // If processing state is older than 10 minutes, consider it stale
+      setError("Previous processing session was interrupted. Please try generating the summary again.");
+      clearFromStorage(STORAGE_KEYS.PROCESSING_STATE);
+      return true;
+    }
+    return false;
+  };
+
+  // Restore state from localStorage on component mount
   useEffect(() => {
+    // Check for stale processing states first
+    const hadStaleState = cleanupStaleProcessingState();
+    
+    if (!hadStaleState) {
+      // Restore processing state only if not stale
+      const savedProcessingState = loadFromStorage(STORAGE_KEYS.PROCESSING_STATE);
+      if (savedProcessingState) {
+        setIsGenerating(savedProcessingState.isGenerating);
+        setProgress(savedProcessingState.progress || "AI is processing your document...");
+        setError(savedProcessingState.error || "");
+      }
+    }
+
+    // Restore selected document
+    const savedSelectedDocument = loadFromStorage(STORAGE_KEYS.SELECTED_DOCUMENT);
+    if (savedSelectedDocument) {
+      setSelectedDocument(savedSelectedDocument);
+    }
+
+    // Restore summary type
+    const savedSummaryType = loadFromStorage(STORAGE_KEYS.SUMMARY_TYPE);
+    if (savedSummaryType) {
+      setSummaryType(savedSummaryType);
+    }
+
+    // Restore generated summary
+    const savedGeneratedSummary = loadFromStorage(STORAGE_KEYS.GENERATED_SUMMARY);
+    if (savedGeneratedSummary) {
+      setGeneratedSummary(savedGeneratedSummary);
+    }
+
     fetchDocuments();
   }, []);
+
+  // Cleanup on component unmount
+  useEffect(() => {
+    return () => {
+      // Cancel any ongoing requests when component unmounts
+      if (abortController) {
+        abortController.abort();
+      }
+    };
+  }, [abortController]);
 
   useEffect(() => {
     if (selectedDocument) {
@@ -777,10 +903,29 @@ export default function Summarization() {
       return;
     }
 
+    // Cancel any existing request
+    if (abortController) {
+      abortController.abort();
+    }
+
+    // Create new AbortController for this request
+    const newAbortController = new AbortController();
+    setAbortController(newAbortController);
+
     setIsGenerating(true);
     setError("");
     setProgress("AI is generating summary...");
     setGeneratedSummary(null);
+
+    // Save processing state to localStorage
+    saveToStorage(STORAGE_KEYS.PROCESSING_STATE, {
+      isGenerating: true,
+      progress: "AI is generating summary...",
+      error: ""
+    });
+    saveToStorage(STORAGE_KEYS.SELECTED_DOCUMENT, selectedDocument);
+    saveToStorage(STORAGE_KEYS.SUMMARY_TYPE, summaryType);
+    clearFromStorage(STORAGE_KEYS.GENERATED_SUMMARY);
 
     try {
       const token = localStorage.getItem("token");
@@ -790,6 +935,12 @@ export default function Summarization() {
         summary_length: summaryLength,
       };
 
+      // Set a timeout for the request (2 minutes for faster response)
+      const timeoutId = setTimeout(() => {
+        newAbortController.abort();
+        setError("Request timed out. Please try again with a shorter document or different summary type.");
+      }, 2 * 60 * 1000); // 2 minutes - optimized for faster response
+
       const response = await fetch("http://localhost:8000/api/summarize/", {
         method: "POST",
         headers: {
@@ -797,20 +948,30 @@ export default function Summarization() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(requestBody),
+        signal: newAbortController.signal, // Add abort signal
       });
+
+      // Clear timeout if request completes
+      clearTimeout(timeoutId);
 
       const data = await response.json();
 
       if (response.ok && data.success) {
-        setProgress("Summary generated successfully!");
-        setGeneratedSummary({
+        const summaryData = {
           ...data,
           document_name: data.document_name || "Unknown Document",
           model_used: data.model_used || "AI Selected",
           created_at: data.created_at || new Date().toISOString(),
           word_count: data.word_count || 0,
           summary_type: data.summary_type || getSummaryTypeName(summaryType),
-        });
+        };
+        
+        setProgress("Summary generated successfully!");
+        setGeneratedSummary(summaryData);
+        
+        // Save successful result to localStorage
+        saveToStorage(STORAGE_KEYS.GENERATED_SUMMARY, summaryData);
+        clearFromStorage(STORAGE_KEYS.PROCESSING_STATE);
       } else {
         let errorMessage = `Request failed (${response.status})`;
         if (response.status === 422 && data.detail) {
@@ -821,12 +982,41 @@ export default function Summarization() {
           errorMessage = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
         }
         setError(errorMessage);
+        
+        // Save error state to localStorage
+        saveToStorage(STORAGE_KEYS.PROCESSING_STATE, {
+          isGenerating: false,
+          progress: "",
+          error: errorMessage
+        });
       }
     } catch (err) {
-      setError(`Network error: ${err instanceof Error ? err.message : "Unknown error"}`);
+      // Don't show error if request was cancelled
+      if (err instanceof Error && err.name === 'AbortError') {
+        console.log('Summary generation was cancelled');
+        setProgress("Request cancelled");
+        setTimeout(() => {
+          setProgress("");
+        }, 2000);
+        return;
+      }
+      
+      const errorMessage = `Network error: ${err instanceof Error ? err.message : "Unknown error"}`;
+      setError(errorMessage);
+      
+      // Save error state to localStorage
+      saveToStorage(STORAGE_KEYS.PROCESSING_STATE, {
+        isGenerating: false,
+        progress: "",
+        error: errorMessage
+      });
     } finally {
       setIsGenerating(false);
       setProgress("");
+      setAbortController(null);
+      
+      // Clear processing state from localStorage when done
+      clearFromStorage(STORAGE_KEYS.PROCESSING_STATE);
     }
   };
 
@@ -921,7 +1111,11 @@ ${generatedSummary.summary_text}`;
             <div className="card-body document-select">
               <select
                 value={selectedDocument}
-                onChange={(e) => setSelectedDocument(e.target.value)}
+                onChange={(e) => {
+                  const newValue = e.target.value;
+                  setSelectedDocument(newValue);
+                  saveToStorage(STORAGE_KEYS.SELECTED_DOCUMENT, newValue);
+                }}
                 className="form-select"
               >
                 <option value="">Select a document from the list</option>
@@ -1015,7 +1209,11 @@ ${generatedSummary.summary_text}`;
               <div className="model-select">
                 <select
                   value={summaryType}
-                  onChange={(e) => setSummaryType(e.target.value)}
+                  onChange={(e) => {
+                    const newValue = e.target.value;
+                    setSummaryType(newValue);
+                    saveToStorage(STORAGE_KEYS.SUMMARY_TYPE, newValue);
+                  }}
                   className="form-select"
                   style={{
                     backgroundColor: "var(--input-bg)",
@@ -1028,7 +1226,7 @@ ${generatedSummary.summary_text}`;
                 {/* <option value="" disabled >
                   Select a summary type
                 </option> */}
-                <option value="">Select a summery type  from the list</option>
+                <option value="">Select a summary type from the list</option>
                 {summaryOptions.map((option) => (
                   <option key={option.id} value={option.id}>
                     {option.name} – {option.model}
@@ -1072,15 +1270,60 @@ ${generatedSummary.summary_text}`;
               {isGenerating ? (
                 <div className="loading-state">
                   <div className="ripple-spinner"></div>
-                  <h3 className="processing-text">AI is Processing Your Document</h3>
+                  <h3 className="processing-text">
+                    {isCancelling ? "Cancelling Request..." : "AI is Processing Your Document"}
+                  </h3>
                   <p>
-                    This may take a few minutes. Please wait while our AI analyzes your document and
-                    generates a comprehensive summary.
+                    {isCancelling 
+                      ? "Please wait while we cancel the current request."
+                      : "This may take a few minutes. Please wait while our AI analyzes your document and generates a comprehensive summary."
+                    }
                   </p>
+                  {progress && (
+                    <div style={{ 
+                      marginTop: "16px", 
+                      padding: "12px", 
+                      backgroundColor: "var(--bg-secondary)", 
+                      borderRadius: "8px",
+                      color: "var(--text-secondary)",
+                      fontSize: "0.9rem"
+                    }}>
+                      {progress}
+                    </div>
+                  )}
                   <div className="dots">
                     <div className="dot"></div>
                     <div className="dot"></div>
                     <div className="dot"></div>
+                  </div>
+                  <div style={{ marginTop: "20px" }}>
+                    <button
+                      onClick={cancelProcessing}
+                      disabled={isCancelling}
+                      style={{
+                        padding: "8px 16px",
+                        backgroundColor: isCancelling ? "#6b7280" : "var(--error-color, #ef4444)",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "6px",
+                        fontSize: "0.9rem",
+                        cursor: isCancelling ? "not-allowed" : "pointer",
+                        transition: "background-color 0.2s",
+                        opacity: isCancelling ? 0.7 : 1
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!isCancelling) {
+                          e.currentTarget.style.backgroundColor = "#dc2626";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isCancelling) {
+                          e.currentTarget.style.backgroundColor = "var(--error-color, #ef4444)";
+                        }
+                      }}
+                    >
+                      {isCancelling ? "Cancelling..." : "Cancel Processing"}
+                    </button>
                   </div>
                 </div>
               ) : generatedSummary ? (

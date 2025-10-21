@@ -373,7 +373,7 @@
 ##Worked 
 
 # Import necessary modules for FastAPI web framework
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel  # For data validation and serialization
 from datetime import datetime   # For timestamp handling
 import logging                  # For application logging
@@ -384,6 +384,10 @@ from ..core.database import db_manager  # Database connection manager
 from ..core.dependencies import get_current_user  # Authentication middleware
 from ..schemas.user_schemas import UserResponse  # User data schema
 import psycopg2  # PostgreSQL database driver
+import asyncio
+from threading import Event
+from concurrent.futures import ThreadPoolExecutor
+import functools
 
 # Set up logging for this module - helps track what happens during execution
 logger = logging.getLogger(__name__)
@@ -606,6 +610,7 @@ def check_existing_summary(document_id: str, model_name: str):
 @router.post("/", response_model=SummarizationResponse)
 async def summarize_document(
     request: SummarizationRequest, 
+    fastapi_request: Request,
     current_user: UserResponse = Depends(get_current_user)
 ):
     """
@@ -722,8 +727,48 @@ async def summarize_document(
             "name": config["name"]
         }
 
-        # Call the AI service to generate the actual summary
-        summary_text = summarize_with_options(document_content, ai_config)
+        # Create cancellation token and run summarization in thread pool
+        cancellation_token = Event()
+        
+        # Function to check if client is still connected
+        async def check_client_connection():
+            try:
+                while not cancellation_token.is_set():
+                    if await fastapi_request.is_disconnected():
+                        logger.info("Client disconnected, cancelling summarization")
+                        cancellation_token.set()
+                        break
+                    await asyncio.sleep(1)  # Check every second
+            except Exception as e:
+                logger.error(f"Error checking client connection: {e}")
+        
+        # Function to run summarization with cancellation token
+        def run_summarization():
+            try:
+                return summarize_with_options(document_content, ai_config, cancellation_token)
+            except Exception as e:
+                if "cancelled by client" in str(e).lower():
+                    logger.info("Summarization cancelled by client disconnection")
+                    raise HTTPException(status_code=499, detail="Client disconnected")
+                raise e
+        
+        # Start client connection monitoring
+        connection_task = asyncio.create_task(check_client_connection())
+        
+        try:
+            # Run summarization in thread pool to avoid blocking
+            loop = asyncio.get_event_loop()
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = loop.run_in_executor(executor, run_summarization)
+                summary_text = await future
+        finally:
+            # Clean up connection monitoring
+            cancellation_token.set()
+            connection_task.cancel()
+            try:
+                await connection_task
+            except asyncio.CancelledError:
+                pass
         
         # Calculate actual word count of the generated summary
         word_count = calculate_word_count(summary_text)
