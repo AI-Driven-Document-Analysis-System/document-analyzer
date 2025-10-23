@@ -28,7 +28,7 @@
     ".next/types/**/*.ts",
     "**/*.ts",
     "**/*.tsx"
-  ],
+, "src/components/payment_portal/billing-checkout.jsx"  ],
   "exclude": [
     "node_modules"
   ]
