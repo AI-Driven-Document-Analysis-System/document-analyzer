@@ -13,15 +13,91 @@
 /* Dashboard Page Styles */
 @import "tailwindcss";
 
+/* Global Dark Mode Theme Variables */
+:root {
+  /* Light Mode Colors */
+  --bg-primary: #ffffff;
+  --bg-primary-rgb: 255, 255, 255;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-tertiary: #94a3b8;
+  --border-color: #e2e8f0;
+  --border-light: #f1f5f9;
+  --accent-color: #3b82f6;
+  --accent-hover: #2563eb;
+  --accent-light: #dbeafe;
+  --success-color: #10b981;
+  --success-light: #dcfce7;
+  --warning-color: #f59e0b;
+  --warning-light: #fef3c7;
+  --danger-color: #ef4444;
+  --danger-light: #fee2e2;
+  --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  --card-shadow-hover: 0 10px 25px rgba(0, 0, 0, 0.1);
+  --header-bg: linear-gradient(135deg, #0d6efd, #0b5ed7);
+  --sidebar-bg: #1f2937;
+  --sidebar-hover: #374151;
+  --sidebar-active: #60a5fa;
+  --input-bg: #ffffff;
+  --input-border: #d1d5db;
+  --input-focus: #3b82f6;
+  --modal-overlay: rgba(0, 0, 0, 0.5);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --transition: all 0.2s ease;
+}
+
+/* Dark Mode Colors - Dark Blue & Black Theme */
+[data-theme='dark'] {
+  --bg-primary: #0f172a;
+  --bg-primary-rgb: 15, 23, 42;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  --border-color: #475569;
+  --border-light: #334155;
+  --accent-color: #60a5fa;
+  --accent-hover: #3b82f6;
+  --accent-light: #1e3a8a;
+  --success-color: #34d399;
+  --success-light: #064e3b;
+  --warning-color: #fbbf24;
+  --warning-light: #451a03;
+  --danger-color: #f87171;
+  --danger-light: #7f1d1d;
+  --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --card-shadow-hover: 0 10px 25px rgba(0, 0, 0, 0.4);
+  --header-bg: linear-gradient(135deg, #1e293b, #0f172a);
+  --sidebar-bg: #020617;
+  --sidebar-hover: #1e293b;
+  --sidebar-active: #3b82f6;
+  --input-bg: #1e293b;
+  --input-border: #475569;
+  --input-focus: #60a5fa;
+  --modal-overlay: rgba(0, 0, 0, 0.8);
+}
+
+/* Dark mode body styles */
+body.dark-mode {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
 /* app.css or globals.css */
 .app-container {
   display: flex;
   min-height: 100vh;
+  background-color: #0f172a;
 }
 
 .main-content {
   flex: 1;
   transition: margin-left 0.3s ease;
+  background-color: #0f172a;
 }
 
 .main-content.sidebar-open {
@@ -33,39 +109,46 @@
 }
 
 .app-header {
-  background: #2563eb;
-  color: white;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  color: #f1f5f9;
   padding: 0.75rem 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  border-bottom: 1px solid #334155;
 }
 
 .card {
-  background: white;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  background: var(--bg-primary);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--card-shadow);
   overflow: hidden;
+  transition: var(--transition);
+}
+
+.card:hover {
+  box-shadow: var(--card-shadow-hover);
 }
 
 .card-header {
   padding: 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-primary);
 }
 
 .card-title {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--text-primary);
   margin-bottom: 0.25rem;
 }
 
 .card-description {
   font-size: 0.875rem;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 .card-content {
   padding: 1.5rem;
+  background-color: var(--bg-primary);
 }
 
 .btn {
@@ -93,27 +176,30 @@
 }
 
 .btn-secondary {
-  background: #f1f5f9;
-  color: #475569;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
 }
 
 .btn-secondary:hover {
-  background: #e2e8f0;
+  background: var(--border-color);
+  color: var(--text-primary);
 }
 
 .form-input {
   width: 100%;
   padding: 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
   font-size: 0.875rem;
-  transition: border-color 0.2s ease;
+  background-color: var(--input-bg);
+  color: var(--text-primary);
+  transition: var(--transition);
 }
 
 .form-input:focus {
   outline: none;
-  border-color: #3b82f6;
+  border-color: var(--input-focus);
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
@@ -750,12 +836,13 @@
   cursor: pointer;
   padding: 0.25rem;
   border-radius: 4px;
-  color: #64748b;
+  color: #d1d5db;
   font-size: 1rem;
 }
 
 .logout-button:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: #4b5563;
+  color: white;
 }
 
 /* Responsive Design */
@@ -803,10 +890,14 @@
   box-sizing: border-box;
 }
 
+html {
+  background-color: #0f172a;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
-  background-color: #f8f9fa;
-  color: #334155;
+  background-color: #0f172a;
+  color: #f1f5f9;
   line-height: 1.6;
   overflow-x: hidden;
 }
@@ -819,8 +910,8 @@ body {
 /* Sidebar Styles */
 .sidebar {
   width: 280px;
-  background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
-  border-right: 1px solid #e2e8f0;
+  background: var(--sidebar-bg);
+  border-right: 1px solid var(--border-color);
   transition: transform 0.3s ease;
   position: fixed;
   height: 100vh;
@@ -834,7 +925,7 @@ body {
 
 .sidebar-header {
   padding: 1.5rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .sidebar-logo {
@@ -846,7 +937,7 @@ body {
 .sidebar-logo-icon {
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  background: var(--accent-color);
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -858,10 +949,7 @@ body {
 .sidebar-logo-text {
   font-size: 1.25rem;
   font-weight: bold;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
 }
 
 .sidebar-nav {
@@ -878,7 +966,7 @@ body {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #64748b;
+  color: var(--text-tertiary);
 }
 
 .nav-item {
@@ -893,8 +981,8 @@ body {
   gap: 0.75rem;
   padding: 0.75rem 1rem;
   text-decoration: none;
-  color: #475569;
-  transition: all 0.2s ease;
+  color: var(--text-tertiary);
+  transition: var(--transition);
   cursor: pointer;
   border: none;
   background: none;
@@ -903,12 +991,12 @@ body {
 }
 
 .nav-link:hover {
-  background: linear-gradient(135deg, #dbeafe 0%, #e9d5ff 100%);
-  color: #1e293b;
+  background: var(--sidebar-hover);
+  color: var(--text-primary);
 }
 
 .nav-link.active {
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  background: var(--sidebar-active);
   color: white;
 }
 
@@ -919,7 +1007,7 @@ body {
 
 .sidebar-footer {
   padding: 1rem 1.5rem;
-  border-top: 1px solid #e2e8f0;
+  border-top: 1px solid #4b5563;
   margin-top: auto;
 }
 
@@ -928,7 +1016,7 @@ body {
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem;
-  background: linear-gradient(135deg, #dbeafe 0%, #e9d5ff 100%);
+  background: #374151;
   border-radius: 8px;
 }
 
@@ -936,7 +1024,7 @@ body {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #3b82f6;
+  background: #60a5fa;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -956,11 +1044,12 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: white;
 }
 
 .user-email {
   font-size: 0.75rem;
-  color: #64748b;
+  color: #d1d5db;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -982,8 +1071,8 @@ body {
 
 .app-header {
   height: 64px;
-  background: linear-gradient(90deg, #ffffff 0%, #f8fafc 100%);
-  border-bottom: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border-bottom: 1px solid #334155;
   display: flex;
   align-items: center;
   padding: 0 1.5rem;
@@ -1035,6 +1124,8 @@ body {
 .content-area {
   flex: 1;
   overflow-y: auto;
+  background-color: #0f172a;
+  min-height: 100vh;
 }
 
 /* Card Styles */
@@ -1084,22 +1175,25 @@ body {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  background: var(--accent-color);
   color: white;
+  border: 1px solid var(--accent-color);
 }
 
 .btn-primary:hover {
-  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
 }
 
 .btn-secondary {
-  background: #f1f5f9;
-  color: #475569;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
 }
 
 .btn-secondary:hover {
-  background: #e2e8f0;
+  background: var(--border-color);
+  color: var(--text-primary);
 }
 
 .btn-outline {
@@ -1404,10 +1498,14 @@ body {
   box-sizing: border-box;
 }
 
+html {
+  background-color: #0f172a;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
-  background-color: #f8f9fa;
-  color: #334155;
+  background-color: #0f172a;
+  color: #f1f5f9;
   line-height: 1.6;
   overflow-x: hidden;
 }
@@ -1850,16 +1948,17 @@ body {
 
 /* Qwen Dashboard Styles */
 .feature-container {
-  background: white;
+  background: var(--bg-primary);
   border-radius: 12px;
   box-shadow: 0 6px 15px rgba(0,0,0,0.1);
   margin-bottom: 25px;
   overflow: hidden;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--border-color);
 }
 
 .tabs-container {
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-primary);
 }
 
 .tab-btn {
@@ -1868,7 +1967,7 @@ body {
   border: none;
   background: transparent;
   font-weight: 500;
-  color: #6c757d;
+  color: var(--text-secondary);
   font-size: 1.1rem;
 }
 
@@ -1877,14 +1976,15 @@ body {
 }
 
 .tab-btn.active {
-  color: #0d6efd;
-  border-bottom: 4px solid #0d6efd;
-  background-color: #f8f9fa;
+  color: var(--accent-color);
+  border-bottom: 4px solid var(--accent-color);
+  background-color: var(--bg-primary);
 }
 
 .tab-content {
   display: none;
   padding: 25px;
+  background: var(--bg-primary);
 }
 
 .tab-content.active {
@@ -1969,7 +2069,7 @@ body {
 
 .result-title {
   font-weight: 600;
-  color: #212529;
+  color: var(--text-primary);
   font-size: 1.1rem;
 }
 
@@ -2026,11 +2126,12 @@ body {
   font-size: 0.8rem;
   font-weight: 500;
   margin-left: 10px;
+  color: var(--text-primary);
 }
 
 .tag-invoice { 
   background-color: #d1ecf1; 
-  color: #0c5460; 
+  color: #cedfe2; 
 }
 
 /* Chat Messages */

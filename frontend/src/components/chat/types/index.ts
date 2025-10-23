@@ -12,7 +12,7 @@ export interface Message {
 }
 
 export interface Document {
-  id: number
+  id: string  // Changed from number to string (UUIDs)
   name: string
   type: string
   size: string
@@ -24,6 +24,7 @@ export interface ChatHistory {
   title: string
   timestamp: string
   messageCount?: number
+  is_pinned?: boolean
 }
 
 export interface ExpandedSections {

@@ -4,10 +4,14 @@ import { getDocumentIcon } from '../../utils/documentUtils'
 interface KnowledgeBaseSectionProps {
   expandedSections: ExpandedSections
   toggleSection: (section: keyof ExpandedSections) => void
-  selectedDocuments: number[]
+  selectedDocuments: string[]
   documents: Document[]
   onShowDocumentModal: () => void
-  onRemoveDocument: (docId: number) => void
+  onRemoveDocument: (docId: string) => void
+  onClearAllDocuments: () => void
+  documentsLoading?: boolean
+  documentsError?: string | null
+  clearingDocuments?: boolean
 }
 
 export function KnowledgeBaseSection({ 
@@ -16,7 +20,11 @@ export function KnowledgeBaseSection({
   selectedDocuments, 
   documents, 
   onShowDocumentModal, 
-  onRemoveDocument 
+  onRemoveDocument,
+  onClearAllDocuments,
+  documentsLoading = false,
+  documentsError = null,
+  clearingDocuments = false
 }: KnowledgeBaseSectionProps) {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -29,36 +37,157 @@ export function KnowledgeBaseSection({
         <div style={{ display: 'flex', alignItems: 'center' }}>
           <i className="fas fa-database" style={{ color: '#60a5fa', marginRight: '8px' }}></i>
           <div>
-            <h3 style={{ fontWeight: '500', color: 'white', margin: 0 }}>Knowledge Base</h3>
-            <p style={{ fontSize: '12px', color: '#d1d5db', margin: '2px 0 0 0' }}>Manage document sources</p>
+            <h3 style={{ fontWeight: '500', color: 'white', margin: 0 }}>Document Scope</h3>
+            <p style={{ fontSize: '12px', color: '#d1d5db', margin: '2px 0 0 0' }}>Choose specific documents for targeted search</p>
           </div>
         </div>
         <i className={`fas ${expandedSections.knowledge ? 'fa-chevron-up' : 'fa-chevron-down'}`} style={{ color: '#d1d5db' }}></i>
       </div>
       {expandedSections.knowledge && (
         <div style={{ padding: '0 16px 100px 16px', flex: 1 }}>
-          <div style={{ textAlign: 'center', padding: '16px 0' }}>
-            <button 
-              onClick={onShowDocumentModal}
-              style={{ 
-                backgroundColor: '#3b82f6', 
-                color: 'white', 
-                padding: '8px 16px', 
-                borderRadius: '8px', 
-                border: 'none', 
-                fontSize: '14px', 
-                cursor: 'pointer',
-                transition: 'background-color 0.2s'
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3b82f6'}
-            >
-              <i className="fas fa-plus" style={{ marginRight: '4px' }}></i> Select Documents
-            </button>
+          <div style={{ padding: '16px 0' }}>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '8px' }}>
+              <button 
+                onClick={onShowDocumentModal}
+                style={{ 
+                  backgroundColor: '#3b82f6', 
+                  color: 'white', 
+                  padding: '6px 12px', 
+                  borderRadius: '6px', 
+                  border: 'none', 
+                  fontSize: '12px', 
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#2563eb'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#3b82f6'}
+              >
+                <i className="fas fa-plus" style={{ marginRight: '4px' }}></i> Select Docs
+              </button>
+              
+              {selectedDocuments.length > 0 && (
+                <>
+                  <button 
+                    onClick={onClearAllDocuments}
+                    disabled={clearingDocuments}
+                    style={{ 
+                      backgroundColor: clearingDocuments ? '#9ca3af' : '#ef4444', 
+                      color: 'white', 
+                      padding: '6px 10px', 
+                      borderRadius: '6px', 
+                      border: 'none', 
+                      fontSize: '12px', 
+                      cursor: clearingDocuments ? 'not-allowed' : 'pointer',
+                      transition: 'background-color 0.2s',
+                      opacity: clearingDocuments ? 0.7 : 1
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!clearingDocuments) {
+                        e.currentTarget.style.backgroundColor = '#dc2626'
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!clearingDocuments) {
+                        e.currentTarget.style.backgroundColor = '#ef4444'
+                      }
+                    }}
+                    title="Clear all"
+                  >
+                    {clearingDocuments ? (
+                      <>
+                        <div style={{
+                          display: 'inline-block',
+                          width: '10px',
+                          height: '10px',
+                          border: '1px solid #ffffff',
+                          borderTop: '1px solid transparent',
+                          borderRadius: '50%',
+                          animation: 'spin 0.8s linear infinite',
+                          marginRight: '4px'
+                        }}></div>
+                        Clearing...
+                      </>
+                    ) : (
+                      'Clear All'
+                    )}
+                  </button>
+                  <span style={{ 
+                    fontSize: '11px', 
+                    color: '#9ca3af',
+                    marginLeft: '4px'
+                  }}>
+                    {selectedDocuments.length} selected
+                  </span>
+                </>
+              )}
+            </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '8px' }}>
-            {selectedDocuments.length === 0 ? (
-              <p style={{ fontSize: '12px', color: '#9ca3af', width: '100%', textAlign: 'center' }}>No documents selected</p>
+            {documentsLoading ? (
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                padding: '20px',
+                color: '#9ca3af'
+              }}>
+                <div style={{
+                  width: '20px',
+                  height: '20px',
+                  border: '2px solid #4b5563',
+                  borderTop: '2px solid #60a5fa',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                  marginBottom: '8px'
+                }}></div>
+                <p style={{ fontSize: '12px', margin: 0 }}>Loading documents...</p>
+                <style jsx>{`
+                  @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                  }
+                `}</style>
+              </div>
+            ) : documentsError ? (
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                padding: '20px',
+                color: '#ef4444',
+                textAlign: 'center'
+              }}>
+                <i className="fas fa-exclamation-triangle" style={{ fontSize: '16px', marginBottom: '8px' }}></i>
+                <p style={{ fontSize: '12px', margin: '0 0 4px 0', fontWeight: '500' }}>Failed to load</p>
+                <p style={{ fontSize: '10px', margin: 0, color: '#9ca3af' }}>{documentsError}</p>
+              </div>
+            ) : clearingDocuments ? (
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: 'column', 
+                alignItems: 'center', 
+                padding: '20px',
+                color: '#9ca3af'
+              }}>
+                <div style={{
+                  width: '20px',
+                  height: '20px',
+                  border: '2px solid #4b5563',
+                  borderTop: '2px solid #60a5fa',
+                  borderRadius: '50%',
+                  animation: 'spin 1s linear infinite',
+                  marginBottom: '8px'
+                }}></div>
+                <p style={{ fontSize: '12px', margin: 0 }}>Clearing documents...</p>
+                <style jsx>{`
+                  @keyframes spin {
+                    0% { transform: rotate(0deg); }
+                    100% { transform: rotate(360deg); }
+                  }
+                `}</style>
+              </div>
+            ) : selectedDocuments.length === 0 ? (
+              <p style={{ fontSize: '12px', color: '#9ca3af', width: '100%', textAlign: 'center' }}>No scope set - searching all documents</p>
             ) : (
               selectedDocuments.map(docId => {
                 const doc = documents.find(d => d.id === docId)

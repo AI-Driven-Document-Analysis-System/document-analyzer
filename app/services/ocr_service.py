@@ -1,5 +1,6 @@
 import os
 import logging
+import re
 from typing import Dict, Any, List, Optional
 from enum import Enum
 
@@ -153,8 +154,8 @@ class OCRService:
         )
         
         return {
-            'extracted_text': extracted_text.strip(),
-            'searchable_content': extracted_text.strip(),
+            'extracted_text': self._clean_text_for_search(extracted_text.strip()),
+            'searchable_content': self._clean_text_for_search(extracted_text.strip()),
             'layout_sections': {
                 'pages': all_pages_elements,
                 'total_pages': len(all_pages_elements),
@@ -210,8 +211,8 @@ class OCRService:
         )
         
         return {
-            'extracted_text': extracted_text.strip(),
-            'searchable_content': extracted_text.strip(),
+            'extracted_text': self._clean_text_for_search(extracted_text.strip()),
+            'searchable_content': self._clean_text_for_search(extracted_text.strip()),
             'layout_sections': {
                 'pages': all_pages_elements,
                 'total_pages': len(all_pages_elements),
@@ -223,6 +224,70 @@ class OCRService:
             'provider': 'surya'
         }
     
+    def _clean_text_for_search(self, text: str) -> str:
+        """
+        Clean extracted text for better search functionality.
+        
+        Args:
+            text: Raw extracted text
+            
+        Returns:
+            Cleaned text suitable for search indexing
+        """
+        if not text:
+            return ""
+        
+        # Fix word-per-line format by reconstructing sentences
+        text = self._reconstruct_sentences(text)
+        
+        # Remove excessive whitespace and normalize line breaks
+        lines = [line.strip() for line in text.split('\n') if line.strip()]
+        cleaned_text = ' '.join(lines)
+        
+        # Remove multiple spaces
+        cleaned_text = re.sub(r'\s+', ' ', cleaned_text)
+        
+        return cleaned_text.strip()
+    
+    def _reconstruct_sentences(self, text: str) -> str:
+        """
+        Reconstruct proper sentences from word-per-line OCR format.
+        
+        Args:
+            text: Raw OCR text with potential word-per-line format
+            
+        Returns:
+            Text with reconstructed sentences
+        """
+        if not text:
+            return ""
+        
+        lines = text.split('\n')
+        reconstructed_lines = []
+        current_sentence = []
+        
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+                
+            # If line is a single word or very short, likely part of fragmented sentence
+            if len(line.split()) <= 2 and len(line) < 20:
+                current_sentence.append(line)
+            else:
+                # Complete sentence or paragraph
+                if current_sentence:
+                    # Join accumulated words and add to result
+                    reconstructed_lines.append(' '.join(current_sentence))
+                    current_sentence = []
+                reconstructed_lines.append(line)
+        
+        # Add any remaining accumulated words
+        if current_sentence:
+            reconstructed_lines.append(' '.join(current_sentence))
+        
+        return '\n'.join(reconstructed_lines)
+
     def get_provider_info(self) -> Dict[str, Any]:
         """Get information about the current OCR provider"""
         return {

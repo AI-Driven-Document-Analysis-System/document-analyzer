@@ -8,6 +8,7 @@ frontend/.next/cache/webpack/client-development-fallback/index.pack.gz
 # IDE files
 .idea/
 .vscode/
+.windsurf/
 
 # Python cache
 __pycache__/
@@ -57,3 +58,23 @@ poppler.zip
 
 # Test files
 test_aws_creds.py
+node_modules/.bin/loose-envify
+*.cmd
+/node_modules
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+evaluation/rag-chatbot/ragas_evaluation.db
+
+# Generated files and notebooks
+*.ipynb_checkpoints/
+*.ipynb
+
+/tests/functional_testing/node_modules
+/tests/ui/node_modules
+
+# Evaluation and testing directories (optional features)
+/evaluation/
+/tests/

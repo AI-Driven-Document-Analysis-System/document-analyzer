@@ -17,6 +17,7 @@ import { authService } from "../services/authService"
 import UserProfilePage  from "../profile/profile"
 import Settings from "../components/settings/settings"
 import { Subscription } from "../components/subscription/subscription"
+import { ThemeProvider } from "../contexts/ThemeContext" 
 
 const routes = {
   "/dashboard": { component: Dashboard, title: "Dashboard", breadcrumb: ["Dashboard"] },
@@ -28,7 +29,7 @@ const routes = {
   "/documents": { component: DocumentView, title: "My Documents", breadcrumb: ["Documents"] },
   "/profile": { component: UserProfilePage, title: "Profile",  breadcrumb: ["Account", "Profile"] },
   "/subscription": { component: Subscription, title: "Subscription", breadcrumb: ["Account", "Subscription"] },
-  "/settings": { component: Settings, title: "Settings", breadcrumb: ["Account", "Settings"] }, // Fixed: Use actual component
+  "/settings": { component: Settings, title: "Settings", breadcrumb: ["Account", "Settings"] },
 }
 
 /**
@@ -74,14 +75,16 @@ export default function Page() {
           setUser(userData);
           setIsAuthenticated(true);
         } else {
+          // No token - show login modal
           setIsAuthenticated(false);
+          setShowAuthModal(true);
         }
       } catch (error) {
-        // Token is invalid, clear it and redirect to landing
+        // Token is invalid, clear it and show login
         authService.logout();
         setUser(null);
         setIsAuthenticated(false);
-        setCurrentRoute("/dashboard");
+        setShowAuthModal(true);
       } finally {
         setIsVerifyingAuth(false); // Done verifying
       }
@@ -134,31 +137,79 @@ export default function Page() {
     );
   }
 
-  // Show landing page only if we're sure user is not authenticated
+  // Show landing page if not authenticated
   if (!isAuthenticated && !isVerifyingAuth) {
     return (
-      <>
+      <ThemeProvider>
         <LandingPage onShowAuth={() => setShowAuthModal(true)} />
         {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onAuthSuccess={handleAuthSuccess} />}
-      </>
+      </ThemeProvider>
     )
   }
 
   const CurrentComponent = routes[currentRoute as keyof typeof routes]?.component || Dashboard
   const breadcrumb = routes[currentRoute as keyof typeof routes]?.breadcrumb || ["Dashboard"]
 
-  const handleNavigation = (path: string) => {
+  const handleNavigation = (path: string, params?: Record<string, string>) => {
     setCurrentRoute(path)
+    // Store navigation params for the target component
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        sessionStorage.setItem(`nav_${key}`, value)
+      })
+    }
+  }
+
+  // Show loading overlay before everything else
+  if (isVerifyingAuth) {
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        backgroundColor: '#0f172a',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 99999
+      }}>
+        <div style={{
+          width: '80px',
+          height: '80px',
+          border: '6px solid #1e293b',
+          borderTop: '6px solid #3b82f6',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+          marginBottom: '24px'
+        }}></div>
+        <p style={{
+          color: '#f1f5f9',
+          fontSize: '18px',
+          fontWeight: '500',
+          marginBottom: '8px',
+          textAlign: 'center'
+        }}>Loading your workspace...</p>
+        <p style={{
+          color: '#94a3b8',
+          fontSize: '14px',
+          textAlign: 'center'
+        }}>Please wait</p>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
   }
 
   return (
-    <div className="app-container">
-      {/* IMPROVED: Show subtle loading indicator while verifying auth */}
-      {isVerifyingAuth && (
-        <div className="auth-verifying-overlay">
-          <div className="auth-verifying-spinner"></div>
-        </div>
-      )}
+    <ThemeProvider>
+      <div className="app-container" style={{ backgroundColor: '#0f172a', minHeight: '100vh' }}>
 
       <Sidebar
         isOpen={sidebarOpen}
@@ -187,28 +238,47 @@ export default function Page() {
             </div>
           </div>
           <div className="header-right">
-            <button className="header-btn" title="Search">
+            {/* <button className="header-btn" title="Search">
               <i className="fas fa-search"></i>
-            </button>
+            </button> */}
             <button className="upload-btn" onClick={() => handleNavigation('/upload')}>
               <i className="fas fa-cloud-upload-alt"></i>
               <span>Upload Document</span>
             </button>
             <div className="header-actions">
-              <button className="header-btn" title="Notifications">
+              {/* <button className="header-btn" title="Notifications">
                 <i className="fas fa-bell"></i>
                 <span className="notification-badge">3</span>
+              </button> */}
+              <button 
+                  className="header-btn" 
+                  title="Settings"
+                  onClick={() => handleNavigation('/settings')}
+                >
+                  <i className="fas fa-cog"></i>
               </button>
-              <button className="header-btn" title="Settings">
-                <i className="fas fa-cog"></i>
-              </button>
-              <div className="user-profile">
+
+              <div className="user-profile" onClick={() => handleNavigation('/profile')}>
                 <div className="user-avatar">
                   <i className="fas fa-user"></i>
                 </div>
                 <span className="user-name">{user?.username || 'User'}</span>
                 <i className="fas fa-chevron-down"></i>
               </div>
+
+              {/* <button className="header-btn" title="Settings">
+                <i className="fas fa-cog"></i>
+              </button> */}
+              {/* <div className="user-profile">
+                <div className="user-avatar">
+                  <i className="fas fa-user"></i>
+                </div>
+                <span className="user-name">{user?.username || 'User'}</span>
+                <i className="fas fa-chevron-down"></i>
+              </div> */}
+
+              
+              
             </div>
           </div>
         </header>
@@ -219,5 +289,6 @@ export default function Page() {
         </div>
       </div>
     </div>
+    </ThemeProvider>
   )
 }

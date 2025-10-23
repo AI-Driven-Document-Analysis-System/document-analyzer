@@ -21,6 +21,7 @@ from services.chatbot.vector_db.chunking import DocumentChunker
 from services.chatbot.vector_db.indexing import LangChainDocumentIndexer
 from services.chatbot.vector_db.langchain_chroma import LangChainChromaStore
 from core.database import db_manager
+from core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -29,11 +30,11 @@ class DocumentEmbeddingService:
     
     def __init__(self):
         """Initialize the embedding service with ChromaDB configuration"""
-        # Use the same configuration as manual script
-        self.db_path = os.path.join(os.path.dirname(__file__), '..', '..', 'chroma_db')
-        self.collection_name = "documents"
-        self.chunk_size = 1000
-        self.chunk_overlap = 200
+        # Use centralized config - same path as chat service
+        self.db_path = os.path.abspath(settings.VECTOR_DB_PATH)
+        self.collection_name = settings.COLLECTION_NAME
+        self.chunk_size = settings.CHUNK_SIZE
+        self.chunk_overlap = settings.CHUNK_OVERLAP
         
         # Initialize components
         self.vectorstore = None

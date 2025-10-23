@@ -64,7 +64,9 @@ async def upload_document(
     except HTTPException:
         raise
     except Exception as e:
+        import traceback
         logger.error(f"Upload error: {e}")
+        logger.error(f"Upload error traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
 
 @router.get("/", response_model=dict)
@@ -92,14 +94,16 @@ async def get_documents(
                 query = """
                     SELECT 
                         d.id, d.original_filename, d.file_size, d.upload_timestamp, 
-                        d.mime_type, d.user_id, d.file_path_minio,
-                        dp.processing_status, dp.processing_errors
+                        d.mime_type, d.user_id, d.file_path_minio, d.thumbnail_url,
+                        dp.processing_status, dp.processing_errors,
+                        dc.document_type
                     FROM documents d
                     LEFT JOIN document_processing dp ON d.id = dp.document_id
+                    LEFT JOIN document_classifications dc ON d.id = dc.document_id
                     WHERE d.user_id = %s
                     ORDER BY d.upload_timestamp DESC
                     LIMIT %s OFFSET %s
-                """
+                """        
                 cursor.execute(query, (user_id, limit, offset))
                 documents = cursor.fetchall()
                 
@@ -107,6 +111,7 @@ async def get_documents(
                 # Get total count
                 cursor.execute("SELECT COUNT(*) FROM documents WHERE user_id = %s", (str(user_id),))
                 total_count = cursor.fetchone()[0]
+
                 
                 # Convert to list of dictionaries
                 result = []
@@ -119,8 +124,10 @@ async def get_documents(
                         "content_type": doc[4],
                         "user_id": doc[5],
                         "file_path": doc[6],
-                        "processing_status": doc[7] or "unknown",
-                        "processing_errors": doc[8]
+                        "thumbnail_url": document_service.get_document_download_url(doc[7]) if doc[7] else None,
+                        "processing_status": doc[8] or "unknown",
+                        "processing_errors": doc[9] or "unknown",
+                        "document_type": doc[10] or "Other"
                     }
                     result.append(doc_dict)
                 
@@ -250,9 +257,10 @@ async def get_document(
                     SELECT 
                         d.id, d.original_filename, d.file_size, d.upload_timestamp, 
                         d.mime_type, d.user_id, d.file_path_minio,
-                        dp.processing_status, dp.processing_errors
+                        dp.processing_status, dp.processing_errors, dc.document_type
                     FROM documents d
                     LEFT JOIN document_processing dp ON d.id = dp.document_id
+                    LEFT JOIN document_classifications dc ON d.id = dc.document_id
                     WHERE d.id = %s AND d.user_id = %s
                 """
                 cursor.execute(query, (document_id, user_id))
@@ -270,7 +278,8 @@ async def get_document(
                     "user_id": doc[5],
                     "file_path": doc[6],
                     "processing_status": doc[7] or "unknown",
-                    "processing_errors": doc[8]
+                    "processing_errors": doc[8],
+                    "document_type": doc[9] or "Other"
                 }
                 
     except HTTPException:
@@ -292,7 +301,7 @@ async def get_document_content(
         with db_manager.get_connection() as conn:
             with conn.cursor() as cursor:
                 query = """
-                    SELECT d.original_filename, dc.extracted_text, dc.entities_extracted, 
+                    SELECT d.original_filename, dc.extracted_text, dc.entities_extracted, dc.layout_sections,
                            dp.processing_status, d.page_count
                     FROM documents d
                     LEFT JOIN document_content dc ON d.id = dc.document_id
@@ -305,7 +314,7 @@ async def get_document_content(
                 if not result:
                     raise HTTPException(status_code=404, detail="Document not found")
                 
-                filename, extracted_text, entities, processing_status, page_count = result
+                filename, extracted_text, entities, layout_sections, processing_status, page_count = result
                 
                 if processing_status != "completed":
                     return {
@@ -313,8 +322,26 @@ async def get_document_content(
                         "filename": filename,
                         "processing_status": processing_status,
                         "extracted_text": None,
+                        "layout_sections": None,
                         "message": f"Document is still being processed. Status: {processing_status}"
                     }
+                
+                # Helper function to safely handle JSON data that might already be parsed
+                def safe_json_parse(data):
+                    if data is None:
+                        return None
+                    # If it's already a list or dict (parsed), return as-is
+                    if isinstance(data, (list, dict)):
+                        return data
+                    # If it's a string, try to parse it
+                    if isinstance(data, str):
+                        try:
+                            return json.loads(data)
+                        except (json.JSONDecodeError, TypeError):
+                            logger.warning(f"Failed to parse JSON data: {data}")
+                            return None
+                    # For any other type, return None
+                    return None
                 
                 if not extracted_text:
                     return {
@@ -322,6 +349,7 @@ async def get_document_content(
                         "filename": filename,
                         "processing_status": processing_status,
                         "extracted_text": None,
+                        "layout_sections": safe_json_parse(layout_sections),
                         "message": "No text content extracted from this document"
                     }
                 
@@ -330,7 +358,8 @@ async def get_document_content(
                     "filename": filename,
                     "processing_status": processing_status,
                     "extracted_text": extracted_text,
-                    "entities": json.loads(entities) if entities else None,
+                    "layout_sections": safe_json_parse(layout_sections),
+                    "entities": safe_json_parse(entities),
                     "page_count": page_count,
                     "character_count": len(extracted_text),
                     "word_count": len(extracted_text.split()) if extracted_text else 0
@@ -391,7 +420,7 @@ async def delete_document(
             with conn.cursor() as cursor:
                 # Get file path before deletion
                 cursor.execute(
-                    "SELECT file_path_minio FROM documents WHERE id = %s AND user_id = %s",
+                    "SELECT file_path_minio, thumbnail_url FROM documents WHERE id = %s AND user_id = %s",
                     (document_id, user_id)
                 )
                 result = cursor.fetchone()
@@ -400,9 +429,10 @@ async def delete_document(
                     raise HTTPException(status_code=404, detail="Document not found")
                 
                 file_path = result[0]
+                thumb_path = result[1]
                 
                 # Delete document
-                document_service.delete_document(file_path, document_id)
+                document_service.delete_document(file_path, thumb_path, document_id)
                 
                 return {"message": "Document deleted successfully"}
                 
@@ -635,6 +665,81 @@ async def manually_embed_document(
         logger.error(f"Error manually embedding document: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error manually embedding document: {str(e)}")
 
+@router.put("/{document_id}/save_changes")
+async def update_document_content(
+    document_id: str,
+    request: Request,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """Update extracted text content for a document."""
+    try:
+        if not hasattr(current_user, 'id') or current_user.id is None:
+            raise HTTPException(status_code=400, detail="Invalid user token")
+        user_id = str(current_user.id)
+        
+        # Parse request body
+        body = await request.json()
+        extracted_text = body.get("extracted_text")
+        document_type = body.get("document_type")
+        
+        if extracted_text is None:
+            raise HTTPException(status_code=400, detail="extracted_text is required")
+        
+        
+        with db_manager.get_connection() as conn:
+            with conn.cursor() as cursor:
+                # First verify the document belongs to the user
+                cursor.execute(
+                    "SELECT id FROM documents WHERE id = %s AND user_id = %s",
+                    (document_id, user_id)
+                )
+                doc = cursor.fetchone()
+                
+                if not doc:
+                    raise HTTPException(status_code=404, detail="Document not found")
+                
+                # Update the extracted text in document_content table
+                cursor.execute("""
+                    UPDATE document_content 
+                    SET extracted_text = %s
+                    WHERE document_id = %s
+                """, (extracted_text, document_id))
+
+                # If no rows were updated, the document_content entry doesn't exist
+                if cursor.rowcount == 0:
+                    # Insert new entry
+                    cursor.execute("""
+                        INSERT INTO document_content (document_id, extracted_text, last_modified)
+                        VALUES (%s, %s, NOW())
+                    """, (document_id, extracted_text))
+
+                cursor.execute("""
+                    UPDATE document_classifications
+                    SET document_type = %s
+                    WHERE document_id = %s
+                """, (document_type, document_id))
+
+                # If no rows were updated, the document_content entry doesn't exist
+                if cursor.rowcount == 0:
+                    # Insert new entry
+                    cursor.execute("""
+                        INSERT INTO document_content (document_id, extracted_text, last_modified)
+                        VALUES (%s, %s, NOW())
+                    """, (document_id, extracted_text))
+
+                conn.commit()
+                
+                return {
+                    "success": True,
+                    "message": "Document content and classification updated successfully",
+                    "document_id": document_id,
+                }
+                
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating document content: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating document content: {str(e)}")
 
 #overall what this code do is define a router for the document service, which includes the following endpoints:
 #GET /documents: Get a list of documents for the current user.

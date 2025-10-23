@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from "react"
 import './documentUpload.css' 
+import DocumentEditor from "../ocr/text_editor" 
 
 interface UploadedFile {
   id: string
@@ -39,12 +40,31 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([])
   const [isDragActive, setIsDragActive] = useState(false)
   const [authToken, setAuthToken] = useState<string | null>(null)
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupFile, setPopupFile] = useState<UploadedFile | null>(null);
 
   // Update token on mount and when prop changes
   React.useEffect(() => {
     const token = propAuthToken || getStoredAuthToken();
     setAuthToken(token);
   }, [propAuthToken])
+
+  React.useEffect(() => {
+  // Find the most recently completed file
+  const justCompleted = uploadedFiles.find(
+    (f) => f.status === "completed" && !f['popupShown']
+  );
+  if (justCompleted) {
+    setPopupFile(justCompleted);
+    setShowPopup(true);
+    // Mark as shown so it doesn't trigger again
+    setUploadedFiles((prev) =>
+      prev.map((f) =>
+        f.id === justCompleted.id ? { ...f, popupShown: true } : f
+      )
+    );
+  }
+}, [uploadedFiles]);
 
   const uploadToAPI = async (file: File, fileId: string) => {
     try {
@@ -242,7 +262,7 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
   return (
     <div style={{ 
       minHeight: '100vh', 
-      backgroundColor: '#f8f9fa', 
+      backgroundColor: 'var(--bg-secondary)', 
       padding: '24px',
       fontFamily: 'system-ui, -apple-system, sans-serif'
     }}>
@@ -252,12 +272,12 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
           <h1 style={{ 
             fontSize: '24px', 
             fontWeight: '600', 
-            color: '#1f2937', 
+            color: 'var(--text-primary)', 
             marginBottom: '8px',
             margin: '0 0 8px 0'
           }}>Document Upload</h1>
           <p style={{ 
-            color: '#6b7280',
+            color: 'var(--text-secondary)',
             fontSize: '16px',
             margin: '0'
           }}>
@@ -267,27 +287,27 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
 
         {/* Upload Card */}
         <div style={{ 
-          backgroundColor: 'white', 
+          backgroundColor: 'var(--bg-primary)', 
           borderRadius: '8px', 
-          border: '1px solid #e5e7eb', 
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+          border: '1px solid var(--border-color)', 
+          boxShadow: 'var(--card-shadow)',
           marginBottom: '24px'
         }}>
           <div style={{ 
             padding: '24px', 
-            borderBottom: '1px solid #e5e7eb'
+            borderBottom: '1px solid var(--border-color)'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
                 <h2 style={{ 
                   fontSize: '18px', 
                   fontWeight: '500', 
-                  color: '#1f2937',
+                  color: 'var(--text-primary)',
                   margin: '0 0 4px 0'
                 }}>Upload Documents</h2>
                 <p style={{ 
                   fontSize: '14px', 
-                  color: '#6b7280', 
+                  color: 'var(--text-secondary)', 
                   margin: '0'
                 }}>
                   Drag and drop files or click to browse
@@ -362,7 +382,7 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
                   <p style={{ 
                     fontSize: '18px', 
                     fontWeight: '500', 
-                    color: '#374151', 
+                    color: 'var(--text-primary)', 
                     marginBottom: '8px',
                     margin: '0 0 8px 0'
                   }}>
@@ -371,7 +391,7 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
                   </p>
                   <p style={{ 
                     fontSize: '14px', 
-                    color: '#6b7280',
+                    color: 'var(--text-secondary)',
                     margin: '0'
                   }}>
                     Supports PDF, DOC, DOCX, PNG, JPG, GIF up to 50MB each
@@ -411,24 +431,24 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
         {/* Upload Progress Section */}
         {uploadedFiles.length > 0 && (
           <div style={{ 
-            backgroundColor: 'white', 
+            backgroundColor: 'var(--bg-primary)', 
             borderRadius: '8px', 
-            border: '1px solid #e5e7eb', 
-            boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+            border: '1px solid var(--border-color)', 
+            boxShadow: 'var(--card-shadow)'
           }}>
             <div style={{ 
               padding: '24px', 
-              borderBottom: '1px solid #e5e7eb'
+              borderBottom: '1px solid var(--border-color)'
             }}>
               <h2 style={{ 
                 fontSize: '18px', 
                 fontWeight: '500', 
-                color: '#1f2937',
+                color: 'var(--text-primary)',
                 margin: '0 0 4px 0'
               }}>Upload Progress</h2>
               <p style={{ 
                 fontSize: '14px', 
-                color: '#6b7280', 
+                color: 'var(--text-secondary)', 
                 margin: '0'
               }}>
                 Track your document uploads and processing status
@@ -520,6 +540,31 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
                             }} />
                           </div>
                         )}
+                        </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {uploadFile.status === "completed" && (
+                          <button
+                            style={{
+                              marginLeft: '8px',
+                              padding: '2px 8px',
+                              backgroundColor: '#dcfce7',
+                              color: '#166534',
+                              border: '1px solid #166534',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: '500',
+
+                            }}
+                            onClick={() => {
+                              console.log('View clicked:', uploadFile);
+                              setPopupFile(uploadFile);
+                              setShowPopup(true);
+                            }}
+                          >
+                            View
+                          </button>
+                        )}
                       </div>
 
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -566,23 +611,30 @@ export function DocumentUpload({ authToken: propAuthToken, onAuthError }: Docume
         {/* Empty State */}
         {uploadedFiles.length === 0 && (
           <div style={{ textAlign: 'center', padding: '64px 0' }}>
-            <div style={{ fontSize: '48px', color: '#d1d5db', marginBottom: '16px' }}>
+            <div style={{ fontSize: '48px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
               <i className="fas fa-file-upload"></i>
             </div>
             <h3 style={{ 
               fontSize: '18px', 
               fontWeight: '500', 
-              color: '#6b7280',
+              color: 'var(--text-secondary)',
               margin: '0 0 4px 0'
             }}>No files uploaded yet</h3>
             <p style={{ 
-              color: '#9ca3af', 
+              color: 'var(--text-tertiary)', 
               margin: '0',
               fontSize: '14px'
             }}>Upload your first document to get started</p>
           </div>
         )}
       </div>
+      {showPopup && popupFile && popupFile.documentId && (
+        <DocumentEditor
+          documentId={popupFile.documentId}
+          onClose={() => setShowPopup(false)}
+          authToken={authToken || undefined}
+        />
+      )}
     </div>
   )
 }

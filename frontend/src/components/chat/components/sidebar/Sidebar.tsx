@@ -9,14 +9,19 @@ interface SidebarProps {
   toggleSection: (section: keyof ExpandedSections) => void
   selectedMessageSources: any[]
   chatHistory: ChatHistory[]
-  selectedDocuments: number[]
+  selectedDocuments: string[]
   documents: Document[]
   onShowDocumentModal: () => void
-  onRemoveDocument: (docId: number) => void
+  onRemoveDocument: (docId: string) => void
+  onClearAllDocuments: () => void
   onNewChat: () => void
   onChatHistoryClick: (chatId: string) => void
   onDeleteChat: (chatId: string) => void
+  onPinChat: (chatId: string) => void
   selectedChatId?: string
+  documentsLoading?: boolean
+  documentsError?: string | null
+  clearingDocuments?: boolean
 }
 
 export function Sidebar({
@@ -28,10 +33,15 @@ export function Sidebar({
   documents,
   onShowDocumentModal,
   onRemoveDocument,
+  onClearAllDocuments,
   onNewChat,
   onChatHistoryClick,
   onDeleteChat,
-  selectedChatId
+  onPinChat,
+  selectedChatId,
+  documentsLoading = false,
+  documentsError = null,
+  clearingDocuments = false
 }: SidebarProps) {
   return (
     <div 
@@ -64,6 +74,7 @@ export function Sidebar({
           chatHistory={chatHistory}
           onChatHistoryClick={onChatHistoryClick}
           onDeleteChat={onDeleteChat}
+          onPinChat={onPinChat}
           selectedChatId={selectedChatId}
         />
         
@@ -74,6 +85,10 @@ export function Sidebar({
           documents={documents}
           onShowDocumentModal={onShowDocumentModal}
           onRemoveDocument={onRemoveDocument}
+          onClearAllDocuments={onClearAllDocuments}
+          documentsLoading={documentsLoading}
+          documentsError={documentsError}
+          clearingDocuments={clearingDocuments}
         />
       </div>
     </div>

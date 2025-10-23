@@ -33,6 +33,7 @@ class ChatMessageRequest(BaseModel):
     llm_config: Optional[Dict[str, Any]] = Field(None, description="LLM configuration override")
     memory_type: MemoryType = Field(MemoryType.WINDOW, description="Memory type for conversation")
     search_mode: SearchMode = Field(SearchMode.STANDARD, description="Search mode for query processing")
+    selected_document_ids: Optional[List[str]] = Field(None, description="List of document IDs to search within (Knowledge Base mode)")
 
 
 class ChatMessageResponse(BaseModel):
@@ -143,6 +144,8 @@ class ConversationResponse(BaseModel):
     title: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+    message_count: Optional[int] = 0
+    is_pinned: Optional[bool] = False
 
 
 class ConversationsListResponse(BaseModel):

@@ -2,8 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
-import { User, Mail, Calendar, BarChart3, Crown, LogOut, Edit, Save, X } from "lucide-react"
+import { User, Mail, Calendar, Crown, LogOut, Edit, Save, X } from "lucide-react"
 
 // === Types ===
 interface UserProfile {
@@ -14,7 +13,6 @@ interface UserProfile {
   documents_count: number
   current_plan: string
   plan_features: Record<string, any>
-  upload_activity: Array<{ date: string; count: number }>
   created_at: string
 }
 
@@ -334,42 +332,6 @@ const UserProfilePage: React.FC = () => {
             </button>
           </div>
         </div>
-
-        {/* Upload Activity Chart */}
-        <div style={styles.chartCard} className="animate-fade-in">
-          <h2 style={styles.chartTitle}>
-            <BarChart3 style={iconStyles} /> Upload Activity (Last 30 Days)
-          </h2>
-          <div style={styles.chartContainer}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={profile.upload_activity}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis
-                  dataKey="date"
-                  tick={{ fontSize: 12, fill: "#6B7280" }}
-                  angle={-45}
-                  textAnchor="end"
-                  height={60}
-                  interval="preserveStartEnd"
-                />
-                <YAxis tick={{ fill: "#6B7280" }} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: "#1F2937", border: "none", borderRadius: "8px" }}
-                  labelFormatter={(value) => `Date: ${value}`}
-                  formatter={(value) => [value, "Documents"]}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="count"
-                  stroke="#3B82F6"
-                  strokeWidth={3}
-                  dot={{ r: 4, fill: "#3B82F6" }}
-                  activeDot={{ r: 8, stroke: "#1D4ED8", strokeWidth: 2 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
       </div>
     </>
   )
@@ -379,10 +341,10 @@ const UserProfilePage: React.FC = () => {
 const styles = {
   container: {
     minHeight: "100vh",
-    backgroundColor: "#F9FAFB",
+    backgroundColor: "var(--bg-secondary)",
     padding: "2rem",
     fontFamily: "system-ui, -apple-system, sans-serif",
-    color: "#1F2937",
+    color: "var(--text-primary)",
   },
   header: {
     marginBottom: "2rem",
@@ -391,11 +353,11 @@ const styles = {
   title: {
     fontSize: "2rem",
     fontWeight: "bold",
-    color: "#111827",
+    color: "var(--text-primary)",
     marginBottom: "0.5rem",
   },
   subtitle: {
-    color: "#6B7280",
+    color: "var(--text-secondary)",
     marginBottom: "0.5rem",
   },
   alertError: {
@@ -423,8 +385,8 @@ const styles = {
     marginBottom: "2rem",
   },
   card: {
-    backgroundColor: "#FFFFFF",
-    boxShadow: "0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06)",
+    backgroundColor: "var(--bg-primary)",
+    boxShadow: "var(--card-shadow)",
     borderRadius: "0.75rem",
     padding: "1.5rem",
     transition: "all 0.2s ease",
@@ -438,13 +400,13 @@ const styles = {
   cardTitle: {
     fontSize: "1.25rem",
     fontWeight: "600",
-    color: "#1F2937",
+    color: "var(--text-primary)",
     display: "flex",
     alignItems: "center",
     gap: "0.5rem",
   },
   editButton: {
-    backgroundColor: "#2563EB",
+    backgroundColor: "var(--accent-color)",
     color: "white",
     border: "none",
     padding: "0.5rem 1rem",
@@ -461,7 +423,7 @@ const styles = {
     gap: "0.5rem",
   },
   saveButton: {
-    backgroundColor: "#059669",
+    backgroundColor: "var(--success-color)",
     color: "white",
     border: "none",
     padding: "0.5rem 1rem",
@@ -512,26 +474,28 @@ const styles = {
     display: "block",
     fontSize: "0.875rem",
     fontWeight: "500",
-    color: "#374151",
+    color: "var(--text-secondary)",
     marginBottom: "0.25rem",
   },
   input: {
     width: "100%",
     padding: "0.75rem",
-    border: "1px solid #D1D5DB",
+    border: "1px solid var(--input-border)",
     borderRadius: "0.375rem",
     fontSize: "1rem",
     outline: "none",
+    backgroundColor: "var(--input-bg)",
+    color: "var(--text-primary)",
   },
   value: {
-    color: "#1F2937",
+    color: "var(--text-primary)",
     fontSize: "1rem",
   },
   valueWithIcon: {
     display: "flex",
     alignItems: "center",
     gap: "0.5rem",
-    color: "#1F2937",
+    color: "var(--text-primary)",
   },
   docCount: {
     fontSize: "1.875rem",
