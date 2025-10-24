@@ -1,7 +1,36 @@
-
 # AI-Driven Document Analysis System
 
-A powerful document analysis platform with AWS Textract OCR, RAG capabilities, and intelligent document processing.
+An AI-driven document analysis system that provides comprehensive document processing and analysis capabilities through advanced machine learning models and intelligent automation. This system enables users to upload documents, extract text through OCR, classify documents automatically, generate summaries, and interact with document content through an intelligent RAG-based chatbot. The platform offers flexible model selection, interactive editing capabilities, and comprehensive analytics dashboards to track document processing activities and insights.
+
+## Features
+
+### Core Components
+
+- **OCR (Optical Character Recognition)**: Extract text from documents with high accuracy
+- **Classification**: Automatically categorize documents into predefined types
+- **RAG Chatbot**: Retrieval-Augmented Generation chatbot for intelligent document Q&A
+- **Summarization**: Generate concise summaries from document content
+
+### Features
+
+- **User-Selectable Models for Chatbot**: Choose from multiple LLM models to power your chatbot interactions
+- **User-Selectable Models for Summarization**: Select different summarization models based on your needs (Brief, Detailed, Domain-Specific)
+- **Interactive OCR Editing**: Edit and refine OCR results directly within the interface
+- **Subscription-Based Plans**: Flexible pricing tiers with Stripe payment integration
+- **Searchable Dashboards**: Powerful search functionality across all your documents
+- **Analytics & Insights**: Comprehensive analytics showing user activities and document insights
+
+## Technologies & Models
+
+- **LLMs**: DeepSeek V3, Llama-3.1-8B-Instant
+- **OCR**: Surya OCR
+- **Summarization Models**: T5, BART, Pegasus
+- **Vector Database**: ChromaDB
+- **File Storage**: MinIO
+- **Relational Database**: PostgreSQL
+- **Payment Service**: Stripe
+- **Backend Framework**: FastAPI
+- **Frontend Framework**: React, Next.js
 
 ## Project Setup Instructions
 
@@ -25,7 +54,7 @@ python -m venv .venv
 **Download Poppler (for PDF processing):**
 - Download Poppler from [Poppler for Windows](https://github.com/oschwartz10612/poppler-windows/releases)
 - Extract to `poppler/` folder in project root
-- Required for AWS Textract PDF conversion
+- Required for PDF processing
 
 ### 4. Install All Dependencies
 ```bash
@@ -39,24 +68,18 @@ cp .env.example .env
 ```
 
 **Required Configuration:**
-- **AWS Credentials**: For Textract OCR processing
 - **Database**: PostgreSQL connection
-- **API Keys**: For LLM services (Gemini, Groq)
+- **API Keys**: For LLM services (DeepSeek, Llama)
+- **Storage**: MinIO configuration
 
 **Example .env configuration:**
 ```env
-# AWS Textract Configuration
-AWS_ACCESS_KEY_ID=your_aws_access_key
-AWS_SECRET_ACCESS_KEY=your_aws_secret_key
-AWS_REGION=us-east-1
-OCR_PROVIDER=aws_textract
-
 # Database Configuration
 DATABASE_URL=postgresql://username:password@localhost:5432/database_name
 
 # LLM API Keys
-GEMINI_API_KEY=your_gemini_api_key_here
-GROQ_API_KEY=your_groq_api_key_here
+DEEPSEEK_API_KEY=your_deepseek_api_key_here
+LLAMA_API_KEY=your_llama_api_key_here
 
 # MinIO Configuration
 MINIO_ENDPOINT=localhost:9000
@@ -85,11 +108,6 @@ python run.py
 ```bash
 powershell -ExecutionPolicy Bypass .\auto_restart.ps1
 ```
-*Automatically restarts the server if it crashes. Use Ctrl+C to stop permanently.*
-```bash
-taskkill /f /im python.exe
-```
-*Run this command to simulate a backend server crash for testing auto-restart functionality.*
 
 **Frontend:**
 ```bash
@@ -97,40 +115,3 @@ cd frontend
 npm install
 npm run dev
 ```
-
-**Access the Application:**
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:8000
-- **API Documentation**: http://localhost:8000/docs
-
-## Features
-
-- **Fast Cloud OCR**: AWS Textract for lightning-fast document processing
-- **RAG System**: Intelligent document search and question answering
-- **Multi-format Support**: PDFs, images, and various document types
-- **Layout Analysis**: Advanced document structure understanding
-- **Vector Database**: ChromaDB for semantic search
-- **Modern UI**: React-based frontend with real-time processing
-
-## AWS Textract Setup
-
-This application uses AWS Textract for fast, cloud-based OCR processing. To set up:
-
-1. **Create AWS Account** and get credentials
-2. **Set up IAM user** with Textract permissions
-3. **Add credentials** to your `.env` file
-4. **Set OCR_PROVIDER=aws_textract** in environment
-
-**Benefits:**
-- **10x faster** than local OCR (seconds vs minutes)
-- **Native PDF support** with multi-page processing
-- **High accuracy** with layout analysis
-- **No local memory issues** - cloud processing
-
-## Architecture
-
-- **Backend**: FastAPI with PostgreSQL database
-- **OCR**: AWS Textract (primary) with Surya fallback
-- **Storage**: MinIO for document files
-- **Vector DB**: ChromaDB for semantic search
-- **Frontend**: React with TypeScript
