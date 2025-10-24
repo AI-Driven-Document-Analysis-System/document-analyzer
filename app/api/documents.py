@@ -10,7 +10,7 @@ from ..core.dependencies import get_current_user
 from ..core.database import db_manager
 from ..schemas.user_schemas import UserResponse
 from ..schemas.document_schemas import DocumentResponse, DocumentUploadResponse
-from ..services.document_service_aws import document_service_aws as document_service
+from ..services.document_service import document_service as document_service
 import logging
 import psycopg2
 import json
@@ -257,9 +257,10 @@ async def get_document(
                     SELECT 
                         d.id, d.original_filename, d.file_size, d.upload_timestamp, 
                         d.mime_type, d.user_id, d.file_path_minio,
-                        dp.processing_status, dp.processing_errors
+                        dp.processing_status, dp.processing_errors, dc.document_type
                     FROM documents d
                     LEFT JOIN document_processing dp ON d.id = dp.document_id
+                    LEFT JOIN document_classifications dc ON d.id = dc.document_id
                     WHERE d.id = %s AND d.user_id = %s
                 """
                 cursor.execute(query, (document_id, user_id))
@@ -277,7 +278,8 @@ async def get_document(
                     "user_id": doc[5],
                     "file_path": doc[6],
                     "processing_status": doc[7] or "unknown",
-                    "processing_errors": doc[8]
+                    "processing_errors": doc[8],
+                    "document_type": doc[9] or "Other"
                 }
                 
     except HTTPException:
@@ -299,7 +301,7 @@ async def get_document_content(
         with db_manager.get_connection() as conn:
             with conn.cursor() as cursor:
                 query = """
-                    SELECT d.original_filename, dc.extracted_text, dc.entities_extracted, 
+                    SELECT d.original_filename, dc.extracted_text, dc.entities_extracted, dc.layout_sections,
                            dp.processing_status, d.page_count
                     FROM documents d
                     LEFT JOIN document_content dc ON d.id = dc.document_id
@@ -312,7 +314,7 @@ async def get_document_content(
                 if not result:
                     raise HTTPException(status_code=404, detail="Document not found")
                 
-                filename, extracted_text, entities, processing_status, page_count = result
+                filename, extracted_text, entities, layout_sections, processing_status, page_count = result
                 
                 if processing_status != "completed":
                     return {
@@ -320,8 +322,26 @@ async def get_document_content(
                         "filename": filename,
                         "processing_status": processing_status,
                         "extracted_text": None,
+                        "layout_sections": None,
                         "message": f"Document is still being processed. Status: {processing_status}"
                     }
+                
+                # Helper function to safely handle JSON data that might already be parsed
+                def safe_json_parse(data):
+                    if data is None:
+                        return None
+                    # If it's already a list or dict (parsed), return as-is
+                    if isinstance(data, (list, dict)):
+                        return data
+                    # If it's a string, try to parse it
+                    if isinstance(data, str):
+                        try:
+                            return json.loads(data)
+                        except (json.JSONDecodeError, TypeError):
+                            logger.warning(f"Failed to parse JSON data: {data}")
+                            return None
+                    # For any other type, return None
+                    return None
                 
                 if not extracted_text:
                     return {
@@ -329,6 +349,7 @@ async def get_document_content(
                         "filename": filename,
                         "processing_status": processing_status,
                         "extracted_text": None,
+                        "layout_sections": safe_json_parse(layout_sections),
                         "message": "No text content extracted from this document"
                     }
                 
@@ -337,7 +358,8 @@ async def get_document_content(
                     "filename": filename,
                     "processing_status": processing_status,
                     "extracted_text": extracted_text,
-                    "entities": json.loads(entities) if entities else None,
+                    "layout_sections": safe_json_parse(layout_sections),
+                    "entities": safe_json_parse(entities),
                     "page_count": page_count,
                     "character_count": len(extracted_text),
                     "word_count": len(extracted_text.split()) if extracted_text else 0
@@ -658,9 +680,11 @@ async def update_document_content(
         # Parse request body
         body = await request.json()
         extracted_text = body.get("extracted_text")
+        document_type = body.get("document_type")
         
         if extracted_text is None:
             raise HTTPException(status_code=400, detail="extracted_text is required")
+        
         
         with db_manager.get_connection() as conn:
             with conn.cursor() as cursor:
@@ -680,7 +704,7 @@ async def update_document_content(
                     SET extracted_text = %s
                     WHERE document_id = %s
                 """, (extracted_text, document_id))
-                
+
                 # If no rows were updated, the document_content entry doesn't exist
                 if cursor.rowcount == 0:
                     # Insert new entry
@@ -688,12 +712,26 @@ async def update_document_content(
                         INSERT INTO document_content (document_id, extracted_text, last_modified)
                         VALUES (%s, %s, NOW())
                     """, (document_id, extracted_text))
-                
+
+                cursor.execute("""
+                    UPDATE document_classifications
+                    SET document_type = %s
+                    WHERE document_id = %s
+                """, (document_type, document_id))
+
+                # If no rows were updated, the document_content entry doesn't exist
+                if cursor.rowcount == 0:
+                    # Insert new entry
+                    cursor.execute("""
+                        INSERT INTO document_content (document_id, extracted_text, last_modified)
+                        VALUES (%s, %s, NOW())
+                    """, (document_id, extracted_text))
+
                 conn.commit()
                 
                 return {
                     "success": True,
-                    "message": "Document content updated successfully",
+                    "message": "Document content and classification updated successfully",
                     "document_id": document_id,
                 }
                 

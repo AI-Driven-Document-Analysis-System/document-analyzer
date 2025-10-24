@@ -52,7 +52,9 @@ const DocumentUploadsChart: React.FC<DocumentUploadsChartProps> = ({
                     className={item.uploads > 0 ? "bar active" : "bar inactive"}
                     style={{ 
                       height: `${height}px`,
-                      backgroundColor: item.uploads > 0 ? VIBRANT_COLORS[index % VIBRANT_COLORS.length] : '#e5e7eb'
+                      backgroundColor: item.uploads > 0 ? VIBRANT_COLORS[index % VIBRANT_COLORS.length] : '#e5e7eb',
+                      animation: `barRiseUp 0.6s ease-out ${index * 0.08}s both`,
+                      transformOrigin: 'bottom'
                     }}
                     onMouseEnter={(e) => {
                       if (item.uploads > 0) {
@@ -91,6 +93,18 @@ const DocumentUploadsChart: React.FC<DocumentUploadsChartProps> = ({
           </div>
         </div>
       )}
+      <style>{`
+        @keyframes barRiseUp {
+          from {
+            transform: scaleY(0);
+            opacity: 0.8;
+          }
+          to {
+            transform: scaleY(1);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 };

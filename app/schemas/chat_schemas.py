@@ -144,6 +144,8 @@ class ConversationResponse(BaseModel):
     title: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
+    message_count: Optional[int] = 0
+    is_pinned: Optional[bool] = False
 
 
 class ConversationsListResponse(BaseModel):

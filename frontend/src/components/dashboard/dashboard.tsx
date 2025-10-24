@@ -5,6 +5,7 @@ import RecentDocuments from './RecentDocuments';
 import RecentChats from './RecentChats';
 import PinnedSummaries from './PinnedSummaries';
 import DocumentActivityChart from './DocumentActivityChart';
+
 import StorageUsageChart from './StorageUsageChart';
 import { c } from "framer-motion/dist/types.d-Cjd591yU";
 //import DocumentViewer from '../DocumentViewer/DocumentViewer';
@@ -55,6 +56,7 @@ interface SummaryOption {
 }
 
 interface DocumentWithSummary extends FormattedDocument {
+  document_type?: string | null
   showSummaryOptions: boolean
   selectedModel: string | null
   currentSummary: Summary | null
@@ -329,6 +331,8 @@ function Dashboard() {
   const [loadingActivity, setLoadingActivity] = useState(true);
   const [activityError, setActivityError] = useState<string | null>(null);
 
+  
+
   // Helper function: Process documents for types (moved outside useEffect)
   const processDocumentsForTypes = useCallback((docs: Document[]) => {
     console.log('Processing documents for types, received docs:', docs.length);
@@ -411,34 +415,15 @@ function Dashboard() {
     };
     }, []);
 
-  // UNIFIED DATA FETCHING with PARALLEL API CALLS
+  // INDEPENDENT DATA FETCHING - Each section loads independently
+  
+  // Fetch documents
   useEffect(() => {
-    const fetchAllDashboardData = async () => {
-      // Check cache first
-      if (cacheInstance && Date.now() - cacheInstance.timestamp < CACHE_TTL) {
-        console.log('Using cached dashboard data');
-        const cached = cacheInstance.data;
-        setDocuments(cached.documents || []);
-        setDocumentTypes(cached.documentTypes || []);
-        setDocumentActivityData(cached.activityData || []);
-        setStorageUsage(cached.storageUsage || { used: 0, total: 2048 });
-        setResourceUsageData(cached.resourceUsage || []);
-        setLoading(false);
-        setLoadingTypes(false);
-        setLoadingActivity(false);
-        setLoadingStorage(false);
-        setLoadingResourceUsage(false);
-        return;
-      }
-
+    const fetchDocuments = async () => {
       const token = getToken();
       if (!token) {
         console.warn('No token found');
         setLoading(false);
-        setLoadingTypes(false);
-        setLoadingActivity(false);
-        setLoadingStorage(false);
-        setLoadingResourceUsage(false);
         return;
       }
 
@@ -448,86 +433,112 @@ function Dashboard() {
       };
 
       try {
-        console.log('Fetching all dashboard data in parallel...');
-        
-        // PARALLEL FETCH - All API calls happen at once
-        const [documentsRes, typesRes, activityRes, storageRes] = await Promise.all([
-          fetch('http://localhost:8000/api/documents/?limit=100', { headers }), // Limit to 100 for faster load
-          fetch('http://localhost:8000/api/analytics/document-types-distribution', { headers }),
-          fetch('http://localhost:8000/api/profile/me', { headers }),
-          fetch('http://localhost:8000/api/analytics/document-uploads-over-time?period=30d', { headers })
-        ]);
-
-        // Process responses
-        const docsData = documentsRes.ok ? await documentsRes.json() : { documents: [] };
-        const docs = docsData.documents || [];
-        
-        // Always use local processing for document types to ensure predefined categories
-        let types: DocumentTypeData[] = processDocumentsForTypes(docs).chartData;
-
-        let activity: Array<{ date: string; count: number }> = [];
-        if (activityRes.ok) {
-          const actData = await activityRes.json();
-          activity = actData.upload_activity || [];
+        const response = await fetch('http://localhost:8000/api/documents/?limit=100', { headers });
+        if (response.ok) {
+          const data = await response.json();
+          const docs = data.documents || [];
+          setDocuments(docs);
+          
+          // Process document types from documents
+          const types: DocumentTypeData[] = processDocumentsForTypes(docs).chartData;
+          setDocumentTypes(types);
+          setLoadingTypes(false);
+          
+          // Process resource usage from documents
+          const resourceData: ResourceUsageData[] = docs.map((doc: Document) => {
+            const sizeInBytes = doc.file_size || 0;
+            const sizeInMB = sizeInBytes / (1024 * 1024);
+            const approximateProcessingTime = 2 + Math.floor(sizeInMB * 1.5);
+            return {
+              id: doc.id,
+              name: doc.original_filename || 'Untitled Document',
+              size: sizeInBytes,
+              processingTime: approximateProcessingTime
+            };
+          });
+          setResourceUsageData(resourceData);
+          setLoadingResourceUsage(false);
         }
-
-        let storage: { used: number; total: number } = { used: 0, total: 2048 };
-        if (storageRes.ok) {
-          const storData = await storageRes.json();
-          if (storData.summary) {
-            const usedMB = Math.round((storData.summary.totalSize || 0) / (1024 * 1024));
-            storage = { used: usedMB, total: 5 * 1024 };
-          }
-        }
-
-        // Process resource usage from documents
-        const resourceData: ResourceUsageData[] = docs.map((doc: Document) => {
-          const sizeInBytes = doc.file_size || 0;
-          const sizeInMB = sizeInBytes / (1024 * 1024);
-          const approximateProcessingTime = 2 + Math.floor(sizeInMB * 1.5);
-          return {
-            id: doc.id,
-            name: doc.original_filename || 'Untitled Document',
-            size: sizeInBytes,
-            processingTime: approximateProcessingTime
-          };
-        });
-
-        // Update all state at once
-        setDocuments(docs);
-        setDocumentTypes(types);
-        setDocumentActivityData(activity);
-        setStorageUsage(storage);
-        setResourceUsageData(resourceData);
-
-        // Cache the data
-        cacheInstance = {
-          data: {
-            documents: docs,
-            documentTypes: types,
-            activityData: activity,
-            storageUsage: storage,
-            resourceUsage: resourceData
-          },
-          timestamp: Date.now()
-        };
-
-        console.log('Dashboard data cached successfully');
-
       } catch (err) {
-        console.error('Error fetching dashboard data:', err);
-        setError('Failed to load dashboard data');
+        console.error('Error fetching documents:', err);
+        setError('Failed to load documents');
       } finally {
         setLoading(false);
-        setLoadingTypes(false);
-        setLoadingActivity(false);
-        setLoadingStorage(false);
-        setLoadingResourceUsage(false);
       }
     };
 
-    fetchAllDashboardData();
-  }, []); // Only run once on mount
+    fetchDocuments();
+  }, [processDocumentsForTypes]);
+
+  // Fetch document activity
+  useEffect(() => {
+    const fetchActivity = async () => {
+      const token = getToken();
+      if (!token) {
+        setLoadingActivity(false);
+        return;
+      }
+
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      };
+
+      try {
+        const response = await fetch('http://localhost:8000/api/analytics/document-uploads-over-time?period=30d', { headers });
+        if (response.ok) {
+          const data = await response.json();
+          // Backend returns chartData with 'uploads' field, map to 'count' for the chart component
+          const activityData = (data.chartData || []).map((item: any) => ({
+            date: item.date,
+            count: item.uploads || 0
+          }));
+          setDocumentActivityData(activityData);
+        }
+      } catch (err) {
+        console.error('Error fetching activity:', err);
+        setActivityError('Failed to load activity data');
+      } finally {
+        setLoadingActivity(false);
+      }
+    };
+
+    fetchActivity();
+  }, []);
+
+  // Fetch storage usage
+  useEffect(() => {
+    const fetchStorage = async () => {
+      const token = getToken();
+      if (!token) {
+        setLoadingStorage(false);
+        return;
+      }
+
+      const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      };
+
+      try {
+        const response = await fetch('http://localhost:8000/api/profile/me', { headers });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.summary) {
+            const usedMB = Math.round((data.summary.totalSize || 0) / (1024 * 1024));
+            setStorageUsage({ used: usedMB, total: 5 * 1024 });
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching storage:', err);
+        setStorageError('Failed to load storage data');
+      } finally {
+        setLoadingStorage(false);
+      }
+    };
+
+    fetchStorage();
+  }, []);
 
   //*********************** */
   // REMOVE OLD USEEFFECTS - Replaced by unified fetch above
@@ -1217,6 +1228,7 @@ const renderResourceUsageChart = () => {
                 doc.processing_status === "processing" ? "Processing" : "Failed",
         uploadedAt: formatRelativeTime(doc.upload_date),
         confidence: doc.processing_status === "completed" ? 95 : null,
+        document_type: doc.document_type,
         showSummaryOptions: false,
         selectedModel: null,
         currentSummary: null,
@@ -1405,10 +1417,12 @@ const renderResourceUsageChart = () => {
 
   // Other handler functions
   const handleChatWithDoc = (doc: DocumentWithSummary) => {
-    // MVP: Disable chat functionality
-    // MVP: Chat functionality disabled
-    // setSelectedDocument(doc)
-    // MVP: Chat functionality disabled - show alert instead
+    // Store document ID for chat to pick up
+    sessionStorage.setItem('chat_with_document_id', doc.id)
+    // Navigate to chat route
+    localStorage.setItem('currentRoute', '/chat')
+    // Trigger page reload to navigate
+    window.location.reload()
   }
 
   const handleSummarizeDoc = (doc: DocumentWithSummary) => {
@@ -1428,34 +1442,9 @@ const renderResourceUsageChart = () => {
     setSummaryModalOpen(true)
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="loading-spinner mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading your dashboard...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <div className="error-message max-w-md w-full">
-          <div className="flex items-center gap-3">
-            <i className="fas fa-exclamation-triangle text-2xl text-yellow-500"></i>
-            <p>{error}</p>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="main-container">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Stats Grid */}
         <div className="grid grid-cols-4 gap-4 mb-6">
           {stats.map((stat) => (
             <div key={stat.title} className="stats-card fade-in">
@@ -1740,6 +1729,7 @@ const renderResourceUsageChart = () => {
           {/* Right side - Pinned Chats and Summaries */}
           <div style={{ flex: '1', display: 'flex', flexDirection: 'column', gap: '0' }}>
             <RecentChats />
+            
             <PinnedSummaries />
           </div>
         </div>

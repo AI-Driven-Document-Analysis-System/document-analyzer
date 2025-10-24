@@ -49,7 +49,9 @@ const TrendsCharts: React.FC<TrendsChartsProps> = ({
                     className={item.count > 0 ? "day-bar active" : "day-bar inactive"}
                     style={{ 
                       height: `${height}px`,
-                      backgroundColor: item.count > 0 ? VIBRANT_COLORS[index % VIBRANT_COLORS.length] : '#e5e7eb'
+                      backgroundColor: item.count > 0 ? VIBRANT_COLORS[index % VIBRANT_COLORS.length] : '#e5e7eb',
+                      animation: `barRiseUp 0.6s ease-out ${index * 0.1}s both`,
+                      transformOrigin: 'bottom'
                     }}
                     onMouseEnter={(e) => {
                       if (item.count > 0) {
@@ -120,6 +122,18 @@ const TrendsCharts: React.FC<TrendsChartsProps> = ({
           </div>
         )}
       </div>
+      <style>{`
+        @keyframes barRiseUp {
+          from {
+            transform: scaleY(0);
+            opacity: 0.8;
+          }
+          to {
+            transform: scaleY(1);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 };

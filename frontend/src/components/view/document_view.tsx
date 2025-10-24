@@ -825,7 +825,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                 msOverflowStyle: 'none'
               }}>
                 {recentFiles.map((document) => {
-                  const fileIcon = getFileIcon(document.content_type)
+                  // const fileIcon = getFileIcon(document.content_type)
                   return (
                     <div
                       key={`recent-${document.id}`}
@@ -854,7 +854,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                       }}
                     >
                       {/* Decorative accent bar */}
-                      <div style={{
+                      {/* <div style={{
                         position: 'absolute',
                         top: 0,
                         left: 0,
@@ -865,7 +865,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                                    fileIcon.accentClass === 'bg-green-500' ? '#10b981' :
                                    fileIcon.accentClass === 'bg-indigo-500' ? '#6366f1' : '#6b7280',
                         borderRadius: '1rem 1rem 0 0'
-                      }}></div>
+                      }}></div> */}
                       
                       <div style={{
                         display: 'flex',
@@ -878,7 +878,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                           gap: '1rem',
                           marginBottom: '1rem'
                         }}>
-                          <div style={{
+                          {/* <div style={{
                             width: '4rem',
                             height: '4rem',
                             background: fileIcon.bgClass === 'bg-red-50' ? '#fef2f2' :
@@ -897,7 +897,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                             transition: 'transform 0.3s ease'
                           }}>
                             {fileIcon.icon}
-                          </div>
+                          </div> */}
                           <div style={{
                             flex: '1 1 0%',
                             minWidth: 0
@@ -923,6 +923,13 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                               fontWeight: '500'
                             }}>
                               {formatFileSize(document.file_size)}
+                            </p>
+                            <p style={{
+                              fontSize: '0.875rem',
+                              color: '#6b7280',
+                              fontWeight: '500'
+                            }}>
+                              {document.content_type}
                             </p>
                           </div>
                         </div>
@@ -1112,7 +1119,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                       }}
                     >
                       {/* Decorative accent bar */}
-                      <div style={{
+                      {/* <div style={{
                         position: 'absolute',
                         top: 0,
                         left: 0,
@@ -1123,7 +1130,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                                    fileIcon.accentClass === 'bg-green-500' ? '#10b981' :
                                    fileIcon.accentClass === 'bg-indigo-500' ? '#6366f1' : '#6b7280',
                         borderRadius: '1rem 1rem 0 0'
-                      }}></div>
+                      }}></div> */}
                       
                       {/* Document Preview/Icon */}
                       <div style={{
@@ -1132,7 +1139,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                                    fileIcon.bgClass === 'bg-blue-50' ? '#eff6ff' :
                                    fileIcon.bgClass === 'bg-green-50' ? '#ecfdf5' :
                                    fileIcon.bgClass === 'bg-indigo-50' ? '#eef2ff' : '#f9fafb',
-                        borderRadius: '1rem rem 0 0',
+                        borderRadius: '1rem 1rem 0 0',
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
@@ -1272,7 +1279,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                           gap: '1rem',
                           marginBottom: '1rem'
                         }}>
-                          <div style={{
+                          {/* <div style={{
                             width: '3.5rem',
                             height: '3.5rem',
                             background: fileIcon.bgClass === 'bg-red-50' ? '#fef2f2' :
@@ -1291,7 +1298,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                             transition: 'transform 0.3s ease'
                           }}>
                             {fileIcon.icon}
-                          </div>
+                          </div> */}
                           <div style={{
                             flex: '1 1 0%',
                             minWidth: 0
@@ -1317,6 +1324,13 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                               fontWeight: '500'
                             }}>
                               {formatFileSize(document.file_size)}
+                            </p>
+                            <p style={{
+                              fontSize: '0.875rem',
+                              color: '#6b7280',
+                              fontWeight: '500'
+                            }}>
+                              {document.content_type}
                             </p>
                           </div>
                         </div>
@@ -1370,9 +1384,9 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                         className="docview-list-item docview-cursor-pointer docview-group docview-transition-all docview-duration-300"
                         onClick={() => handleDocumentClick(document)}
                       >
-                        <div className={`docview-w-14 docview-h-14 ${fileIcon.bgClass} docview-rounded-2xl docview-flex docview-items-center docview-justify-center docview-text-2xl docview-flex-shrink-0 docview-shadow-sm docview-list-icon`}>
+                        {/* <div className={`docview-w-14 docview-h-14 ${fileIcon.bgClass} docview-rounded-2xl docview-flex docview-items-center docview-justify-center docview-text-2xl docview-flex-shrink-0 docview-shadow-sm docview-list-icon`}>
                           {fileIcon.icon}
-                        </div>
+                        </div> */}
                         
                         <div className="docview-flex-1 docview-min-w-0">
                           <div className="docview-flex docview-items-center docview-gap-3 docview-mb-1">
@@ -1407,6 +1421,8 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
                           </div>
                           <div className="docview-flex docview-items-center docview-gap-4 docview-text-sm docview-text-gray-500">
                             <span>{formatFileSize(document.file_size)}</span>
+                            <span>•</span>
+                            <span>{document.content_type}</span>
                             <span>•</span>
                             <span>{formatDate(document.upload_date)}</span>
                             {/* {document.document_type && (
@@ -1611,7 +1627,7 @@ export function DocumentView({ authToken: propAuthToken, onAuthError }: Document
             <div 
               className="docview-modal-content"
               onClick={e => e.stopPropagation()}
-              style={{ maxWidth: 900, width: '95vw', minHeight: 500, display: 'flex', flexDirection: 'column' }}
+              style={{ maxWidth: 1000, width: '100vw', minHeight: 600, display: 'flex', flexDirection: 'column' }}
             >
               <div className="docview-modal-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1.5rem 2rem 0rem 2rem' }}>
               <h2 className="docview-text-2xl docview-font-bold" style={{ color: themeColors.primaryText }}>Document Details</h2>

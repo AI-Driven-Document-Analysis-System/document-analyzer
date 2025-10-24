@@ -18,6 +18,7 @@ import UserProfilePage  from "../profile/profile"
 import Settings from "../components/settings/settings"
 import { Subscription } from "../components/subscription/subscription"
 import { ThemeProvider } from "../contexts/ThemeContext" 
+import ReturnPage from "../components/payment_portal/return-page"
 
 const routes = {
   "/dashboard": { component: Dashboard, title: "Dashboard", breadcrumb: ["Dashboard"] },
@@ -30,6 +31,7 @@ const routes = {
   "/profile": { component: UserProfilePage, title: "Profile",  breadcrumb: ["Account", "Profile"] },
   "/subscription": { component: Subscription, title: "Subscription", breadcrumb: ["Account", "Subscription"] },
   "/settings": { component: Settings, title: "Settings", breadcrumb: ["Account", "Settings"] },
+  "/return": { component: ReturnPage, title: "Payment Return", breadcrumb: ["Payments", "Return"] },
 }
 
 /**
@@ -46,6 +48,7 @@ export default function Page() {
   const [sidebarOpen, setSidebarOpen] = useState(true) // Safe default
   const [user, setUser] = useState<{username?: string} | null>(null)
   const [isClientReady, setIsClientReady] = useState(false) // Track when client is ready
+
 
   // FIXED: Handle client-side hydration and state restoration
   useEffect(() => {
@@ -64,6 +67,19 @@ export default function Page() {
     }
   }, []);
 
+  useEffect(() => {
+  if (!isClientReady) return;
+  
+  // Check if we're coming back from Stripe
+  const urlParams = new URLSearchParams(window.location.search);
+  const sessionId = urlParams.get('session_id');
+  
+  if (sessionId && window.location.pathname === '/') {
+    // User returned from Stripe, navigate to return page
+    setCurrentRoute('/return');
+  }
+}, [isClientReady]);
+
   // Verify authentication in background
   useEffect(() => {
     if (!isClientReady) return; // Wait for client hydration
@@ -75,14 +91,16 @@ export default function Page() {
           setUser(userData);
           setIsAuthenticated(true);
         } else {
+          // No token - show login modal
           setIsAuthenticated(false);
+          setShowAuthModal(true);
         }
       } catch (error) {
-        // Token is invalid, clear it and redirect to landing
+        // Token is invalid, clear it and show login
         authService.logout();
         setUser(null);
         setIsAuthenticated(false);
-        setCurrentRoute("/dashboard");
+        setShowAuthModal(true);
       } finally {
         setIsVerifyingAuth(false); // Done verifying
       }
@@ -135,7 +153,7 @@ export default function Page() {
     );
   }
 
-  // Show landing page only if we're sure user is not authenticated
+  // Show landing page if not authenticated
   if (!isAuthenticated && !isVerifyingAuth) {
     return (
       <ThemeProvider>
@@ -148,19 +166,66 @@ export default function Page() {
   const CurrentComponent = routes[currentRoute as keyof typeof routes]?.component || Dashboard
   const breadcrumb = routes[currentRoute as keyof typeof routes]?.breadcrumb || ["Dashboard"]
 
-  const handleNavigation = (path: string) => {
+  const handleNavigation = (path: string, params?: Record<string, string>) => {
     setCurrentRoute(path)
+    // Store navigation params for the target component
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        sessionStorage.setItem(`nav_${key}`, value)
+      })
+    }
+  }
+
+  // Show loading overlay before everything else
+  if (isVerifyingAuth) {
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        backgroundColor: '#0f172a',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 99999
+      }}>
+        <div style={{
+          width: '80px',
+          height: '80px',
+          border: '6px solid #1e293b',
+          borderTop: '6px solid #3b82f6',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+          marginBottom: '24px'
+        }}></div>
+        <p style={{
+          color: '#f1f5f9',
+          fontSize: '18px',
+          fontWeight: '500',
+          marginBottom: '8px',
+          textAlign: 'center'
+        }}>Loading your workspace...</p>
+        <p style={{
+          color: '#94a3b8',
+          fontSize: '14px',
+          textAlign: 'center'
+        }}>Please wait</p>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
   }
 
   return (
     <ThemeProvider>
-      <div className="app-container">
-      {/* IMPROVED: Show subtle loading indicator while verifying auth */}
-      {isVerifyingAuth && (
-        <div className="auth-verifying-overlay">
-          <div className="auth-verifying-spinner"></div>
-        </div>
-      )}
+      <div className="app-container" style={{ backgroundColor: '#0f172a', minHeight: '100vh' }}>
 
       <Sidebar
         isOpen={sidebarOpen}
@@ -236,7 +301,11 @@ export default function Page() {
 
         <div className="content-area">
           {/* Show the user's intended page immediately, with subtle loading if needed */}
-          <CurrentComponent />
+          {currentRoute === '/return' ? (
+            <ReturnPage onNavigate={handleNavigation} />
+          ) : (
+            <CurrentComponent />
+          )}
         </div>
       </div>
     </div>

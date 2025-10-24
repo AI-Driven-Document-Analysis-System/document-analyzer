@@ -838,22 +838,23 @@ async def list_conversations_api(user_id: Optional[str] = None, limit: int = 50,
             raise HTTPException(status_code=400, detail="user_id is required")
         conversation_repo = get_conversations()
         
-        # Use the optimized query that filters empty conversations
+        # Get conversations with message counts
         conversations = conversation_repo.list_with_message_counts(UUID(user_id), limit, offset)
         
-        # Convert to proper format
-        formatted_conversations = []
-        for conv in conversations:
-            formatted_conversations.append({
-                "id": str(conv["id"]),
-                "user_id": str(conv["user_id"]) if conv["user_id"] else None,
-                "title": conv["title"],
-                "created_at": conv["created_at"].isoformat() if conv["created_at"] else None,
-                "updated_at": conv["updated_at"].isoformat() if conv["updated_at"] else None,
-                "message_count": conv["message_count"]
-            })
-        
-        return {"conversations": formatted_conversations}
+        return {
+            "conversations": [
+                {
+                    "id": str(conv["id"]),
+                    "user_id": str(conv["user_id"]) if conv.get("user_id") else None,
+                    "title": conv.get("title"),
+                    "created_at": conv["created_at"].isoformat() if conv.get("created_at") else None,
+                    "updated_at": conv["updated_at"].isoformat() if conv.get("updated_at") else None,
+                    "message_count": conv.get("message_count", 0),
+                    "is_pinned": conv.get("is_pinned", False)
+                }
+                for conv in conversations
+            ]
+        }
     except Exception as e:
         logger.error(f"Error listing conversations: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -869,6 +870,58 @@ async def rename_conversation_api(conversation_id: str, payload: RenameConversat
         return ConversationResponse(id=str(conv.id), user_id=str(conv.user_id) if conv.user_id else None, title=conv.title, created_at=conv.created_at, updated_at=conv.updated_at)
     except Exception as e:
         logger.error(f"Error renaming conversation: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.patch("/conversations/{conversation_id}/pin")
+async def toggle_pin_conversation(conversation_id: str):
+    """
+    Toggle pin status for a conversation
+    """
+    try:
+        conversation_repo = get_conversations()
+        conv = conversation_repo.toggle_pin(UUID(conversation_id))
+        if not conv:
+            raise HTTPException(status_code=404, detail="Conversation not found")
+        return {
+            "success": True,
+            "conversation_id": str(conv.id),
+            "is_pinned": conv.is_pinned,
+            "message": f"Conversation {'pinned' if conv.is_pinned else 'unpinned'} successfully"
+        }
+    except Exception as e:
+        logger.error(f"Error toggling pin status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/conversations/pinned")
+async def get_pinned_conversations(user_id: Optional[str] = None, limit: int = 10):
+    """
+    Get all pinned conversations for a user
+    """
+    try:
+        if not user_id:
+            raise HTTPException(status_code=400, detail="user_id is required")
+        
+        conversation_repo = get_conversations()
+        conversations = conversation_repo.get_pinned_conversations(UUID(user_id), limit=limit)
+        
+        return {
+            "conversations": [
+                {
+                    "id": str(conv.id),
+                    "user_id": str(conv.user_id) if conv.user_id else None,
+                    "title": conv.title,
+                    "is_pinned": conv.is_pinned,
+                    "created_at": conv.created_at,
+                    "updated_at": conv.updated_at
+                }
+                for conv in conversations
+            ],
+            "total": len(conversations)
+        }
+    except Exception as e:
+        logger.error(f"Error getting pinned conversations: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

@@ -49,12 +49,12 @@ class SuryaDocumentProcessor:
         """Convert PDF pages to PIL images for Surya processing (optimized DPI)"""
         try:
             # Set Poppler path for pdf2image - reduced DPI for faster processing
-            poppler_path = r"C:\Users\sahan\OneDrive\Desktop\document-analyzer\poppler\poppler-23.01.0\Library\bin"
+            # poppler_path = r"C:\Users\sahan\OneDrive\Desktop\document-analyzer\poppler\poppler-23.01.0\Library\bin"
             images = pdf2image.convert_from_path(
                 pdf_path, 
                 dpi=dpi, 
                 fmt="RGB", 
-                poppler_path=poppler_path,
+                
                 thread_count=min(4, multiprocessing.cpu_count())  # Use multiple threads
             )
             logger.info(f"Converted PDF to {len(images)} PIL images at {dpi} DPI")
@@ -222,6 +222,7 @@ class SuryaDocumentProcessor:
                     avg_confidence = np.mean([line['confidence'] for line in overlapping_lines]) if overlapping_lines else 1.0
                     
                     element = {
+                        "page_number": page_idx + 1,
                         "bounding_box": block.bbox,
                         "element_type": block.label,
                         "extracted_text": " ".join(block_texts),

@@ -373,7 +373,7 @@
 ##Worked 
 
 # Import necessary modules for FastAPI web framework
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from pydantic import BaseModel  # For data validation and serialization
 from datetime import datetime   # For timestamp handling
 import logging                  # For application logging
@@ -384,6 +384,10 @@ from ..core.database import db_manager  # Database connection manager
 from ..core.dependencies import get_current_user  # Authentication middleware
 from ..schemas.user_schemas import UserResponse  # User data schema
 import psycopg2  # PostgreSQL database driver
+import asyncio
+from threading import Event
+from concurrent.futures import ThreadPoolExecutor
+import functools
 
 # Set up logging for this module - helps track what happens during execution
 logger = logging.getLogger(__name__)
@@ -606,6 +610,7 @@ def check_existing_summary(document_id: str, model_name: str):
 @router.post("/", response_model=SummarizationResponse)
 async def summarize_document(
     request: SummarizationRequest, 
+    fastapi_request: Request,
     current_user: UserResponse = Depends(get_current_user)
 ):
     """
@@ -722,8 +727,48 @@ async def summarize_document(
             "name": config["name"]
         }
 
-        # Call the AI service to generate the actual summary
-        summary_text = summarize_with_options(document_content, ai_config)
+        # Create cancellation token and run summarization in thread pool
+        cancellation_token = Event()
+        
+        # Function to check if client is still connected
+        async def check_client_connection():
+            try:
+                while not cancellation_token.is_set():
+                    if await fastapi_request.is_disconnected():
+                        logger.info("Client disconnected, cancelling summarization")
+                        cancellation_token.set()
+                        break
+                    await asyncio.sleep(1)  # Check every second
+            except Exception as e:
+                logger.error(f"Error checking client connection: {e}")
+        
+        # Function to run summarization with cancellation token
+        def run_summarization():
+            try:
+                return summarize_with_options(document_content, ai_config, cancellation_token)
+            except Exception as e:
+                if "cancelled by client" in str(e).lower():
+                    logger.info("Summarization cancelled by client disconnection")
+                    raise HTTPException(status_code=499, detail="Client disconnected")
+                raise e
+        
+        # Start client connection monitoring
+        connection_task = asyncio.create_task(check_client_connection())
+        
+        try:
+            # Run summarization in thread pool to avoid blocking
+            loop = asyncio.get_event_loop()
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = loop.run_in_executor(executor, run_summarization)
+                summary_text = await future
+        finally:
+            # Clean up connection monitoring
+            cancellation_token.set()
+            connection_task.cancel()
+            try:
+                await connection_task
+            except asyncio.CancelledError:
+                pass
         
         # Calculate actual word count of the generated summary
         word_count = calculate_word_count(summary_text)
@@ -870,3 +915,65 @@ async def get_document_summaries(
 
 
 
+@router.get("/user/recent")
+async def get_user_recent_summaries(
+    limit: int = 5,
+    current_user: UserResponse = Depends(get_current_user)
+):
+    """
+    Get recent summaries for the current user across all documents.
+    
+    Args:
+        limit: Maximum number of summaries to return (default: 5)
+        current_user: Authenticated user (injected by dependency)
+    
+    Returns:
+        dict: Success status and list of recent summaries with document details
+    """
+    try:
+        with db_manager.get_connection() as conn:
+            with conn.cursor() as cursor:
+                # Query to get recent summaries with document details
+                query = """
+                    SELECT 
+                        ds.id,
+                        ds.summary_text,
+                        ds.model_version,
+                        ds.word_count,
+                        ds.created_at,
+                        d.id as document_id,
+                        d.original_filename as document_name,
+                        d.created_at as document_created_at
+                    FROM document_summaries ds
+                    JOIN documents d ON ds.document_id = d.id
+                    WHERE d.user_id = %s
+                    ORDER BY ds.created_at DESC
+                    LIMIT %s
+                """
+                cursor.execute(query, (str(current_user.id), limit))
+                results = cursor.fetchall()
+                
+                summaries = []
+                for result in results:
+                    summaries.append({
+                        "id": result[0],
+                        "summary_text": result[1],
+                        "model_used": result[2],
+                        "word_count": result[3],
+                        "created_at": result[4].isoformat() if result[4] else None,
+                        "document_id": result[5],
+                        "document_name": result[6],
+                        "document_created_at": result[7].isoformat() if result[7] else None,
+                        "summary_type": "Summary",
+                        "from_cache": True
+                    })
+                
+                return {
+                    "success": True,
+                    "summaries": summaries,
+                    "count": len(summaries)
+                }
+                
+    except Exception as e:
+        logger.error(f"Error fetching user recent summaries: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to fetch recent summaries")

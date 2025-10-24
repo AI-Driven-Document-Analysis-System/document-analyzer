@@ -17,6 +17,7 @@ interface SidebarProps {
   onNewChat: () => void
   onChatHistoryClick: (chatId: string) => void
   onDeleteChat: (chatId: string) => void
+  onPinChat: (chatId: string) => void
   selectedChatId?: string
   documentsLoading?: boolean
   documentsError?: string | null
@@ -36,6 +37,7 @@ export function Sidebar({
   onNewChat,
   onChatHistoryClick,
   onDeleteChat,
+  onPinChat,
   selectedChatId,
   documentsLoading = false,
   documentsError = null,
@@ -72,6 +74,7 @@ export function Sidebar({
           chatHistory={chatHistory}
           onChatHistoryClick={onChatHistoryClick}
           onDeleteChat={onDeleteChat}
+          onPinChat={onPinChat}
           selectedChatId={selectedChatId}
         />
         

@@ -1,4 +1,4 @@
-
+   
 
 
 
@@ -1061,6 +1061,10 @@ import re
 from typing import Dict, List, Optional, Union
 import os
 from dotenv import load_dotenv
+import asyncio
+from threading import Event
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import signal
 
 logger = logging.getLogger(__name__)
 
@@ -1081,29 +1085,32 @@ def get_summary_options():
         "brief": {
             "name": "Brief Summary", 
             "model": "pegasus",
-            "max_length": 100,
-            "min_length": 30
+            "max_length": 150,  # Increased for better quality
+            "min_length": 50
         },
         "detailed": {
             "name": "Detailed Summary", 
             "model": "bart",
-            "max_length": 300,
-            "min_length": 100
+            "max_length": 400,  # Increased for better coverage
+            "min_length": 150
         },
         "domain_specific": {
             "name": "Domain Specific Summary", 
-            "model": "t5",
-            "max_length": 250,
-            "min_length": 80
+            "model": "t5",  # Keep T5 for UI display, but internally use BART
+            "max_length": 350,
+            "min_length": 120
         }
     }
 
 def _get_model_endpoint(model_name: str) -> str:
     """Get the Hugging Face API endpoint for the model with reliable alternatives."""
     models = {
-        "bart": "facebook/bart-large-cnn",
-        "pegasus": "sshleifer/distilbart-cnn-12-6",  # More reliable alternative
-        "t5": "google/flan-t5-base"
+        "bart": "facebook/bart-large-cnn",  # Best for general summarization
+        "pegasus": "google/pegasus-cnn_dailymail",  # Better for news-style content
+        "t5": "google/flan-t5-large",  # Upgraded to large model for better quality
+        "longformer": "allenai/led-large-16384-arxiv",  # For very long documents
+        "medical_bart": "facebook/bart-large-cnn",  # Will use BART for medical
+        "legal_bart": "facebook/bart-large-cnn"  # Will use BART for legal
     }
     
     if model_name not in models:
@@ -1112,32 +1119,115 @@ def _get_model_endpoint(model_name: str) -> str:
     model_id = models[model_name]
     return f"https://api-inference.huggingface.co/models/{model_id}"
 
-def _make_api_request(endpoint: str, payload: dict, max_retries: int = 3) -> dict:
-    """Make a request to the Hugging Face API with retry logic."""
+def _select_optimal_model(text: str, summary_type: str, domain: str, original_model: str) -> str:
+    """Select the optimal model based on document characteristics."""
+    text_length = len(text.split())
+    
+    # ALWAYS use BART for domain-specific summaries (T5 is unstable)
+    if summary_type == "Domain Specific Summary":
+        logger.info(f"Domain-specific summary requested - using BART internally (UI shows T5 for consistency)")
+        return "bart"
+    
+    # For very long documents (>2000 words), use models that handle long context better
+    if text_length > 2000:
+        logger.info(f"Long document detected ({text_length} words), using BART for better context handling")
+        return "bart"
+    
+    # For brief summaries, use the original model (Pegasus)
+    if summary_type == "Brief Summary":
+        return original_model
+    
+    # For detailed summaries, use the original model (BART)
+    if summary_type == "Detailed Summary":
+        return original_model
+    
+    # Default to original model
+    return original_model
+
+def _get_model_specific_parameters(model_name: str, base_params: dict) -> dict:
+    """Get model-specific parameters for better summarization quality."""
+    params = base_params.copy()
+    
+    if model_name == "bart":
+        # BART works well with these parameters for coherent summaries
+        params.update({
+            "do_sample": False,
+            "num_beams": 4,  # Beam search for better quality
+            "early_stopping": True,
+            "repetition_penalty": 1.2,
+            "length_penalty": 1.0
+        })
+    elif model_name == "pegasus":
+        # Pegasus is optimized for abstractive summarization
+        params.update({
+            "do_sample": False,
+            "num_beams": 3,
+            "early_stopping": True,
+            "repetition_penalty": 1.1,
+            "length_penalty": 0.8  # Slightly favor shorter summaries
+        })
+    elif model_name == "t5":
+        # T5 benefits from explicit instruction formatting
+        params.update({
+            "do_sample": False,
+            "num_beams": 4,
+            "early_stopping": True,
+            "repetition_penalty": 1.3,
+            "length_penalty": 1.1
+        })
+    
+    return params
+
+def _make_api_request(endpoint: str, payload: dict, max_retries: int = 3, cancellation_token: Optional[Event] = None) -> dict:
+    """Make a request to the Hugging Face API with retry logic and cancellation support."""
     headers = {
         "Authorization": f"Bearer {HF_API_KEY}",
         "Content-Type": "application/json"
     }
     
     for attempt in range(max_retries):
+        # Check if cancellation was requested
+        if cancellation_token and cancellation_token.is_set():
+            logger.info("Request cancelled by client")
+            raise Exception("Request cancelled by client")
+            
         try:
             response = requests.post(endpoint, headers=headers, json=payload, timeout=30)
             
             if response.status_code == 401:
                 raise Exception(f"Invalid API key. Please check your Hugging Face API key: {response.text}")
             elif response.status_code == 503:
-                logger.info(f"Model loading, waiting 20 seconds... (attempt {attempt + 1})")
-                time.sleep(20)
+                # Reduce model loading wait time for faster response
+                wait_time = min(10, 5 * (attempt + 1))  # Progressive wait: 5s, 10s, 10s
+                logger.info(f"Model loading, waiting {wait_time} seconds... (attempt {attempt + 1})")
+                # Check for cancellation during wait
+                for i in range(wait_time):
+                    if cancellation_token and cancellation_token.is_set():
+                        logger.info("Request cancelled during model loading wait")
+                        raise Exception("Request cancelled by client")
+                    time.sleep(1)
                 continue
             elif response.status_code == 429:
-                logger.info(f"Rate limit hit, waiting 10 seconds... (attempt {attempt + 1})")
-                time.sleep(10)
+                # Reduce rate limit wait time
+                wait_time = min(5, 2 * (attempt + 1))  # Progressive wait: 2s, 4s, 5s
+                logger.info(f"Rate limit hit, waiting {wait_time} seconds... (attempt {attempt + 1})")
+                # Check for cancellation during wait
+                for i in range(wait_time):
+                    if cancellation_token and cancellation_token.is_set():
+                        logger.info("Request cancelled during rate limit wait")
+                        raise Exception("Request cancelled by client")
+                    time.sleep(1)
                 continue
             elif response.status_code != 200:
                 logger.error(f"API request failed with status {response.status_code}: {response.text}")
                 if attempt == max_retries - 1:
                     raise Exception(f"API request failed: {response.status_code} - {response.text}")
-                time.sleep(5)
+                # Check for cancellation during wait
+                for i in range(5):
+                    if cancellation_token and cancellation_token.is_set():
+                        logger.info("Request cancelled during retry wait")
+                        raise Exception("Request cancelled by client")
+                    time.sleep(1)
                 continue
             
             return response.json()
@@ -1146,12 +1236,22 @@ def _make_api_request(endpoint: str, payload: dict, max_retries: int = 3) -> dic
             logger.error(f"Request timeout (attempt {attempt + 1})")
             if attempt == max_retries - 1:
                 raise Exception("Request timed out after multiple attempts")
-            time.sleep(5)
+            # Check for cancellation during wait
+            for i in range(5):
+                if cancellation_token and cancellation_token.is_set():
+                    logger.info("Request cancelled during timeout recovery")
+                    raise Exception("Request cancelled by client")
+                time.sleep(1)
         except requests.exceptions.RequestException as e:
             logger.error(f"Request error: {e} (attempt {attempt + 1})")
             if attempt == max_retries - 1:
                 raise Exception(f"Request failed: {str(e)}")
-            time.sleep(5)
+            # Check for cancellation during wait
+            for i in range(5):
+                if cancellation_token and cancellation_token.is_set():
+                    logger.info("Request cancelled during error recovery")
+                    raise Exception("Request cancelled by client")
+                time.sleep(1)
     
     raise Exception("Max retries exceeded")
 
@@ -1617,13 +1717,23 @@ def extract_legal_key_fields(text: str) -> str:
     key_fields += "\n"
     return key_fields
 
-def generate_rule_based_summary(text: str, max_length: int, summary_type: str) -> str:
-    """Generate a rule-based summary as fallback when APIs fail"""
+def generate_rule_based_summary(text: str, max_length: int, summary_type: str, cancellation_token: Optional[Event] = None) -> str:
+    """Generate a rule-based summary as fallback when APIs fail, with cancellation support"""
+    # Check for cancellation at the start
+    if cancellation_token and cancellation_token.is_set():
+        logger.info("Rule-based summary cancelled before processing")
+        raise Exception("Request cancelled by client")
+    
     sentences = re.split(r'[.!?]+', text)
     sentences = [s.strip() for s in sentences if len(s.strip()) > 10]
     
     scored_sentences = []
     for i, sentence in enumerate(sentences):
+        # Check for cancellation during processing
+        if cancellation_token and cancellation_token.is_set():
+            logger.info("Rule-based summary cancelled during sentence processing")
+            raise Exception("Request cancelled by client")
+            
         score = 0
         score += max(0, 10 - i)
         
@@ -1640,6 +1750,11 @@ def generate_rule_based_summary(text: str, max_length: int, summary_type: str) -
         
         scored_sentences.append((score, sentence))
     
+    # Check for cancellation before final processing
+    if cancellation_token and cancellation_token.is_set():
+        logger.info("Rule-based summary cancelled before final processing")
+        raise Exception("Request cancelled by client")
+    
     scored_sentences.sort(reverse=True, key=lambda x: x[0])
     selected_sentences = [s[1] for s in scored_sentences[:3]]
     
@@ -1651,28 +1766,153 @@ def generate_rule_based_summary(text: str, max_length: int, summary_type: str) -
     
     return rule_summary
 
-def _handle_long_text(text: str, model_name: str, max_length: int, min_length: int, endpoint: str):
-    """Handle long text by chunking appropriately for each model."""
+def _extract_key_content(text: str, max_words: int = 3000) -> str:
+    """Extract the most important content from long documents for faster processing."""
+    words = text.split()
+    
+    # If document is not too long, return as is
+    if len(words) <= max_words:
+        return text
+    
+    logger.info(f"Large document detected ({len(words)} words), extracting key content")
+    
+    # Split into paragraphs
+    paragraphs = text.split('\n\n')
+    
+    # Score paragraphs based on importance
+    scored_paragraphs = []
+    
+    # Important keywords that indicate key content
+    important_keywords = [
+        # Medical keywords
+        'diagnosis', 'treatment', 'patient', 'symptoms', 'medication', 'condition',
+        'test', 'result', 'recommendation', 'conclusion', 'findings',
+        # Legal keywords  
+        'plaintiff', 'defendant', 'court', 'contract', 'agreement', 'clause',
+        'whereas', 'settlement', 'damages', 'breach', 'liability',
+        # General important keywords
+        'summary', 'conclusion', 'recommendation', 'important', 'key', 'main',
+        'significant', 'critical', 'essential', 'primary', 'objective', 'purpose'
+    ]
+    
+    for i, paragraph in enumerate(paragraphs):
+        if len(paragraph.strip()) < 50:  # Skip very short paragraphs
+            continue
+            
+        score = 0
+        para_lower = paragraph.lower()
+        
+        # Position scoring (earlier paragraphs and last paragraphs are often important)
+        if i < 3:  # First 3 paragraphs
+            score += 10
+        elif i >= len(paragraphs) - 3:  # Last 3 paragraphs
+            score += 8
+        
+        # Keyword scoring
+        for keyword in important_keywords:
+            score += para_lower.count(keyword) * 3
+        
+        # Length scoring (moderate length paragraphs are often more informative)
+        para_words = len(paragraph.split())
+        if 50 <= para_words <= 200:
+            score += 5
+        elif para_words > 200:
+            score += 2
+        
+        # Number and date scoring (often contain important facts)
+        if re.search(r'\d+', paragraph):
+            score += 2
+        
+        scored_paragraphs.append((score, paragraph, para_words))
+    
+    # Sort by score and select top paragraphs
+    scored_paragraphs.sort(reverse=True, key=lambda x: x[0])
+    
+    selected_content = []
+    total_words = 0
+    
+    for score, paragraph, para_words in scored_paragraphs:
+        if total_words + para_words <= max_words:
+            selected_content.append(paragraph)
+            total_words += para_words
+        else:
+            break
+    
+    # If we have very little content, add more paragraphs
+    if total_words < max_words * 0.7:
+        for score, paragraph, para_words in scored_paragraphs[len(selected_content):]:
+            if total_words + para_words <= max_words:
+                selected_content.append(paragraph)
+                total_words += para_words
+            else:
+                break
+    
+    result = '\n\n'.join(selected_content)
+    logger.info(f"Extracted key content: {total_words} words from {len(words)} original words")
+    
+    return result
+
+def _smart_text_chunking(text: str, max_chunk_size: int) -> List[str]:
+    """Intelligently chunk text to preserve context and meaning."""
+    # Try to split by paragraphs first
+    paragraphs = text.split('\n\n')
+    chunks = []
+    current_chunk = ""
+    
+    for paragraph in paragraphs:
+        # If adding this paragraph would exceed the limit
+        if len(current_chunk) + len(paragraph) > max_chunk_size:
+            if current_chunk:
+                chunks.append(current_chunk.strip())
+                current_chunk = paragraph
+            else:
+                # Paragraph itself is too long, split by sentences
+                sentences = re.split(r'[.!?]+', paragraph)
+                for sentence in sentences:
+                    if len(current_chunk) + len(sentence) > max_chunk_size:
+                        if current_chunk:
+                            chunks.append(current_chunk.strip())
+                            current_chunk = sentence
+                        else:
+                            # Even sentence is too long, force split
+                            chunks.append(sentence[:max_chunk_size].strip())
+                    else:
+                        current_chunk += sentence + ". "
+        else:
+            current_chunk += paragraph + "\n\n"
+    
+    if current_chunk.strip():
+        chunks.append(current_chunk.strip())
+    
+    return [chunk for chunk in chunks if len(chunk.strip()) > 50]  # Filter out very short chunks
+
+def _handle_long_text(text: str, model_name: str, max_length: int, min_length: int, endpoint: str, cancellation_token: Optional[Event] = None):
+    """Handle long text by chunking appropriately for each model with cancellation support."""
     max_input_lengths = {
         "bart": 1024,
         "pegasus": 512,
-        "t5": 512
+        "t5": 512,
+        "longformer": 4096  # Much longer context
     }
     
     max_input_length = max_input_lengths.get(model_name, 1024)
     
     if len(text) <= max_input_length:
+        base_params = {
+            "max_length": max_length,
+            "min_length": min_length
+        }
+        
+        # Get model-specific parameters for better quality
+        optimized_params = _get_model_specific_parameters(model_name, base_params)
+        
         payload = {
             "inputs": text,
-            "parameters": {
-                "max_length": max_length,
-                "min_length": min_length,
-                "do_sample": False
-            }
+            "parameters": optimized_params
         }
         
         try:
-            result = _make_api_request(endpoint, payload)
+            result = _make_api_request(endpoint, payload, cancellation_token=cancellation_token)
             if isinstance(result, list) and len(result) > 0:
                 return result[0].get("summary_text", "")
             else:
@@ -1681,117 +1921,592 @@ def _handle_long_text(text: str, model_name: str, max_length: int, min_length: i
             logger.error(f"Error with {model_name} summarization: {e}")
             shorter_text = text[:max_input_length//2]
             payload["inputs"] = shorter_text
-            result = _make_api_request(endpoint, payload)
+            result = _make_api_request(endpoint, payload, cancellation_token=cancellation_token)
             if isinstance(result, list) and len(result) > 0:
                 return result[0].get("summary_text", "")
             else:
                 raise Exception(f"Unexpected API response format: {result}")
     else:
-        chunks = [text[i:i+max_input_length] for i in range(0, len(text), max_input_length//2)]
+        # Use smart chunking to preserve context
+        logger.info(f"Document too long ({len(text)} chars), using smart chunking")
+        chunks = _smart_text_chunking(text, max_input_length)
         summaries = []
         
-        chunk_max_length = min(max_length//len(chunks) + 30, max_length//2)
-        chunk_min_length = max(min_length//len(chunks), 10)
+        # Adjust chunk summary lengths based on number of chunks
+        num_chunks = len(chunks)
+        chunk_max_length = min(max_length//num_chunks + 50, max_length//2)  # More generous allocation
+        chunk_min_length = max(min_length//num_chunks, 20)  # Minimum meaningful length
         
-        for chunk in chunks:
+        logger.info(f"Split into {num_chunks} chunks, each targeting {chunk_max_length} words")
+        
+        # Process chunks in parallel for faster processing
+        def process_single_chunk(chunk_data):
+            chunk_idx, chunk = chunk_data
             try:
-                payload = {
-                    "inputs": chunk,
-                    "parameters": {
-                        "max_length": chunk_max_length,
-                        "min_length": chunk_min_length,
-                        "do_sample": False
-                    }
+                # Check for cancellation
+                if cancellation_token and cancellation_token.is_set():
+                    return None
+                
+                base_chunk_params = {
+                    "max_length": chunk_max_length,
+                    "min_length": chunk_min_length
                 }
                 
-                result = _make_api_request(endpoint, payload)
-                if isinstance(result, list) and len(result) > 0:
-                    summaries.append(result[0].get("summary_text", ""))
+                optimized_chunk_params = _get_model_specific_parameters(model_name, base_chunk_params)
                 
-                time.sleep(1)
+                payload = {
+                    "inputs": chunk,
+                    "parameters": optimized_chunk_params
+                }
+                
+                logger.info(f"Processing chunk {chunk_idx + 1}/{num_chunks}")
+                result = _make_api_request(endpoint, payload, cancellation_token=cancellation_token)
+                if isinstance(result, list) and len(result) > 0:
+                    return (chunk_idx, result[0].get("summary_text", ""))
+                return None
                 
             except Exception as e:
-                logger.error(f"Error processing chunk: {e}")
-                continue
+                logger.error(f"Error processing chunk {chunk_idx + 1}: {e}")
+                return None
+        
+        # Use ThreadPoolExecutor for parallel processing (max 3 concurrent requests)
+        max_workers = min(3, num_chunks)  # Don't overwhelm the API
+        logger.info(f"Processing {num_chunks} chunks with {max_workers} parallel workers")
+        
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            # Submit all chunk processing tasks
+            future_to_chunk = {
+                executor.submit(process_single_chunk, (i, chunk)): i 
+                for i, chunk in enumerate(chunks)
+            }
+            
+            chunk_results = {}
+            for future in as_completed(future_to_chunk):
+                if cancellation_token and cancellation_token.is_set():
+                    logger.info("Parallel chunk processing cancelled")
+                    raise Exception("Request cancelled by client")
+                
+                result = future.result()
+                if result:
+                    chunk_idx, summary = result
+                    chunk_results[chunk_idx] = summary
+        
+        # Reconstruct summaries in original order
+        summaries = []
+        for i in range(num_chunks):
+            if i in chunk_results:
+                summaries.append(chunk_results[i])
+            else:
+                logger.warning(f"Chunk {i + 1} failed to process")
         
         if not summaries:
             raise Exception("Failed to process any text chunks")
         
-        combined = " ".join(summaries)
-        if len(combined.split()) > max_length:
+        # Combine summaries with better formatting
+        combined = "\n\n".join(summaries)  # Use paragraph breaks instead of spaces
+        combined_words = combined.split()
+        
+        logger.info(f"Combined chunk summaries: {len(combined_words)} words")
+        
+        # If combined summary is still too long, re-summarize it
+        if len(combined_words) > max_length:
             try:
+                # Create a more focused prompt for re-summarization
+                re_summary_prompt = f"Summarize the following key points into a coherent summary:\n\n{combined}"
+                
                 payload = {
-                    "inputs": combined,
+                    "inputs": re_summary_prompt,
                     "parameters": {
                         "max_length": max_length,
                         "min_length": min_length,
-                        "do_sample": False
+                        "do_sample": False,
+                        "temperature": 0.3,  # Lower temperature for more focused output
+                        "repetition_penalty": 1.2  # Avoid repetition
                     }
                 }
-                result = _make_api_request(endpoint, payload)
+                
+                logger.info("Re-summarizing combined chunks for final coherent summary")
+                result = _make_api_request(endpoint, payload, cancellation_token=cancellation_token)
                 if isinstance(result, list) and len(result) > 0:
-                    return result[0].get("summary_text", "")
+                    final_summary = result[0].get("summary_text", "")
+                    logger.info(f"Final re-summarized text: {len(final_summary.split())} words")
+                    return final_summary
             except Exception as e:
                 logger.error(f"Error re-summarizing combined text: {e}")
-                return " ".join(combined.split()[:max_length])
+                # Fallback: intelligently truncate while preserving key information
+                return _intelligent_truncate(combined, max_length)
         
         return combined
 
-def perform_domain_analysis_with_ner(text: str, domain: str) -> str:
-    """Perform domain analysis with NER for domain-specific summaries in compact format"""
-    result = ""
+def _intelligent_truncate(text: str, max_words: int) -> str:
+    """Intelligently truncate text while preserving key information."""
+    words = text.split()
+    if len(words) <= max_words:
+        return text
     
+    # Try to find natural break points (sentences)
+    sentences = re.split(r'[.!?]+', text)
+    result = ""
+    word_count = 0
+    
+    for sentence in sentences:
+        sentence_words = len(sentence.split())
+        if word_count + sentence_words <= max_words:
+            result += sentence.strip() + ". "
+            word_count += sentence_words
+        else:
+            break
+    
+    # If we couldn't fit any complete sentences, just truncate
+    if not result.strip():
+        result = " ".join(words[:max_words]) + "..."
+    
+    return result.strip()
+
+def perform_domain_analysis_with_ner(text: str, domain: str) -> str:
+    """Perform comprehensive domain analysis with NER for domain-specific summaries"""
+    result = "DOMAIN-SPECIFIC ANALYSIS\n"
+    result += "=" * 50 + "\n\n"
+    
+    # Extract general entities that are important across all domains
+    general_entities = extract_general_entities(text)
+    if general_entities:
+        result += "KEY ENTITIES IDENTIFIED:\n"
+        result += general_entities + "\n"
+    
+    # Domain-specific analysis
     if domain in ["medical", "legal"]:
         if domain == "medical":
             key_fields = extract_medical_key_fields(text)
+            result += "MEDICAL INFORMATION:\n"
         else:
             key_fields = extract_legal_key_fields(text)
+            result += "LEGAL INFORMATION:\n"
         
-        print(f"Key fields extracted: {len(key_fields)} characters")
-        result += key_fields
-        
-        print(f"Starting NER API query for {domain} domain...")
-        logger.info(f"Querying NER API for {domain} domain...")
+        result += key_fields + "\n"
         
         try:
             ner_entities = query_ner_api(text, domain)
-            print(f"NER entities received: {len(ner_entities) if ner_entities else 0} entities")
-            
-            formatted_ner = format_ner_entities_professional(ner_entities, domain)
-            print(f"Formatted NER length: {len(formatted_ner)} characters")
-            result += formatted_ner + "\n"
-            
+            if ner_entities:
+                result += format_ner_entities(ner_entities, domain)
         except Exception as ner_error:
-            print(f"NER failed with error: {ner_error}")
-            result += "ENTITIES EXTRACTED\n"
-            result += f"Entity extraction failed: {str(ner_error)}"
+            logger.error(f"NER API failed for {domain}: {str(ner_error)}")
+            # Don't show error message to user, just continue without advanced NER
+            pass
     else:
-        print(f"Domain '{domain}' not medical or legal, skipping detailed NER")
-        result += f"Entity analysis not available for {domain} documents.  \n"
+        result += f"GENERAL DOCUMENT ANALYSIS:\n"
+        result += extract_general_document_info(text) + "\n"
+    
+    # Extract special incidents and important events
+    incidents = extract_special_incidents(text)
+    if incidents and incidents.strip():
+        result += "SPECIAL INCIDENTS & EVENTS:\n"
+        result += incidents + "\n"
     
     return result
 
-def summarize_with_options(text: str, options: dict) -> str:
-    """Generate a summary using the appropriate model based on summary type."""
+def extract_general_entities(text: str) -> str:
+    """Extract general entities using proper NER models and smart filtering."""
+    entities = []
+    
+    # Try to use spaCy NER model for better accuracy
     try:
-        model_name = options["model"]
+        import spacy
+        
+        # Try to load English model
+        try:
+            nlp = spacy.load("en_core_web_sm")
+        except OSError:
+            # Fallback to basic model if not available
+            logger.warning("spaCy en_core_web_sm model not found, using fallback regex patterns")
+            return extract_entities_fallback(text)
+        
+        # Process text with spaCy
+        doc = nlp(text)
+        
+        # Extract entities with spaCy
+        extracted_entities = {
+            'PERSON': [],
+            'ORG': [],
+            'GPE': [],  # Geopolitical entities (cities, countries)
+            'DATE': [],
+            'MONEY': [],
+            'CARDINAL': [],  # Numbers (ages, quantities)
+            'PHONE': [],
+            'EMAIL': [],
+            'DISEASES': [],
+            'AGES': []
+        }
+        
+        # Use spaCy's built-in NER
+        for ent in doc.ents:
+            entity_text = ent.text.strip()
+            
+            # Skip very short or invalid entities
+            if len(entity_text) < 2:
+                continue
+                
+            # Filter out obvious false positives first
+            if is_false_positive(entity_text, ent.label_):
+                continue
+                
+            if ent.label_ == 'PERSON' and entity_text not in extracted_entities['PERSON']:
+                # Only real person names
+                if not any(word in entity_text.lower() for word in ['abstract', 'clinical', 'study', 'report', 'technical', 'article', 'scenario']):
+                    extracted_entities['PERSON'].append(entity_text)
+                    
+            elif ent.label_ == 'ORG' and entity_text not in extracted_entities['ORG']:
+                # Only real organizations
+                if not any(word in entity_text.lower() for word in ['was admitted', 'documented', 'highlighted', 'fine-tuned']):
+                    extracted_entities['ORG'].append(entity_text)
+                    
+            elif ent.label_ == 'GPE' and entity_text not in extracted_entities['GPE']:
+                # Countries, cities, states
+                extracted_entities['GPE'].append(entity_text)
+                
+            elif ent.label_ == 'DATE' and entity_text not in extracted_entities['DATE']:
+                # Dates
+                extracted_entities['DATE'].append(entity_text)
+                
+            elif ent.label_ == 'MONEY' and entity_text not in extracted_entities['MONEY']:
+                # Money amounts
+                extracted_entities['MONEY'].append(entity_text)
+                
+            elif ent.label_ == 'CARDINAL' and entity_text not in extracted_entities['CARDINAL']:
+                # Check if it's an age
+                if re.search(r'\b\d{1,3}[-\s]?(?:year|years|yr|yrs)?\s?old\b', text.lower()) and entity_text.isdigit():
+                    if 1 <= int(entity_text) <= 120:  # Reasonable age range
+                        extracted_entities['AGES'].append(f"{entity_text} years old")
+        
+        # Extract medical conditions/diseases manually
+        disease_patterns = [
+            r'\b(?:diabetes|hypertension|cancer|pneumonia|infection|allergic reaction|heart disease|stroke|asthma|copd|covid|influenza|tuberculosis|hepatitis|arthritis|depression|anxiety|schizophrenia|bipolar|alzheimer|parkinson|epilepsy|migraine|fracture|surgery|operation)\b',
+            r'\b(?:respiratory infection|allergic reaction|heart attack|blood pressure|kidney disease|liver disease|lung disease|brain tumor|breast cancer|prostate cancer)\b'
+        ]
+        
+        for pattern in disease_patterns:
+            diseases = re.findall(pattern, text, re.IGNORECASE)
+            for disease in diseases:
+                disease_clean = disease.strip().title()
+                if disease_clean not in extracted_entities['DISEASES'] and len(extracted_entities['DISEASES']) < 3:
+                    extracted_entities['DISEASES'].append(disease_clean)
+        
+        # Add manual extraction for phone numbers and emails (spaCy doesn't catch these well)
+        phone_emails = extract_contact_info(text)
+        extracted_entities['PHONE'].extend(phone_emails['phones'])
+        extracted_entities['EMAIL'].extend(phone_emails['emails'])
+        
+        # Format entities with appropriate icons
+        if extracted_entities['PERSON']:
+            for person in extracted_entities['PERSON'][:3]:  # Limit to 3
+                entities.append(f"👤 Person: {person}")
+        
+        if extracted_entities['ORG']:
+            for org in extracted_entities['ORG'][:3]:  # Limit to 3
+                entities.append(f"🏢 Organization: {org}")
+        
+        if extracted_entities['GPE']:
+            for location in extracted_entities['GPE'][:3]:  # Limit to 3
+                entities.append(f"🌍 Country/City: {location}")
+        
+        if extracted_entities['AGES']:
+            for age in extracted_entities['AGES'][:2]:  # Limit to 2
+                entities.append(f"👶 Age: {age}")
+        
+        if extracted_entities['DISEASES']:
+            for disease in extracted_entities['DISEASES']:
+                entities.append(f"🏥 Medical Condition: {disease}")
+        
+        if extracted_entities['DATE']:
+            for date in extracted_entities['DATE'][:3]:  # Limit to 3
+                entities.append(f"📅 Date: {date}")
+        
+        if extracted_entities['MONEY']:
+            for money in extracted_entities['MONEY'][:3]:  # Limit to 3
+                entities.append(f"💰 Amount: {money}")
+        
+        if extracted_entities['PHONE']:
+            for phone in extracted_entities['PHONE'][:2]:  # Limit to 2
+                entities.append(f"📞 Phone: {phone}")
+        
+        if extracted_entities['EMAIL']:
+            for email in extracted_entities['EMAIL'][:2]:  # Limit to 2
+                entities.append(f"📧 Email: {email}")
+        
+    except ImportError:
+        logger.warning("spaCy not available, using fallback regex patterns")
+        return extract_entities_fallback(text)
+    
+    if entities:
+        return "\n".join(entities) + "\n"
+    else:
+        return "No specific entities identified.\n"
+
+def is_false_positive(entity_text: str, entity_type: str) -> bool:
+    """Check if an entity is likely a false positive."""
+    entity_lower = entity_text.lower()
+    
+    # Common false positives for PERSON
+    if entity_type == 'PERSON':
+        false_person_terms = [
+            'us example', 'scenario article', 'medical scenario', 'example medical',
+            'severe allergic reaction', 'routine antibiotic', 'medical center',
+            'hospital', 'department', 'treatment', 'patient', 'infection',
+            'emergency', 'outcome', 'conclusion', 'incident', 'summary'
+        ]
+        return any(term in entity_lower for term in false_person_terms)
+    
+    # Common false positives for ORG
+    elif entity_type == 'ORG':
+        false_org_terms = [
+            'was admitted to', 'documented five years', 'the hospital',
+            'another hospital', 'medical scenario', 'example medical',
+            'scenario article', 'allergic reaction', 'antibiotic treatment'
+        ]
+        return any(term in entity_lower for term in false_org_terms)
+    
+    # Common false positives for GPE (locations)
+    elif entity_type == 'GPE':
+        false_location_terms = [
+            'medical', 'hospital', 'center', 'department', 'treatment',
+            'scenario', 'example', 'article', 'reaction', 'infection'
+        ]
+        return any(term in entity_lower for term in false_location_terms)
+    
+    return False
+
+def extract_contact_info(text: str) -> dict:
+    """Extract phone numbers and emails with better validation."""
+    contact_info = {'phones': [], 'emails': []}
+    
+    # Phone numbers with validation
+    phone_patterns = [
+        r'\b\d{3}[-.\s]\d{3}[-.\s]\d{4}\b',
+        r'\(\d{3}\)\s*\d{3}[-.\s]?\d{4}',
+        r'\+\d{1,3}[-.\s]?\d{3,4}[-.\s]?\d{3,4}[-.\s]?\d{3,4}',
+        r'\b1[-.\s]?\d{3}[-.\s]?\d{3}[-.\s]?\d{4}\b',
+    ]
+    
+    for pattern in phone_patterns:
+        phones = re.findall(pattern, text)
+        for phone in phones:
+            phone_digits = re.sub(r'[^\d]', '', phone)
+            if len(phone_digits) in [10, 11] and phone not in contact_info['phones']:
+                contact_info['phones'].append(phone)
+    
+    # Email addresses
+    email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+    emails = re.findall(email_pattern, text)
+    contact_info['emails'] = list(dict.fromkeys(emails))  # Remove duplicates
+    
+    return contact_info
+
+def extract_entities_fallback(text: str) -> str:
+    """Fallback entity extraction using regex when spaCy is not available."""
+    entities = []
+    
+    # Basic phone and email extraction
+    contact_info = extract_contact_info(text)
+    
+    for phone in contact_info['phones'][:2]:
+        entities.append(f"📞 Phone: {phone}")
+    
+    for email in contact_info['emails'][:2]:
+        entities.append(f"📧 Email: {email}")
+    
+    # Basic date extraction
+    date_patterns = [
+        r'\b(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d{1,2},?\s+\d{4}\b',
+        r'\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b'
+    ]
+    
+    dates = []
+    for pattern in date_patterns:
+        found_dates = re.findall(pattern, text, re.IGNORECASE)
+        dates.extend(found_dates)
+    
+    unique_dates = list(dict.fromkeys(dates))[:2]
+    for date in unique_dates:
+        entities.append(f"📅 Date: {date}")
+    
+    if entities:
+        return "\n".join(entities) + "\n"
+    else:
+        return "No specific entities identified.\n"
+
+def extract_special_incidents(text: str) -> str:
+    """Extract key events and important information from the document."""
+    # For now, let's disable incident extraction since it's causing confusion
+    # Focus on clean entity extraction instead
+    return ""
+
+def extract_receipt_info(text: str) -> list:
+    """Extract useful information from retail receipts."""
+    receipt_entities = []
+    
+    # Store/Manager information
+    mgr_pattern = r'Mgr:?\s*([A-Z\s]+[A-Z])'
+    mgr_matches = re.findall(mgr_pattern, text, re.IGNORECASE)
+    for mgr in mgr_matches[:1]:  # Just the first manager
+        if len(mgr.strip()) > 2:
+            receipt_entities.append(f"👨‍💼 Manager: {mgr.strip()}")
+    
+    # Store address (actual store location)
+    store_address_pattern = r'(\d+\s+[A-Za-z\s]+(?:Road|Rd|Street|St|Avenue|Ave|Boulevard|Blvd|Drive|Dr|Lane|Ln)\s*\d*)\s*([A-Z]{2}\s+\d{5})'
+    store_matches = re.findall(store_address_pattern, text, re.IGNORECASE)
+    for address, zip_code in store_matches[:1]:  # Just the first store address
+        full_address = f"{address.strip()}, {zip_code}"
+        receipt_entities.append(f"🏪 Store Location: {full_address}")
+    
+    # Store number/ID
+    store_num_pattern = r'ST#?\s*(\d{4,6})'
+    store_nums = re.findall(store_num_pattern, text)
+    for store_num in store_nums[:1]:
+        receipt_entities.append(f"🏪 Store #: {store_num}")
+    
+    # Transaction details
+    transaction_pattern = r'TR#?\s*(\d+)'
+    trans_nums = re.findall(transaction_pattern, text)
+    for trans_num in trans_nums[:1]:
+        receipt_entities.append(f"🧾 Transaction #: {trans_num}")
+    
+    # Total amount (look for patterns like "TOTAL $XX.XX")
+    total_pattern = r'(?:TOTAL|Total)\s*\$?(\d+\.\d{2})'
+    totals = re.findall(total_pattern, text, re.IGNORECASE)
+    for total in totals[:1]:
+        receipt_entities.append(f"💳 Total: $" + total)
+    
+    return receipt_entities
+
+def extract_general_document_info(text: str) -> str:
+    """Extract general document information for non-medical/legal documents."""
+    info = []
+    
+    # Document statistics
+    word_count = len(text.split())
+    sentence_count = len(re.split(r'[.!?]+', text))
+    paragraph_count = len([p for p in text.split('\n\n') if p.strip()])
+    
+    info.append(f"📊 Document Stats: {word_count} words, {sentence_count} sentences, {paragraph_count} paragraphs")
+    
+    # Key topics (most frequent meaningful words)
+    words = re.findall(r'\b[a-zA-Z]{4,}\b', text.lower())
+    # Filter out common words
+    stop_words = {'that', 'this', 'with', 'from', 'they', 'been', 'have', 'their', 'said', 'each', 'which', 'will', 'there', 'more', 'other', 'were', 'very', 'what', 'know', 'just', 'first', 'into', 'over', 'think', 'also', 'your', 'work', 'life', 'only', 'can', 'still', 'should', 'after', 'being', 'now', 'made', 'before', 'here', 'through', 'when', 'where', 'much', 'some', 'these', 'many', 'would', 'like', 'time', 'about', 'could', 'them', 'well', 'were'}
+    
+    filtered_words = [word for word in words if word not in stop_words and len(word) > 4]
+    word_freq = {}
+    for word in filtered_words:
+        word_freq[word] = word_freq.get(word, 0) + 1
+    
+    top_words = sorted(word_freq.items(), key=lambda x: x[1], reverse=True)[:8]
+    if top_words:
+        topics = [f"{word} ({count})" for word, count in top_words]
+        info.append(f"🔍 Key Topics: {', '.join(topics)}")
+    
+    # Document type indicators
+    if any(word in text.lower() for word in ['report', 'analysis', 'study', 'research']):
+        info.append("📋 Document Type: Report/Analysis")
+    elif any(word in text.lower() for word in ['letter', 'correspondence', 'memo']):
+        info.append("📋 Document Type: Communication")
+    elif any(word in text.lower() for word in ['manual', 'guide', 'instruction', 'procedure']):
+        info.append("📋 Document Type: Instructional")
+    elif any(word in text.lower() for word in ['proposal', 'plan', 'strategy']):
+        info.append("📋 Document Type: Planning")
+    
+    return "\n".join(info) + "\n"
+
+def extract_special_incidents(text: str) -> str:
+    """Extract special incidents, events, and important occurrences."""
+    incidents = []
+    
+    # Emergency/urgent keywords
+    emergency_keywords = ['emergency', 'urgent', 'critical', 'immediate', 'crisis', 'accident', 'incident', 'injury', 'death', 'fatal', 'serious', 'severe', 'hospitalized', 'admitted', 'surgery', 'operation']
+    
+    # Legal incident keywords
+    legal_keywords = ['violation', 'breach', 'lawsuit', 'litigation', 'complaint', 'allegation', 'charged', 'arrested', 'convicted', 'sentenced', 'penalty', 'fine', 'damages', 'settlement']
+    
+    # Action keywords
+    action_keywords = ['must', 'shall', 'required', 'mandatory', 'prohibited', 'forbidden', 'deadline', 'due date', 'expires', 'terminate', 'cancel', 'suspend']
+    
+    sentences = re.split(r'[.!?]+', text)
+    
+    for sentence in sentences:
+        sentence = sentence.strip()
+        if len(sentence) < 20:  # Skip very short sentences
+            continue
+            
+        sentence_lower = sentence.lower()
+        
+        # Check for emergency incidents
+        for keyword in emergency_keywords:
+            if keyword in sentence_lower:
+                incidents.append(f"🚨 Emergency/Critical: {sentence[:100]}...")
+                break
+        
+        # Check for legal incidents
+        for keyword in legal_keywords:
+            if keyword in sentence_lower:
+                incidents.append(f"⚖️ Legal Issue: {sentence[:100]}...")
+                break
+        
+        # Check for required actions
+        for keyword in action_keywords:
+            if keyword in sentence_lower:
+                incidents.append(f"📋 Required Action: {sentence[:100]}...")
+                break
+        
+        # Check for dates with actions (deadlines, appointments)
+        if re.search(r'\b(?:by|before|until|deadline|due)\b.*\b\d{1,2}[/-]\d{1,2}[/-]\d{2,4}\b', sentence_lower):
+            incidents.append(f"⏰ Time-Sensitive: {sentence[:100]}...")
+        
+        # Check for financial incidents
+        if re.search(r'\$\d{1,3}(?:,\d{3})*(?:\.\d{2})?', sentence) and any(word in sentence_lower for word in ['loss', 'damage', 'cost', 'expense', 'bill', 'charge', 'fee', 'penalty']):
+            incidents.append(f"💸 Financial Impact: {sentence[:100]}...")
+    
+    # Remove duplicates and limit results
+    unique_incidents = list(dict.fromkeys(incidents))[:10]  # Max 10 incidents
+    
+    if unique_incidents:
+        return "\n".join(unique_incidents) + "\n"
+    else:
+        return "No special incidents or critical events identified.\n"
+
+def summarize_with_options(text: str, options: dict, cancellation_token: Optional[Event] = None) -> str:
+    """Generate a summary using the appropriate model based on summary type with cancellation support."""
+    try:
+        original_model = options["model"]
         max_length = options.get("max_length", 150)
         min_length = options.get("min_length", 50)
         summary_type = options.get("name", "")
         
         is_domain_specific = summary_type == "Domain Specific Summary"
         
+        # Detect domain first
+        domain = detect_document_domain(text)
+        
+        # For large documents, extract key content first to speed up processing
+        original_word_count = len(text.split())
+        if original_word_count > 2000:
+            logger.info(f"Large document detected ({original_word_count} words), applying intelligent preprocessing")
+            text = _extract_key_content(text, max_words=3000)
+            logger.info(f"Preprocessed document: {len(text.split())} words (reduced by {original_word_count - len(text.split())} words)")
+        
+        # Select optimal model based on document characteristics
+        model_name = _select_optimal_model(text, summary_type, domain, original_model)
+        
         print(f"\n{'='*60}")
         print(f"Summary type: {summary_type}")
-        print(f"Using model: {model_name.upper()}")
+        print(f"Original model: {original_model.upper()}")
+        print(f"Optimized model: {model_name.upper()}")
+        print(f"Document length: {len(text.split())} words")
+        print(f"Detected domain: {domain}")
         print(f"Is domain-specific request: {is_domain_specific}")
         print(f"{'='*60}\n")
         
         result = ""
         
-        domain = detect_document_domain(text)
-        print(f"Detected domain: {domain}")
-        logger.info(f"Detected domain: {domain}")
+        logger.info(f"Detected domain: {domain}, selected model: {model_name}")
         
         ner_entities = []
         if is_domain_specific:
@@ -1805,10 +2520,15 @@ def summarize_with_options(text: str, options: dict) -> str:
         summary_text = ""
         
         try:
+            # Check for cancellation before starting AI processing
+            if cancellation_token and cancellation_token.is_set():
+                logger.info("Summary generation cancelled before starting")
+                raise Exception("Request cancelled by client")
+                
             endpoint = _get_model_endpoint(model_name)
             print(f"Attempting summary with {model_name.upper()} model...")
             
-            summary_text = _handle_long_text(text, model_name, max_length, min_length, endpoint)
+            summary_text = _handle_long_text(text, model_name, max_length, min_length, endpoint, cancellation_token)
             print(f"Summary generated successfully with {model_name.upper()}: {len(summary_text)} characters")
             summary_generated = True
             
@@ -1816,14 +2536,28 @@ def summarize_with_options(text: str, options: dict) -> str:
             print(f"{model_name.upper()} model failed: {summary_error}")
             logger.error(f"Error with {model_name} model: {summary_error}")
             
+            # Check if the error was due to cancellation - if so, don't try fallback
+            if "cancelled by client" in str(summary_error).lower():
+                print("Skipping rule-based fallback due to client cancellation")
+                raise summary_error
+            
             try:
+                # Check for cancellation before attempting fallback
+                if cancellation_token and cancellation_token.is_set():
+                    logger.info("Rule-based fallback cancelled before starting")
+                    raise Exception("Request cancelled by client")
+                    
                 print("Attempting rule-based summary fallback...")
-                summary_text = generate_rule_based_summary(text, max_length, summary_type)
+                summary_text = generate_rule_based_summary(text, max_length, summary_type, cancellation_token)
                 print(f"Rule-based summary generated: {len(summary_text)} characters")
                 summary_generated = True
             except Exception as fallback_error:
                 print(f"Rule-based fallback failed: {fallback_error}")
                 logger.error(f"Rule-based fallback failed: {fallback_error}")
+                
+                # If fallback failed due to cancellation, re-raise the cancellation error
+                if "cancelled by client" in str(fallback_error).lower():
+                    raise fallback_error
         
         # if summary_generated and summary_text.strip():
         #     if is_domain_specific:
@@ -1883,15 +2617,25 @@ def summarize_with_options(text: str, options: dict) -> str:
         print(f"Exception in summarize_with_options: {e}")
         logger.error(f"Error in summarize_with_options: {e}")
         
+        # If the error was due to cancellation, re-raise it to be handled by the API
+        if "cancelled by client" in str(e).lower():
+            raise e
+        
         error_result = "PROCESSING ERROR\n"
         error_result += "=" * 50 + "\n\n"
         error_result += f"An error occurred during processing: {str(e)}\n\n"
         
         if options.get("name") == "Domain Specific Summary":
             try:
+                # Check for cancellation before attempting domain analysis
+                if cancellation_token and cancellation_token.is_set():
+                    raise Exception("Request cancelled by client")
+                    
                 domain = detect_document_domain(text)
                 error_result += perform_domain_analysis_with_ner(text, domain)
             except Exception as analysis_error:
+                if "cancelled by client" in str(analysis_error).lower():
+                    raise analysis_error
                 error_result += f"Domain analysis also failed: {str(analysis_error)}\n"
         
         return error_result

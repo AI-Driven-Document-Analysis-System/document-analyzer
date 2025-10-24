@@ -91,13 +91,13 @@ body.dark-mode {
 .app-container {
   display: flex;
   min-height: 100vh;
-  background-color: var(--bg-secondary);
+  background-color: #0f172a;
 }
 
 .main-content {
   flex: 1;
   transition: margin-left 0.3s ease;
-  background-color: var(--bg-secondary);
+  background-color: #0f172a;
 }
 
 .main-content.sidebar-open {
@@ -109,10 +109,10 @@ body.dark-mode {
 }
 
 .app-header {
-  background: var(--header-bg);
-  color: var(--text-primary);
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  color: #f1f5f9;
   padding: 0.75rem 1.5rem;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #334155;
 }
 
 .card {
@@ -890,10 +890,14 @@ body.dark-mode {
   box-sizing: border-box;
 }
 
+html {
+  background-color: #0f172a;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
-  background-color: #f8f9fa;
-  color: #334155;
+  background-color: #0f172a;
+  color: #f1f5f9;
   line-height: 1.6;
   overflow-x: hidden;
 }
@@ -1067,8 +1071,8 @@ body {
 
 .app-header {
   height: 64px;
-  background: linear-gradient(90deg, #ffffff 0%, #f8fafc 100%);
-  border-bottom: 1px solid #e2e8f0;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  border-bottom: 1px solid #334155;
   display: flex;
   align-items: center;
   padding: 0 1.5rem;
@@ -1120,6 +1124,8 @@ body {
 .content-area {
   flex: 1;
   overflow-y: auto;
+  background-color: #0f172a;
+  min-height: 100vh;
 }
 
 /* Card Styles */
@@ -1492,10 +1498,14 @@ body {
   box-sizing: border-box;
 }
 
+html {
+  background-color: #0f172a;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
-  background-color: #f8f9fa;
-  color: #334155;
+  background-color: #0f172a;
+  color: #f1f5f9;
   line-height: 1.6;
   overflow-x: hidden;
 }
@@ -1938,16 +1948,17 @@ body {
 
 /* Qwen Dashboard Styles */
 .feature-container {
-  background: white;
+  background: var(--bg-primary);
   border-radius: 12px;
   box-shadow: 0 6px 15px rgba(0,0,0,0.1);
   margin-bottom: 25px;
   overflow: hidden;
-  border: 1px solid #e9ecef;
+  border: 1px solid var(--border-color);
 }
 
 .tabs-container {
-  border-bottom: 1px solid #dee2e6;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-primary);
 }
 
 .tab-btn {
@@ -1956,7 +1967,7 @@ body {
   border: none;
   background: transparent;
   font-weight: 500;
-  color: #6c757d;
+  color: var(--text-secondary);
   font-size: 1.1rem;
 }
 
@@ -1965,14 +1976,15 @@ body {
 }
 
 .tab-btn.active {
-  color: #0d6efd;
-  border-bottom: 4px solid #0d6efd;
-  background-color: #f8f9fa;
+  color: var(--accent-color);
+  border-bottom: 4px solid var(--accent-color);
+  background-color: var(--bg-primary);
 }
 
 .tab-content {
   display: none;
   padding: 25px;
+  background: var(--bg-primary);
 }
 
 .tab-content.active {
