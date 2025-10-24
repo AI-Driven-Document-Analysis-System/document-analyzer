@@ -9,7 +9,8 @@ alembic==1.13.1
 asyncpg==0.30.0
 # Authentication & Security
 python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
+passlib[bcrypt]>=1.7.4
+bcrypt==4.3.0
 PyJWT==2.8.0
 
 # Data Validation & Settings
@@ -59,8 +60,9 @@ langchain-google-genai>=2.0.0
 langchain-groq>=0.1.0
 langchain-openai>=0.1.0
 langchain-huggingface>=0.0.1
+langchain-chroma>=0.1.0
 langfuse>=2.0.0
-websockets==11.0.3
+websockets>=12.0
 google-generativeai
 huggingface-hub==0.34.3
 tokenizers==0.22.0
@@ -71,8 +73,8 @@ groq==0.31.0
 
 # RAGAS Evaluation Framework
 ragas==0.1.7
-datasets==2.14.0
-pyarrow>=12.0.0
+datasets>=2.20.0
+pyarrow>=14.0.0
 
 # RAGAS Evaluation
 ragas>=0.1.0

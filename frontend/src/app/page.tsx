@@ -18,6 +18,7 @@ import UserProfilePage  from "../profile/profile"
 import Settings from "../components/settings/settings"
 import { Subscription } from "../components/subscription/subscription"
 import { ThemeProvider } from "../contexts/ThemeContext" 
+import ReturnPage from "../components/payment_portal/return-page"
 
 const routes = {
   "/dashboard": { component: Dashboard, title: "Dashboard", breadcrumb: ["Dashboard"] },
@@ -30,6 +31,7 @@ const routes = {
   "/profile": { component: UserProfilePage, title: "Profile",  breadcrumb: ["Account", "Profile"] },
   "/subscription": { component: Subscription, title: "Subscription", breadcrumb: ["Account", "Subscription"] },
   "/settings": { component: Settings, title: "Settings", breadcrumb: ["Account", "Settings"] },
+  "/return": { component: ReturnPage, title: "Payment Return", breadcrumb: ["Payments", "Return"] },
 }
 
 /**
@@ -47,6 +49,7 @@ export default function Page() {
   const [user, setUser] = useState<{username?: string} | null>(null)
   const [isClientReady, setIsClientReady] = useState(false) // Track when client is ready
 
+
   // FIXED: Handle client-side hydration and state restoration
   useEffect(() => {
     // Mark client as ready and restore state from localStorage
@@ -63,6 +66,19 @@ export default function Page() {
       setSidebarOpen(JSON.parse(savedSidebar));
     }
   }, []);
+
+  useEffect(() => {
+  if (!isClientReady) return;
+  
+  // Check if we're coming back from Stripe
+  const urlParams = new URLSearchParams(window.location.search);
+  const sessionId = urlParams.get('session_id');
+  
+  if (sessionId && window.location.pathname === '/') {
+    // User returned from Stripe, navigate to return page
+    setCurrentRoute('/return');
+  }
+}, [isClientReady]);
 
   // Verify authentication in background
   useEffect(() => {
@@ -285,7 +301,11 @@ export default function Page() {
 
         <div className="content-area">
           {/* Show the user's intended page immediately, with subtle loading if needed */}
-          <CurrentComponent />
+          {currentRoute === '/return' ? (
+            <ReturnPage onNavigate={handleNavigation} />
+          ) : (
+            <CurrentComponent />
+          )}
         </div>
       </div>
     </div>
