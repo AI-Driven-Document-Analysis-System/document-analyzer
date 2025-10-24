@@ -54,75 +54,69 @@ async def get_my_subscription(current_user: UserResponse = Depends(get_current_u
         raise HTTPException(status_code=500, detail="Internal error")
 
 
-@router.post('/', response_model=SubscriptionResponse)
-async def create_subscription(payload: CreateSubscriptionRequest, current_user: UserResponse = Depends(get_current_user)):
-    """Create a user subscription entry after successful payment/webhook.
-    This endpoint should be called by the backend after payment completes (or by the frontend after verifying session status).
-    """
+
+@router.post('/change', response_model=SubscriptionResponse)
+async def change_subscription(payload: CreateSubscriptionRequest, current_user: UserResponse = Depends(get_current_user)):
+    """Create or update a user's subscription. If the user already has a subscription, it will be updated.
+    If not, a new subscription will be created."""
     try:
         user_id = current_user.id
         now = payload.started_at or datetime.utcnow()
         expires = payload.expires_at
         if not expires:
-            # Default to 1 month for demonstration
-            expires = now + timedelta(days=30)
-        
-        # Look up plan id by name
-        select_sql = "SELECT id FROM subscription_plans WHERE name = %s"
-        with db_manager.get_cursor(commit=False) as cursor:
-            cursor.execute(select_sql, (payload.name,))
-            plan_row = cursor.fetchone()
-            if not plan_row:
-                raise HTTPException(status_code=400, detail="Invalid subscription plan name")
-            plan_id = plan_row['id']
-        insert_sql = "INSERT INTO user_subscriptions (user_id, plan_id, status, started_at, expires_at, auto_renew) VALUES (%s, %s, %s, %s, %s, %s) RETURNING id, user_id, plan_id, status, started_at, expires_at, auto_renew"
-        with db_manager.get_cursor(commit=True) as cursor:
-            cursor.execute(insert_sql, (str(user_id), plan_id, 'active', now, expires, payload.auto_renew))
-            row = cursor.fetchone()
-            if not row:
-                raise HTTPException(status_code=500, detail='Failed to insert subscription')
-            response = {
-                'user_id': str(row.get('user_id')) if row.get('user_id') is not None else None,
-                'plan_id': str(row.get('plan_id')) if row.get('plan_id') is not None else None,
-                'name': payload.name,
-                'status': row.get('status'),
-                'started_at': row.get('started_at'),
-                'expires_at': row.get('expires_at'),
-                'auto_renew': row.get('auto_renew')
-            }
-            return SubscriptionResponse(**response)
-    except Exception as e:
-        logger.exception("Failed to create subscription")
-        raise HTTPException(status_code=500, detail="Internal error")
-
-@router.post('/change', response_model=SubscriptionResponse)
-async def change_subscription(payload: CreateSubscriptionRequest, current_user: UserResponse = Depends(get_current_user)):
-    """Change the current user's active subscription."""
-    try:
-        user_id = current_user.id
-        now = payload.started_at or datetime.utcnow()
-        if not payload.expires_at:
-            # Default to 1 month for demonstration
+            # Default to 1 year for all subscriptions
             expires = now + timedelta(days=365)
         
         # Look up plan id by name
         select_sql = "SELECT id FROM subscription_plans WHERE name = %s"
-        with db_manager.get_cursor(commit=False) as cursor:
+        with db_manager.get_cursor(commit=True) as cursor:  
+            # First get the plan ID
             cursor.execute(select_sql, (payload.name,))
             plan_row = cursor.fetchone()
             if not plan_row:
                 raise HTTPException(status_code=400, detail="Invalid subscription plan name")
             plan_id = plan_row['id']
-        update_sql = "UPDATE user_subscriptions SET plan_id = %s, status = %s, started_at = %s, expires_at = %s, auto_renew = %s WHERE user_id = %s RETURNING id, user_id, plan_id, status, started_at, expires_at, auto_renew"
-        with db_manager.get_cursor(commit=True) as cursor:
-            cursor.execute(update_sql, (plan_id, 'active', now, expires, payload.auto_renew, str(user_id)))
+            
+            # Check if user already has a subscription
+            check_sql = "SELECT id FROM user_subscriptions WHERE user_id = %s"
+            cursor.execute(check_sql, (str(user_id),))
+            existing_sub = cursor.fetchone()
+            
+            if existing_sub:
+                # Update existing subscription
+                update_sql = """
+                    UPDATE user_subscriptions 
+                    SET plan_id = %s, 
+                        status = %s, 
+                        started_at = %s, 
+                        expires_at = %s, 
+                        auto_renew = %s 
+                    WHERE user_id = %s 
+                    RETURNING id, user_id, plan_id, status, started_at, expires_at, auto_renew
+                """
+                cursor.execute(update_sql, (plan_id, 'active', now, expires, payload.auto_renew, str(user_id)))
+            else:
+                # Create new subscription
+                insert_sql = """
+                    INSERT INTO user_subscriptions 
+                    (user_id, plan_id, status, started_at, expires_at, auto_renew) 
+                    VALUES (%s, %s, %s, %s, %s, %s) 
+                    RETURNING id, user_id, plan_id, status, started_at, expires_at, auto_renew
+                """
+                cursor.execute(insert_sql, (str(user_id), plan_id, 'active', now, expires, payload.auto_renew))
+            
             row = cursor.fetchone()
             if not row:
                 raise HTTPException(status_code=500, detail='Failed to update subscription')
+            
+            # Get the plan name for the response
+            cursor.execute("SELECT name FROM subscription_plans WHERE id = %s", (row.get('plan_id'),))
+            plan_name = cursor.fetchone()
+            
             response = {
                 'user_id': str(row.get('user_id')) if row.get('user_id') is not None else None,
                 'plan_id': str(row.get('plan_id')) if row.get('plan_id') is not None else None,
-                'name': payload.name,
+                'name': plan_name['name'] if plan_name else payload.name,
                 'status': row.get('status'),
                 'started_at': row.get('started_at'),
                 'expires_at': row.get('expires_at'),

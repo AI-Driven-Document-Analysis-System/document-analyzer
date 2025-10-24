@@ -17,18 +17,54 @@ export default function ReturnPage({ onNavigate }: { onNavigate?: (path: string)
       return;
     }
 
-    fetch(`http://localhost:8000/api/payments/session-status?session_id=${encodeURIComponent(sessionId)}`)
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.json();
-      })
-      .then((data) => {
-        setStatus(data.status);
-        setCustomerEmail(data.customer_email || null);
+    const checkSessionAndCreateSubscription = async () => {
+      try {
+        // First check the payment session status
+        const sessionRes = await fetch(`http://localhost:8000/api/payments/session-status?session_id=${encodeURIComponent(sessionId)}`);
+        if (!sessionRes.ok) throw new Error(`HTTP ${sessionRes.status}`);
+        const sessionData = await sessionRes.json();
+        
+        setStatus(sessionData.status);
+        setCustomerEmail(sessionData.customer_email || null);
         window.history.replaceState({}, '', '/');
-      })
-      .catch((err) => setError(String(err)))
-      .finally(() => setLoading(false));
+
+        // If payment is complete, create/update the subscription
+        if (sessionData.status === 'complete') {
+          const token = localStorage.getItem('token');
+          if (!token) throw new Error('Authentication required');
+
+          const subscriptionRes = await fetch('http://localhost:8000/api/subscriptions/change', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              name: 'Pro',
+              auto_renew: true
+            })
+          });
+
+          if (!subscriptionRes.ok) {
+            const errorData = await subscriptionRes.json();
+            throw new Error(errorData.detail || 'Failed to create subscription');
+          }
+
+          // Try to notify other windows/tabs about the subscription update
+          try {
+            localStorage.setItem('subscription_updated', Date.now().toString());
+          } catch (e) {
+            console.warn('Failed to notify about subscription update:', e);
+          }
+        }
+      } catch (err) {
+        setError(String(err));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkSessionAndCreateSubscription();
   }, []);
 
   const handleBackToSettings = () => {
