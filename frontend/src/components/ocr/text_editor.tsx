@@ -370,6 +370,27 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ documentId, onClose, au
   };
 
   // Function to render structured content
+  // Function to safely format HTML-like syntax in text
+  const formatHtmlTags = (text: string) => {
+    const formattedText = text.split('\n').map(line => {
+      // Replace common HTML tags with styled spans
+      return line
+        .replace(/<b>(.*?)<\/b>/g, (_, content) => `<span style="font-weight: bold;">${content}</span>`)
+        .replace(/<i>(.*?)<\/i>/g, (_, content) => `<span style="font-style: italic;">${content}</span>`)
+        .replace(/<u>(.*?)<\/u>/g, (_, content) => `<span style="text-decoration: underline;">${content}</span>`)
+        .replace(/<sup>(.*?)<\/sup>/g, (_, content) => `<span style="vertical-align: super; font-size: smaller;">${content}</span>`)
+        .replace(/<sub>(.*?)<\/sub>/g, (_, content) => `<span style="vertical-align: sub; font-size: smaller;">${content}</span>`)
+        .replace(/<strike>(.*?)<\/strike>/g, (_, content) => `<span style="text-decoration: line-through;">${content}</span>`)
+        .replace(/<strong>(.*?)<\/strong>/g, (_, content) => `<span style="font-weight: bold;">${content}</span>`)
+        .replace(/<em>(.*?)<\/em>/g, (_, content) => `<span style="font-style: italic;">${content}</span>`)
+        .replace(/<small>(.*?)<\/small>/g, (_, content) => `<span style="font-size: smaller;">${content}</span>`)
+        .replace(/<mark>(.*?)<\/mark>/g, (_, content) => `<span style="background-color: ${isDarkMode ? '#374151' : '#fef3c7'}; padding: 0 2px;">${content}</span>`)
+        .replace(/<code>(.*?)<\/code>/g, (_, content) => `<span style="font-family: monospace; background-color: ${isDarkMode ? '#1e293b' : '#f1f5f9'}; padding: 0 4px; border-radius: 4px;">${content}</span>`);
+    }).join('\n');
+
+    return <div dangerouslySetInnerHTML={{ __html: formattedText }} />;
+  };
+
   const renderStructuredContent = () => {
     if (!document?.layoutSections || document.layoutSections.length === 0 ) {
       return (
@@ -439,43 +460,44 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ documentId, onClose, au
                         </span>
                       )}
                     </div>
-                    <textarea
-                      value={section.text}
-                      onChange={(e) => handleStructuredTextEdit(parseInt(pageNum), index, e.target.value)}
-                      style={{
-                        width: '100%',
-                        minHeight: Math.max(60, Math.ceil(section.text.length / 80) * 20 + 40) + 'px',
-                        padding: '8px',
-                        border: 'none',
-                        borderRadius: '4px',
-                        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                        color: 'inherit',
-                        fontSize: 'inherit',
-                        fontFamily: 'inherit',
-                        fontWeight: 'inherit',
-                        fontStyle: 'inherit',
-                        textAlign: 'inherit',
-                        lineHeight: 'inherit',
-                        resize: 'none',
-                        outline: 'none',
-                        boxSizing: 'border-box',
-                        overflow: 'hidden',
-                      }}
-                      onFocus={(e) => {
-                        e.currentTarget.style.backgroundColor = isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.05)';
-                        e.currentTarget.style.boxShadow = '0 0 0 2px rgba(59, 130, 246, 0.3)';
-                      }}
-                      onBlur={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
-                        e.currentTarget.style.boxShadow = 'none';
-                      }}
-                      onInput={(e) => {
-                        // Auto-resize textarea to fit content without scrollbars
-                        const target = e.currentTarget;
-                        target.style.height = 'auto';
-                        target.style.height = Math.max(60, target.scrollHeight) + 'px';
-                      }}
-                    />
+                    <div style={{
+                      width: '100%',
+                      minHeight: Math.max(60, Math.ceil(section.text.length / 80) * 20 + 40) + 'px',
+                      padding: '8px',
+                      border: 'none',
+                      borderRadius: '4px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      color: 'inherit',
+                      fontSize: 'inherit',
+                      fontFamily: 'inherit',
+                      fontWeight: 'inherit',
+                      fontStyle: 'inherit',
+                      textAlign: 'inherit',
+                      lineHeight: 'inherit',
+                      outline: 'none',
+                      boxSizing: 'border-box',
+                      overflow: 'hidden',
+                      cursor: 'text',
+                    }} 
+                    onClick={(e) => {
+                      const textArea = e.currentTarget.querySelector('textarea');
+                      if (textArea) textArea.focus();
+                    }}>
+                      {/* Hidden textarea for editing */}
+                      <textarea
+                        value={section.text}
+                        onChange={(e) => handleStructuredTextEdit(parseInt(pageNum), index, e.target.value)}
+                        style={{
+                          position: 'absolute',
+                          left: '-9999px',
+                          width: '1px',
+                          height: '1px',
+                          overflow: 'hidden',
+                        }}
+                      />
+                      {/* Formatted display */}
+                      {formatHtmlTags(section.text)}
+                    </div>
                   </div>
                 );
               })}
