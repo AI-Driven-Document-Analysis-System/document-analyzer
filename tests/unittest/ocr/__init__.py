@@ -1,0 +1,3 @@
+"""
+OCR unit tests package
+"""

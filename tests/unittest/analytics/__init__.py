@@ -1,0 +1,3 @@
+"""
+Analytics unit tests package
+"""
