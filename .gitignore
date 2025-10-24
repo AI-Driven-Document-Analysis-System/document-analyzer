@@ -74,7 +74,3 @@ evaluation/rag-chatbot/ragas_evaluation.db
 
 /tests/functional_testing/node_modules
 /tests/ui/node_modules
-
-# Evaluation and testing directories (optional features)
-/evaluation/
-/tests/
