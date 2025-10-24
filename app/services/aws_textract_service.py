@@ -88,7 +88,7 @@ class AWSTextractService:
             # Use analyze_document for layout analysis
             response = self.textract_client.analyze_document(
                 Document={'Bytes': image_bytes},
-                FeatureTypes=['LAYOUT', 'TABLES']  # Include layout and table detection
+                FeatureTypes=['LAYOUT', 'TABLES', 'FORMS']  # Include layout, table, and form detection
             )
             
             logger.info(f"Textract analyzed document with {len(response.get('Blocks', []))} blocks")
@@ -162,6 +162,78 @@ class AWSTextractService:
         except Exception as e:
             logger.error(f"Error extracting layout elements: {e}")
             return []
+
+    def parse_layout_elements(self, textract_response: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        Parses the raw JSON response from AWS Textract's AnalyzeDocument with the LAYOUT feature
+        and formats the layout elements into a structured list for database storage.
+
+        Args:
+            textract_response (dict): The raw JSON response from the Textract API.
+
+        Returns:
+            list: A list of dictionaries, where each dictionary represents a layout element.
+        """
+        try: 
+            # Create a dictionary to map each block's ID to the block itself for easy lookup.
+            # This is much more efficient than searching the list of blocks repeatedly.
+            blocks_map = {block['Id']: block for block in textract_response.get('Blocks', [])}
+            
+            processed_elements = []
+
+            # Iterate through each block to find the main layout elements.
+            for block_id, block in blocks_map.items():
+                # We only care about processing top-level LAYOUT blocks.
+                if block['BlockType'].startswith("LAYOUT_"):
+                    
+                    # --- 1. Assemble the Full Text for the Element ---
+                    full_text = []
+                    if 'Relationships' in block:
+                        for relationship in block['Relationships']:
+                            if relationship['Type'] == 'CHILD':
+                                for child_id in relationship['Ids']:
+                                    child_block = blocks_map.get(child_id)
+                                    if not child_block:
+                                        continue
+
+                                    # Case 1: The child is a LINE block (most common)
+                                    if child_block['BlockType'] == 'LINE':
+                                        full_text.append(child_block.get('Text', ''))
+                                    
+                                    # Case 2: The child is LAYOUT_TEXT (specifically for LAYOUT_LIST items)
+                                    # We need to look one level deeper to get the LINEs.
+                                    elif child_block['BlockType'] == 'LAYOUT_TEXT':
+                                        if 'Relationships' in child_block:
+                                            for sub_rel in child_block['Relationships']:
+                                                if sub_rel['Type'] == 'CHILD':
+                                                    for line_id in sub_rel['Ids']:
+                                                        line_block = blocks_map.get(line_id)
+                                                        if line_block and line_block['BlockType'] == 'LINE':
+                                                            full_text.append(line_block.get('Text', ''))
+                    
+                    # --- 2. Calculate the Bounding Box ---
+                    bbox = block.get('Geometry', {}).get('BoundingBox', {})
+                    bounding_box = [
+                        bbox.get('Left', 0),
+                        bbox.get('Top', 0),
+                        bbox.get('Left', 0) + bbox.get('Width', 0),
+                        bbox.get('Top', 0) + bbox.get('Height', 0)
+                    ]
+
+                    # --- 3. Assemble the Final Element Dictionary ---
+                    element = {
+                        "bounding_box": bounding_box,
+                        "element_type": block['BlockType'].lower(),
+                        "extracted_text": " ".join(full_text),
+                        "confidence": block.get('Confidence', 0) / 100.0  # Convert to 0-1 scale
+                    }
+                    processed_elements.append(element)
+                
+            return processed_elements
+        
+        except Exception as e:
+            logger.error(f"Error parsing layout elements: {e}")
+            return []
     
     def process_document(self, file_path: str, document_id: Optional[str] = None, 
                         use_layout_analysis: bool = True) -> List[List[Dict[str, Any]]]:
@@ -230,7 +302,7 @@ class AWSTextractService:
                         response = self.process_single_image(image_bytes)
                     
                     # Extract elements in our format
-                    page_elements = self.extract_layout_elements(response)
+                    page_elements = self.parse_layout_elements(response)
                     all_pages_elements.append(page_elements)
                 
                 logger.info(f"AWS Textract PDF processing completed. Total pages: {len(all_pages_elements)}")
@@ -245,7 +317,7 @@ class AWSTextractService:
                 else:
                     response = self.process_single_image(image_bytes)
                 
-                elements = self.extract_layout_elements(response)
+                elements = self.parse_layout_elements(response)
                 logger.info(f"AWS Textract processing completed. Elements: {len(elements)}")
                 
                 return [elements]  # Return as single page

@@ -294,6 +294,7 @@
   transition: var(--transition);
   border: 1px solid var(--border-color);
   position: relative;
+  min-height: 200px;
 }
 
 .document-card:hover {
@@ -1020,13 +1021,11 @@ body.modal-open {
   border-radius: 16px;
   overflow: hidden;
   box-shadow: var(--card-shadow);
-  margin-bottom: 2rem;
-  max-width: 100%;
-  height: fit-content;
+  transition: var(--transition);
 }
 
 .tabs-container {
-  background: var(--bg-tertiary);
+  background: var(--bg-primary);
   border-bottom: 1px solid var(--border-color);
   padding: 0;
 }
@@ -1212,6 +1211,80 @@ body.modal-open {
 .tag-invoice {
   background: linear-gradient(135deg, #8b5cf6, #7c3aed);
   color: #ffffff;
+}
+
+/* Classification Labels - Tag style matching My Documents */
+.classification-label {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  margin-left: 0.75rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: capitalize;
+  letter-spacing: 0.3px;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+/* Research Paper - Blue */
+.classification-research-paper {
+  color: #3b82f6;
+  border: 1.5px solid #3b82f6;
+}
+
+.classification-research-paper:hover {
+  background: rgba(59, 130, 246, 0.1);
+}
+
+/* Financial Report - Green */
+.classification-financial-report {
+  color: #10b981;
+  border: 1.5px solid #10b981;
+}
+
+.classification-financial-report:hover {
+  background: rgba(16, 185, 129, 0.1);
+}
+
+/* Medical Record - Red */
+.classification-medical-record {
+  color: #ef4444;
+  border: 1.5px solid #ef4444;
+}
+
+.classification-medical-record:hover {
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* Invoice or Receipt - Orange */
+.classification-invoice-or-receipt {
+  color: #f59e0b;
+  border: 1.5px solid #f59e0b;
+}
+
+.classification-invoice-or-receipt:hover {
+  background: rgba(245, 158, 11, 0.1);
+}
+
+/* Legal Document - Purple */
+.classification-legal-document {
+  color: #8b5cf6;
+  border: 1.5px solid #8b5cf6;
+}
+
+.classification-legal-document:hover {
+  background: rgba(139, 92, 246, 0.1);
+}
+
+/* Other - Gray */
+.classification-other {
+  color: #6b7280;
+  border: 1.5px solid #6b7280;
+}
+
+.classification-other:hover {
+  background: rgba(107, 114, 128, 0.1);
 }
 
 /* Empty state for no documents */

@@ -1,1 +1,0 @@
-# ChromaDB Test Suite

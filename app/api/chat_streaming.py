@@ -5,8 +5,8 @@ import uuid
 import os
 import time
 import sys
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'evaluation', 'rag-chatbot'))
-from quick_integration import capture_chatbot_interaction, init_evaluation_capture
+# sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..', 'evaluation', 'rag-chatbot'))
+# from quick_integration import capture_chatbot_interaction, init_evaluation_capture
 from ..schemas.chat_schemas import ChatMessageRequest
 from ..services.chat_service import get_chatbot_service
 from ..services.chatbot.rag.query_preprocessing import preprocess_user_query

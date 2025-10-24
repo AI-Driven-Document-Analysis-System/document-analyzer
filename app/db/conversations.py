@@ -6,6 +6,7 @@ import logging
 
 from .models import Conversation as ConversationModel, ChatMessage as ChatMessageModel
 from ..core.database import get_db
+from . import conversations_pin_methods
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +56,7 @@ class Conversations:
                 LEFT JOIN chat_messages m ON c.id = m.conversation_id 
                     AND m.role IN ('user', 'assistant')
                 WHERE c.user_id = %s
-                GROUP BY c.id, c.user_id, c.title, c.created_at, c.updated_at
+                GROUP BY c.id, c.user_id, c.title, c.is_pinned, c.created_at, c.updated_at
                 HAVING COUNT(m.id) > 0
                 ORDER BY c.updated_at DESC
                 LIMIT %s OFFSET %s
@@ -106,6 +107,12 @@ class Conversations:
         except Exception as e:
             logger.error(f"Error deleting conversation: {e}")
             raise
+
+    def toggle_pin(self, conversation_id: UUID) -> Optional[ConversationModel]:
+        return conversations_pin_methods.toggle_pin(self.db, conversation_id)
+
+    def get_pinned_conversations(self, user_id: UUID, limit: int = 10) -> List[ConversationModel]:
+        return conversations_pin_methods.get_pinned_conversations(self.db, user_id, limit)
 
 
 class Messages:

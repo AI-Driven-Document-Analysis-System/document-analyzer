@@ -30,9 +30,9 @@ function RAGChatbotContent() {
   const generatingMessageIdRef = useRef<string | null>(null) // Use ref instead of state - prevents re-render issues
   const [searchMode, setSearchMode] = useState<'standard' | 'rephrase' | 'multiple_queries'>('standard')
   const [selectedModel, setSelectedModel] = useState<{ provider: string; model: string; name: string } | undefined>({
-    provider: 'groq',
-    model: 'llama-3.1-8b-instant', 
-    name: 'Llama-3.1-8b-instant'
+    provider: 'deepseek',
+    model: 'deepseek-chat', 
+    name: 'Deepseek-v3'
   })
   const [useStreaming, setUseStreaming] = useState(true) // Enable streaming by default
   // Load conversation ID from localStorage (user-specific)
@@ -61,6 +61,10 @@ function RAGChatbotContent() {
   // New chat confirmation modal state
   const [showNewChatConfirm, setShowNewChatConfirm] = useState(false)
   const [pendingDocumentModal, setPendingDocumentModal] = useState(false)
+  
+  // Document loaded notification
+  const [showDocumentLoadedNotification, setShowDocumentLoadedNotification] = useState(false)
+  const [loadedDocumentName, setLoadedDocumentName] = useState<string>('')
 
   // Handle feedback from messages
   const handleFeedback = async (messageId: string, feedback: 'thumbs_up' | 'thumbs_down', reason?: string) => {
@@ -197,7 +201,6 @@ function RAGChatbotContent() {
   }
 
 
-
   // Initialize user ID and load user-specific data
   useEffect(() => {
     const initializeUser = async () => {
@@ -286,6 +289,9 @@ function RAGChatbotContent() {
     }
   }, [conversationId, currentUserId])
 
+
+  
+
   // Fetch chat history from database on component mount
   useEffect(() => {
     const fetchChatHistory = async () => {
@@ -296,23 +302,24 @@ function RAGChatbotContent() {
         if (response.conversations && Array.isArray(response.conversations)) {
           // Backend now filters empty conversations efficiently
           const transformedHistory: ChatHistory[] = response.conversations.map((conv: any) => ({
-            id: conv.id,
-            title: conv.title || 'Untitled Chat',
-            timestamp: conv.created_at ? new Date(conv.created_at + 'Z').toLocaleString([], {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            }) : new Date().toLocaleString([], {
-              year: 'numeric',
-              month: 'short',
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit'
-            }),
-            messageCount: conv.message_count || 0
-          }))
+              id: conv.id,
+              title: conv.title || 'Untitled Chat',
+              timestamp: conv.created_at ? new Date(conv.created_at + 'Z').toLocaleString([], {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) : new Date().toLocaleString([], {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              }),
+              messageCount: conv.message_count || 0,
+              is_pinned: conv.is_pinned || false
+            }))
           
           setChatHistory(transformedHistory)
         }
@@ -326,6 +333,17 @@ function RAGChatbotContent() {
 
     fetchChatHistory()
   }, [])
+
+  // Load conversation from session storage (set by dashboard navigation)
+  useEffect(() => {
+    const conversationIdParam = sessionStorage.getItem('nav_conversation_id')
+    if (conversationIdParam && !isLoadingHistory) {
+      // Load this conversation after history is loaded
+      handleChatHistoryClick(conversationIdParam)
+      // Clear the param so it doesn't load again on next visit
+      sessionStorage.removeItem('nav_conversation_id')
+    }
+  }, [isLoadingHistory])
 
   // Document management using custom hook
   const {
@@ -354,6 +372,39 @@ function RAGChatbotContent() {
     refetch: refetchDocuments
   } = useDocuments()
 
+  // Handle "Chat with Doc" navigation from dashboard
+  useEffect(() => {
+    const chatWithDocId = sessionStorage.getItem('chat_with_document_id')
+    if (chatWithDocId && documents.length > 0 && !documentsLoading) {
+      console.log('📄 Chat with Doc triggered for document:', chatWithDocId)
+      
+      // Find the document name
+      const selectedDoc = documents.find(doc => doc.id === chatWithDocId)
+      const docName = selectedDoc?.original_filename || 'Document'
+      
+      // Start a new chat first
+      handleNewChat().then(() => {
+        // Auto-select the document after new chat is created
+        toggleDocumentSelection(chatWithDocId)
+        // Expand the Document Scope section so user can see the selected document
+        setExpandedSections(prev => ({ ...prev, knowledge: true }))
+        
+        // Show notification
+        setLoadedDocumentName(docName)
+        setShowDocumentLoadedNotification(true)
+        
+        // Auto-hide notification after 4 seconds
+        setTimeout(() => {
+          setShowDocumentLoadedNotification(false)
+        }, 4000)
+        
+        console.log('✅ Document auto-selected and Document Scope expanded:', chatWithDocId)
+      })
+      // Clear the session storage so it doesn't trigger again
+      sessionStorage.removeItem('chat_with_document_id')
+    }
+  }, [documents, documentsLoading])
+
   const toggleSection = (section: keyof ExpandedSections) => {
     setExpandedSections(prev => ({
       ...prev,
@@ -370,6 +421,10 @@ function RAGChatbotContent() {
   useEffect(() => {
     scrollChatToBottom()
   }, [messages])
+
+  
+
+
 
   // Reset page to top and disable body scroll when component mounts
   useEffect(() => {
@@ -681,6 +736,41 @@ function RAGChatbotContent() {
     }
   }
 
+  const handlePinChat = async (chatId: string) => {
+    try {
+      console.log('🔥 PIN CLICKED - Chat ID:', chatId)
+      const token = localStorage.getItem('token')
+      if (!token) {
+        console.error('❌ No token found')
+        return
+      }
+
+      console.log('📡 Sending pin request to:', `http://localhost:8000/api/chat/conversations/${chatId}/pin`)
+      const response = await fetch(`http://localhost:8000/api/chat/conversations/${chatId}/pin`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      console.log('📥 Response status:', response.status)
+      if (response.ok) {
+        const data = await response.json()
+        console.log('✅ Pin response data:', data)
+        setChatHistory(prev => prev.map(chat => 
+          chat.id === chatId ? { ...chat, is_pinned: data.is_pinned } : chat
+        ))
+        console.log('✅ Chat history updated')
+      } else {
+        const errorText = await response.text()
+        console.error('❌ Pin request failed:', response.status, errorText)
+      }
+    } catch (error) {
+      console.error('❌ Error toggling pin status:', error)
+    }
+  }
+
   const cancelDeleteChat = () => {
     setShowDeleteConfirm(false)
     setChatToDelete(null)
@@ -724,6 +814,30 @@ function RAGChatbotContent() {
         {/* Main Chat Area */}
         <div style={{ flex: '1 1 0%', minWidth: '0', display: 'flex', flexDirection: 'column', backgroundColor: isDarkMode ? '#1a202c' : '#f8fafc' }}>
           <div className={`flex-1 flex flex-col`} style={{ position: 'relative', height: 'calc(100vh - 60px)', backgroundColor: isDarkMode ? '#2d3748' : 'white' }}>
+            {/* Document Loaded Notification */}
+            {showDocumentLoadedNotification && (
+              <div style={{
+                position: 'absolute',
+                top: '16px',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                backgroundColor: '#10b981',
+                color: 'white',
+                padding: '12px 24px',
+                borderRadius: '8px',
+                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)',
+                zIndex: 101,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                fontSize: '14px',
+                fontWeight: '500'
+              }}>
+                <i className="fas fa-check-circle" style={{ fontSize: '16px' }}></i>
+                <span>{loadedDocumentName} is loaded and ready!</span>
+              </div>
+            )}
+            
             {/* Dark Mode Toggle */}
             <div style={{
               position: 'absolute',
@@ -860,6 +974,7 @@ function RAGChatbotContent() {
           onNewChat={handleNewChat}
           onChatHistoryClick={handleChatHistoryClick}
           onDeleteChat={handleDeleteChat}
+          onPinChat={handlePinChat}
           selectedChatId={conversationId || undefined}
           documentsLoading={documentsLoading}
           documentsError={documentsError}

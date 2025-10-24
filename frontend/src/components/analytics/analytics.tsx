@@ -1298,15 +1298,35 @@ const Analytics: React.FC = () => {
           display: 'flex', 
           alignItems: 'center', 
           justifyContent: 'center', 
-          height: '200px',
-          backgroundColor: '#f9fafb',
-          borderRadius: '8px'
+          minHeight: '400px',
+          backgroundColor: 'var(--bg-primary)',
+          borderRadius: '12px',
+          border: '1px solid var(--border-color)'
         }}>
           <div style={{ textAlign: 'center' }}>
-            <div className="spinner"></div>
-            <p>Loading analytics data...</p>
+            <div style={{
+              width: '60px',
+              height: '60px',
+              border: '4px solid var(--border-color)',
+              borderTop: '4px solid #3b82f6',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              margin: '0 auto 20px'
+            }}></div>
+            <p style={{ color: 'var(--text-primary)', fontSize: '16px', fontWeight: '500' }}>
+              Loading analytics data...
+            </p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '14px', marginTop: '8px' }}>
+              Please wait while we fetch your insights
+            </p>
           </div>
         </div>
+        <style jsx>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
       </div>
     );
   }
@@ -1334,28 +1354,6 @@ const Analytics: React.FC = () => {
         <div className="analytics-title">
           <h1>Analytics Dashboard</h1>
           <p>Document upload insights and trends</p>
-        </div>
-        <div className="analytics-controls">
-          <button
-            onClick={() => fetchAnalyticsData(selectedPeriod, true)}
-            disabled={refreshing}
-            className="refresh-btn"
-          >
-            <span className="refresh-icon" style={{ transform: refreshing ? 'rotate(360deg)' : 'none' }}>
-              <Icons.Refresh />
-            </span>
-            <span>{refreshing ? "Refreshing..." : "Refresh"}</span>
-          </button>
-          <select 
-            value={selectedPeriod} 
-            onChange={(e) => handlePeriodChange(e.target.value)}
-            className="period-select"
-          >
-            <option value="7d">Last 7 days</option>
-            <option value="30d">Last 30 days</option>
-            <option value="90d">Last 90 days</option>
-            <option value="1y">Last year</option>
-          </select>
         </div>
       </div>
 
@@ -1543,7 +1541,9 @@ const Analytics: React.FC = () => {
                         borderRadius: '2px 2px 0 0',
                         transition: 'all 0.2s ease',
                         cursor: 'pointer',
-                        position: 'relative'
+                        position: 'relative',
+                        animation: `barRiseUp 0.6s ease-out ${index * 0.1}s both`,
+                        transformOrigin: 'bottom'
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.filter = 'brightness(1.2)';
@@ -1637,6 +1637,18 @@ const Analytics: React.FC = () => {
           Last updated: {lastUpdated.toLocaleString()}
         </div>
       )}
+      <style>{`
+        @keyframes barRiseUp {
+          from {
+            transform: scaleY(0);
+            opacity: 0.8;
+          }
+          to {
+            transform: scaleY(1);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 };

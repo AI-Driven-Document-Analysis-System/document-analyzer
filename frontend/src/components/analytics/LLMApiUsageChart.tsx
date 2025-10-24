@@ -134,7 +134,9 @@ const LLMApiUsageChart: React.FC = () => {
                     borderRadius: '2px 2px 0 0',
                     transition: 'all 0.2s ease',
                     cursor: 'pointer',
-                    position: 'relative'
+                    position: 'relative',
+                    animation: `barRiseUp 0.6s ease-out ${index * 0.1}s both`,
+                    transformOrigin: 'bottom'
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.filter = 'brightness(1.2)';
@@ -208,6 +210,18 @@ const LLMApiUsageChart: React.FC = () => {
           </div>
         </div>
       </div>
+      <style>{`
+        @keyframes barRiseUp {
+          from {
+            transform: scaleY(0);
+            opacity: 0.8;
+          }
+          to {
+            transform: scaleY(1);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 };

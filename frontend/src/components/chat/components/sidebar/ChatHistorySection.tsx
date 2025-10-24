@@ -6,10 +6,13 @@ interface ChatHistorySectionProps {
   chatHistory: ChatHistory[]
   onChatHistoryClick: (chatId: string) => void
   onDeleteChat: (chatId: string) => void
+  onPinChat: (chatId: string) => void
   selectedChatId?: string
 }
 
-export function ChatHistorySection({ expandedSections, toggleSection, chatHistory, onChatHistoryClick, onDeleteChat, selectedChatId }: ChatHistorySectionProps) {
+export function ChatHistorySection({ expandedSections, toggleSection, chatHistory, onChatHistoryClick, onDeleteChat, onPinChat, selectedChatId }: ChatHistorySectionProps) {
+  console.log('🔍 Chat History Data:', chatHistory.map(c => ({ id: c.id, title: c.title, is_pinned: c.is_pinned })))
+  
   return (
     <div style={{ borderBottom: '1px solid #4b5563', flexShrink: 0 }}>
       <div 
@@ -58,8 +61,8 @@ export function ChatHistorySection({ expandedSections, toggleSection, chatHistor
                    }
                  }}
                  onClick={(e) => {
-                   // Only trigger chat selection if not clicking on delete button
-                   if (!(e.target as HTMLElement).closest('.delete-btn')) {
+                   // Only trigger chat selection if not clicking on delete or pin button
+                   if (!(e.target as HTMLElement).closest('.delete-btn') && !(e.target as HTMLElement).closest('.pin-btn')) {
                      onChatHistoryClick(chat.id);
                    }
                  }}>
@@ -69,6 +72,45 @@ export function ChatHistorySection({ expandedSections, toggleSection, chatHistor
                   <p style={{ fontWeight: '500', fontSize: '12px', color: 'white', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{chat.title}</p>
                   <p style={{ fontSize: '10px', color: '#d1d5db', margin: '2px 0 0 0' }}>{chat.timestamp}</p>
                 </div>
+                <button
+                  className="pin-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPinChat(chat.id);
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: chat.is_pinned ? '#3b82f6' : '#9ca3af',
+                    cursor: 'pointer',
+                    padding: '4px',
+                    borderRadius: '4px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    opacity: 0.7,
+                    transition: 'all 0.2s ease',
+                    fontSize: '12px',
+                    width: '24px',
+                    height: '24px',
+                    marginRight: '4px'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.opacity = '1';
+                    e.currentTarget.style.backgroundColor = chat.is_pinned ? 'rgba(59, 130, 246, 0.1)' : 'rgba(156, 163, 175, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.opacity = '0.7';
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                  title={chat.is_pinned ? "Unpin conversation" : "Pin conversation"}
+                >
+                  <i className={`fas fa-thumbtack`} style={{ 
+                    fontSize: '10px',
+                    transform: chat.is_pinned ? 'rotate(45deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.2s ease'
+                  }}></i>
+                </button>
                 <button
                   className="delete-btn"
                   onClick={(e) => {
