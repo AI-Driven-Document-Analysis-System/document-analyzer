@@ -2,6 +2,10 @@
 
 An AI-driven document analysis system that provides comprehensive document processing and analysis capabilities through advanced machine learning models and intelligent automation. This system enables users to upload documents, extract text through OCR, classify documents automatically, generate summaries, and interact with document content through an intelligent RAG-based chatbot. The platform offers flexible model selection, interactive editing capabilities, and comprehensive analytics dashboards to track document processing activities and insights.
 
+## Architecture
+![architecture](https://github.com/user-attachments/assets/6ba17ef9-229b-4268-86a2-14ec8ab63b5e)
+
+
 ## Features
 
 ### Core Components
