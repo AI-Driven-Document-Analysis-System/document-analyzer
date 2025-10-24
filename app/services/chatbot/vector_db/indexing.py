@@ -1,8 +1,8 @@
-
 from .langchain_chroma import LangChainChromaStore
 from langchain.schema import Document
 from .chunking import DocumentChunker
-from typing import Dict, List
+from .contextual_chunking import DocumentAwareAugmenter
+from typing import Dict, List, Optional
 import logging
 
 
@@ -20,16 +20,18 @@ class LangChainDocumentIndexer:
     plain text documents, automatically choosing the appropriate chunking strategy.
     """
     
-    def __init__(self, vectorstore: LangChainChromaStore, chunker: DocumentChunker):
+    def __init__(self, vectorstore: LangChainChromaStore, chunker: DocumentChunker, llm: Optional[Any] = None):
         """
         Initialize the document indexer with vector store and chunker components.
         
         Args:
             vectorstore: The vector database store for storing document chunks
             chunker: The document chunker for splitting documents into manageable pieces
+            llm: Optional language model for contextual chunking
         """
         self.vectorstore = vectorstore
         self.chunker = chunker
+        self.document_augmenter = DocumentAwareAugmenter(llm=llm)
         self.logger = logging.getLogger(__name__)
 
     def _clean_metadata(self, metadata: Dict) -> Dict:
@@ -119,6 +121,10 @@ class LangChainDocumentIndexer:
                     document_data['text'],
                     document_metadata
                 )
+            
+            # ===== DOCUMENT-AWARE AUGMENTATION =====
+            # Augment chunks with contextual information if enabled
+            chunks = self.document_augmenter.augment_chunks_with_context(chunks, document_data)
 
             # ===== LANGCHAIN DOCUMENT CONVERSION =====
             # Convert chunks to LangChain Document objects for vector storage
