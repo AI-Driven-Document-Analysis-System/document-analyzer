@@ -177,6 +177,7 @@
   font-size: 14px;
   cursor: pointer;
   transition: var(--transition);
+  margin-top: 16px;
 }
 
 .settings-section button[type='submit'] {
@@ -334,6 +335,7 @@
   padding: 16px;
   border-radius: 8px;
   font-size: 14px;
+  margin-bottom: 16px;
 }
 
 .plan-info h4 {
@@ -352,4 +354,104 @@
     width: 100%;
     margin-bottom: 20px;
   }
+}
+
+/* Modal styles used by settings modals */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(2,6,23,0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: 24px;
+}
+
+.modal-content {
+  width: 100%;
+  max-width: 640px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 10px 30px rgba(2,6,23,0.5);
+  color: var(--text-primary);
+}
+
+.modal-content h2 {
+  margin-top: 0;
+  padding-left: 10px;
+}
+
+.modal-close {
+  position: absolute;
+  right: 20px;
+  top: 18px;
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--text-secondary);
+}
+
+.modal-content .btn-primary {
+  width: auto;
+  display: inline-block;
+}
+
+.modal-content .btn-secondary {
+  width: auto;
+  display: inline-block;
+}
+
+.plan-info {
+  margin-bottom: 1rem;
+}
+
+.plan-label {
+  font-weight: 500;
+  margin-right: 0.5rem;
+}
+
+.plan-value {
+  color: var(--color-text-primary);
+}
+
+.plan-status {
+  margin-left: 0.5rem;
+  color: var(--color-text-secondary);
+}
+
+.plan-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.btn-primary, .btn-secondary {
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-dark);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-bg-hover);
 }
