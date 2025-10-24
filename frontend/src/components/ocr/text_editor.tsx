@@ -296,16 +296,48 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ documentId, onClose, au
   // Function to get element type label
   const getElementTypeLabel = (elementType: string) => {
     switch (elementType) {
-      case 'layout_title': return 'Title';
-      case 'layout_section_header': return 'Section Header';
-      case 'layout_header': return 'Page Header';
-      case 'layout_footer': return 'Page Footer';
-      case 'layout_list': return 'List';
-      case 'layout_table': return 'Table';
-      case 'layout_figure': return 'Figure';
-      case 'layout_key_value': return 'Key-Value';
-      case 'layout_page_number': return 'Page Number';
-      case 'layout_text': return 'Text';
+      case 'layout_title':
+        return 'Title';
+      case 'layout_section_header':
+      case 'SectionHeader': 
+        return 'Section Header';
+      case 'layout_header': 
+      case 'PageHeader': 
+        return 'Page Header';
+      case 'layout_footer': 
+      case 'PageFooter': 
+        return 'Page Footer';
+      case 'layout_list': 
+      case 'ListItem': 
+        return 'List';
+      case 'layout_table': 
+      case 'Table': 
+        return 'Table';
+      case 'layout_figure':
+      case 'Figure':
+        return 'Figure';
+      case 'Picture':
+        return 'Picture';
+      case 'layout_key_value': 
+      case 'Form':
+        return 'Form';
+      case 'layout_page_number':
+        return 'Page Number';
+      case 'Caption':
+        return 'Caption';
+      case 'Footnote':
+        return 'Footnote';
+      case 'Formula':
+        return 'Formula';
+      case 'TableOfContents':
+        return 'Table of Contents';
+      case 'Handwriting':
+        return 'Handwriting';
+      case 'TextInlineMath':
+        return 'Inline Math';
+      case 'layout_text':
+      case 'text':
+        return 'Text';
       default: return 'Text';
     }
   };
@@ -339,7 +371,7 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ documentId, onClose, au
 
   // Function to render structured content
   const renderStructuredContent = () => {
-    if (!document?.layoutSections || document.layoutSections.length === 0) {
+    if (!document?.layoutSections || document.layoutSections.length === 0 ) {
       return (
         <div style={{
           padding: '20px',
@@ -386,6 +418,9 @@ const DocumentEditor: React.FC<DocumentEditorProps> = ({ documentId, onClose, au
                 </div>
               )}
               {sections.map((section, index) => {
+                if (getElementTypeLabel(section.element_type) === 'Picture' || getElementTypeLabel(section.element_type) === 'Figure') {
+                  return null; // Skip rendering Picture and Figure elements
+                }
                 const sectionStyle = getElementTypeStyle(section.element_type);
                 return (
                   <div key={`${pageNum}-${index}`} style={sectionStyle}>
